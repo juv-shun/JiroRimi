@@ -65,7 +65,7 @@ So that 簡単に登録でき、X IDも自動で紐づく
 ```
 
 **受け入れ条件**:
-- Firebase Auth + X（Twitter）プロバイダーでログイン
+- Supabase Auth + X（Twitter）プロバイダーでログイン
 - X IDはログイン時に自動取得される（荒らし抑止力として活用）
 - 優先度: **P0**
 
@@ -396,10 +396,10 @@ So that 自分の実績を振り返れる
 
 | サービス | 用途 |
 |---|---|
-| Firebase Auth | X（Twitter）認証 |
-| Firestore | データベース（リアルタイム更新） |
-| Firebase Hosting | Webアプリホスティング |
-| Firebase Cloud Functions | チーム分けロジック等のサーバーサイド処理 |
+| Supabase Auth | X（Twitter）認証 |
+| Supabase Database (PostgreSQL) | データベース（リレーショナルデータ、リアルタイム更新） |
+| Vercel | Webアプリホスティング、サーバーサイド処理 (Next.js) |
+| Supabase Edge Functions | 定期実行やWebhookなど、Next.js外での処理が必要な場合 |
 
 ---
 

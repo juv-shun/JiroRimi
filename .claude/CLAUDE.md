@@ -39,12 +39,11 @@
 
 ## 技術スタック
 
-- **認証**: Firebase Auth（X プロバイダー）
-- **DB**: Firestore（リアルタイム更新）
-- **ホスティング**: Firebase Hosting
-- **サーバーサイド**: Firebase Cloud Functions
-- **フロントエンド**: TypeScript + React
-- **バックエンド**: Python
+- **認証**: Supabase Auth（X プロバイダー）
+- **DB**: Supabase (PostgreSQL)
+- **ホスティング**: Vercel
+- **フレームワーク**: Next.js (App Router)
+- **言語**: TypeScript (Frontend & Backend) / Python (Scripts)
 
 ## 利用者規模
 
