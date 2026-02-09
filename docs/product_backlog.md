@@ -27,7 +27,7 @@
 | ID | バックログアイテム | 説明 | 受け入れ条件 | ステータス |
 |----|-------------------|------|-------------|-----------|
 | 1.1.1 | Supabaseプロジェクト初期設定 | Supabase プロジェクトを作成し、Auth/Database/Storage/Edge Functionsを有効化 | ダッシュボードでプロジェクトが作成されている | 🟢 Done |
-| 1.1.2 | フロントエンド環境構築 | Next.js (App Router) + TypeScript でプロジェクトを初期化 | `pnpm dev` でローカル起動できる | 🔵 Not Started |
+| 1.1.2 | フロントエンド環境構築 | Next.js (App Router) + TypeScript でプロジェクトを初期化 | `next@16.1.1` と `typescript@5.9.3` を使用し、`packageManager` は `pnpm@10.28.0`、Node は `>=20.9.0`、`pnpm dev` でローカル起動できる | 🟢 Done |
 | 1.1.3 | バックエンド環境構築 | Supabase CLI によるローカル開発環境を構築 | ローカルでSupabaseが動作する | 🔵 Not Started |
 | 1.1.4 | データベース設計 (Schema) | ユーザー/大会/予選/エントリーのテーブル定義 (SQL) | DDLまたはER図が存在する | 🔵 Not Started |
 | 1.1.5 | Row Level Security (RLS) | 認証・権限に基づくアクセス制御ポリシーを実装 | 未認証ユーザーは書き込み不可 | 🔵 Not Started |
