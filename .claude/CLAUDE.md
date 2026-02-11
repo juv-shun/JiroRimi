@@ -53,3 +53,5 @@
 
 - [要件定義書](../docs/requirements.md) - 機能要件・TBD一覧
 - [プロダクトバックログ](../docs/product_backlog.md) - 開発計画・進捗管理
+- [データベース設計書](../docs/database_design.md) - テーブル定義・ER図
+- [RLS設計書](../docs/rls_design.md) - Row Level Security ポリシー
