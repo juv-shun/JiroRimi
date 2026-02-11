@@ -1,4 +1,4 @@
-# プロダクトバックログ: Unite Solo Tournament Manager
+# プロダクトバックログ: じろりみ
 
 ## 開発フェーズ概要
 

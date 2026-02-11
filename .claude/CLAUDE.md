@@ -1,4 +1,4 @@
-# Unite Solo Tournament Manager
+# じろりみ
 
 ポケモンユナイトのソロ大会運営Webアプリケーション。
 

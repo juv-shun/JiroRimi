@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Unite Solo Tournament Manager",
-  description: "Pokemon Unite solo tournament operations app."
+  title: "じろりみ",
+  description: "ポケモンユナイト ソロ大会運営アプリ"
 };
 
 type RootLayoutProps = {
