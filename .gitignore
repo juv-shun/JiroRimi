@@ -3,3 +3,7 @@ node_modules
 pnpm-debug.log*
 .DS_Store
 out
+
+# Environment variables
+.env*.local
+.env
