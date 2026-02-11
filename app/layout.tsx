@@ -13,7 +13,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body className="bg-background min-h-screen">{children}</body>
     </html>
   )
 }
