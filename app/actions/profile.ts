@@ -37,7 +37,7 @@ export async function updateProfile(
 
   if (!validated.success) {
     // 最初のエラーメッセージを返す
-    const firstError = validated.error.errors[0]
+    const firstError = validated.error.issues[0]
     return { success: false, error: firstError.message }
   }
 

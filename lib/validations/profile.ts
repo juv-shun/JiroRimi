@@ -7,7 +7,7 @@ import { ROLES } from "@/lib/types/profile"
 
 // ロールのスキーマ
 const roleSchema = z.enum(ROLES, {
-  required_error: "ロールを選択してください",
+  error: "ロールを選択してください",
 })
 
 // プロフィール更新のスキーマ
@@ -30,7 +30,7 @@ export const profileSchema = z
         "有効なX IDを入力してください",
       ),
     gender: z.enum(["boys", "girls"], {
-      required_error: "性別を選択してください",
+      error: "性別を選択してください",
     }),
     first_role: roleSchema,
     second_role: roleSchema,

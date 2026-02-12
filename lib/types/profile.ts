@@ -42,6 +42,7 @@ export type Profile = {
   id: string
   discord_id: string
   discord_username: string | null
+  avatar_url: string | null
   player_name: string | null
   x_id: string | null
   gender: Gender | null

@@ -73,21 +73,44 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           <span className="w-1.5 h-5 bg-[#5865F2] rounded-full" />
           Discord連携情報
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              Discord ID
-            </label>
-            <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary font-mono text-sm border border-border">
-              {profile.discord_id}
-            </div>
+        <div className="flex items-start gap-6">
+          {/* アバター */}
+          <div className="flex-shrink-0">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.discord_username ?? "Discord アバター"}
+                className="w-20 h-20 rounded-full border-2 border-[#5865F2]/20 shadow-sm"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-[#5865F2]/10 border-2 border-[#5865F2]/20 flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-[#5865F2]/50"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+              </div>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">
-              ユーザー名
-            </label>
-            <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary text-sm border border-border">
-              {profile.discord_username ?? "未設定"}
+          {/* Discord情報 */}
+          <div className="flex-1 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Discord ID
+              </label>
+              <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary font-mono text-sm border border-border">
+                {profile.discord_id}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                ユーザー名
+              </label>
+              <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary text-sm border border-border">
+                {profile.discord_username ?? "未設定"}
+              </div>
             </div>
           </div>
         </div>
