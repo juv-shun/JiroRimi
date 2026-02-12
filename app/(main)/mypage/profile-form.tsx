@@ -1,20 +1,20 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useRouter } from "next/navigation"
+import { useActionState, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
 import { updateProfile } from "@/app/actions/profile"
 import { Toast } from "@/app/components/toast"
-import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
 import {
-  type Profile,
-  type Role,
-  ROLES,
-  ROLE_LABELS,
-  GENDER_LABELS,
   type ActionResult,
+  GENDER_LABELS,
+  type Profile,
+  ROLE_LABELS,
+  ROLES,
+  type Role,
 } from "@/lib/types/profile"
+import { type ProfileFormData, profileSchema } from "@/lib/validations/profile"
 
 type ProfileFormProps = {
   profile: Profile

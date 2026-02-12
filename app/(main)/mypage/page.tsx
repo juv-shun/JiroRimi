@@ -42,7 +42,10 @@ export default async function MyPage() {
         />
 
         {/* プロフィールフォーム */}
-        <ProfileForm profile={profile as Profile} isFirstTimeSetup={isFirstTimeSetup} />
+        <ProfileForm
+          profile={profile as Profile}
+          isFirstTimeSetup={isFirstTimeSetup}
+        />
       </div>
     </main>
   )
