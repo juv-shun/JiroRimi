@@ -5,6 +5,7 @@
   --color-primary-hover: #e66a00;
   --color-primary-light: #fff3e6;
   --color-background: #fdf8f4;
+  --color-surface: #ffffff;
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
   --color-border: #e5e5e5;
@@ -12,7 +13,12 @@
   --color-error: #ef4444;
   --color-warning: #f59e0b;
 
+  /* Sidebar */
+  --sidebar-width: 16rem;
+
+  /* Animations */
   --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-in: slide-in 0.3s ease-out;
 }
 
 @keyframes fade-in {
@@ -23,5 +29,16 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
