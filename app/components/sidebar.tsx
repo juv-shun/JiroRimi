@@ -14,22 +14,22 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    label: "ホーム",
+    label: "Home",
     href: "/",
     icon: <Home className="size-5" />,
   },
   {
-    label: "大会一覧",
+    label: "Tournaments",
     href: "/tournaments",
     icon: <Trophy className="size-5" />,
   },
   {
-    label: "スケジュール",
+    label: "Schedule",
     href: "/schedule",
     icon: <Calendar className="size-5" />,
   },
   {
-    label: "マイページ",
+    label: "My Page",
     href: "/mypage",
     icon: <User className="size-5" />,
   },
@@ -110,7 +110,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs text-text-secondary">
-                    ログイン中
+                    Signed in
                   </span>
                   <span className="font-medium text-sm text-text-primary truncate max-w-[140px]">
                     {userName}
@@ -124,7 +124,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
                 className="group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-text-secondary transition-all duration-200 hover:bg-error/10 hover:text-error"
               >
                 <LogOut className="size-5 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                <span className="font-medium">ログアウト</span>
+                <span className="font-medium">Sign out</span>
               </button>
             </form>
           </>
@@ -135,7 +135,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary-hover px-4 py-3 font-semibold text-white shadow-md shadow-primary/30 transition-all duration-200 hover:shadow-lg hover:shadow-primary/40"
           >
             <User className="size-5" />
-            <span>ログイン</span>
+            <span>Sign in</span>
           </Link>
         )}
       </div>
@@ -156,7 +156,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="flex size-10 items-center justify-center rounded-xl text-text-secondary transition-colors hover:bg-primary-light hover:text-primary"
-          aria-label={isOpen ? "メニューを閉じる" : "メニューを開く"}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
         >
           {isOpen ? <X className="size-6" /> : <Menu className="size-6" />}
         </button>
@@ -169,7 +169,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
           className="fixed inset-0 z-40 cursor-default bg-black/20 backdrop-blur-sm md:hidden"
           onClick={closeMenu}
           onKeyDown={(e) => e.key === "Escape" && closeMenu()}
-          aria-label="メニューを閉じる"
+          aria-label="Close menu"
         />
       )}
 
