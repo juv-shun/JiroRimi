@@ -1,10 +1,10 @@
 "use client"
 
+import { signOut } from "@/app/actions/auth"
 import { Calendar, Home, LogOut, Menu, Trophy, User, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { signOut } from "@/app/actions/auth"
 
 type NavItem = {
   label: string
@@ -63,9 +63,6 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
         <div className="flex flex-col">
           <span className="font-bold text-lg text-text-primary tracking-tight">
             JiroRimi
-          </span>
-          <span className="text-[10px] text-text-secondary leading-none">
-            UNITE Tournament
           </span>
         </div>
       </div>
