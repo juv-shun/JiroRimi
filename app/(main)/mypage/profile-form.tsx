@@ -207,9 +207,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             <span className="w-1.5 h-5 bg-success rounded-full" />
             ロール優先順位
           </h2>
-          <p className="text-xs text-text-secondary mt-1">
-            希望するロールを優先順に3つ選択してください
-          </p>
         </div>
 
         <div className="p-6">

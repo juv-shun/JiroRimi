@@ -22,9 +22,6 @@ export default async function MyPage() {
         {/* ページヘッダー */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-text-primary">マイページ</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            プロフィール情報を設定してください
-          </p>
         </div>
 
         {/* プロフィールフォーム */}
