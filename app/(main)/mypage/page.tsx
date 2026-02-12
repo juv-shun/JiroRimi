@@ -21,7 +21,7 @@ export default async function MyPage() {
       <div className="max-w-2xl mx-auto">
         {/* ページヘッダー */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-primary">マイページ</h1>
+          <h1 className="text-2xl font-bold text-text-primary">My Page</h1>
         </div>
 
         {/* プロフィールフォーム */}

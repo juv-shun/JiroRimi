@@ -24,17 +24,17 @@ export const ROLES = [
 
 // ロール表示名
 export const ROLE_LABELS: Record<Role, string> = {
-  top_carry: "上キャリー",
-  bot_carry: "下キャリー",
-  mid: "中央",
-  tank: "タンク",
-  support: "サポート",
+  top_carry: "Top",
+  bot_carry: "Bottom",
+  mid: "Mid",
+  tank: "Tank",
+  support: "Support",
 }
 
 // 性別表示名
 export const GENDER_LABELS: Record<Gender, string> = {
-  boys: "男",
-  girls: "女",
+  boys: "Boy",
+  girls: "Girl",
 }
 
 // プロフィール型

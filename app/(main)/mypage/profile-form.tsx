@@ -73,7 +73,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/50">
           <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <span className="w-1.5 h-5 bg-primary rounded-full" />
-            プロフィール情報
+            Profile
           </h2>
         </div>
 
@@ -116,13 +116,13 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   htmlFor="player_name"
                   className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
                 >
-                  プレイヤー名
+                  Player Name
                 </label>
                 <input
                   id="player_name"
                   type="text"
                   {...register("player_name")}
-                  placeholder="ゲーム内で表示される名前"
+                  placeholder="Your in-game name"
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
                 {errors.player_name && (
@@ -159,7 +159,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             {/* 右：性別選択（縦並びトグル） */}
             <div className="flex flex-col gap-2">
               <span className="text-xs font-medium text-text-secondary uppercase tracking-wide text-center">
-                性別
+                Gender
               </span>
               <div className="flex flex-col gap-1.5">
                 {(["boys", "girls"] as const).map((gender) => (
@@ -205,7 +205,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <div className="bg-gradient-to-r from-success/10 via-success/5 to-transparent px-6 py-4 border-b border-border/50">
           <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <span className="w-1.5 h-5 bg-success rounded-full" />
-            ロール優先順位
+            Role Priority
           </h2>
         </div>
 
@@ -218,7 +218,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 htmlFor="first_role"
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
               >
-                第1希望
+                1st
               </label>
               <select
                 id="first_role"
@@ -231,7 +231,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   backgroundSize: "1.25em 1.25em",
                 }}
               >
-                <option value="">選択</option>
+                <option value="">Select</option>
                 {ROLES.map((role) => (
                   <option
                     key={role}
@@ -253,7 +253,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 htmlFor="second_role"
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
               >
-                第2希望
+                2nd
               </label>
               <select
                 id="second_role"
@@ -266,7 +266,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   backgroundSize: "1.25em 1.25em",
                 }}
               >
-                <option value="">選択</option>
+                <option value="">Select</option>
                 {ROLES.map((role) => (
                   <option
                     key={role}
@@ -288,7 +288,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 htmlFor="third_role"
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
               >
-                第3希望
+                3rd
               </label>
               <select
                 id="third_role"
@@ -301,7 +301,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   backgroundSize: "1.25em 1.25em",
                 }}
               >
-                <option value="">選択</option>
+                <option value="">Select</option>
                 {ROLES.map((role) => (
                   <option
                     key={role}
@@ -329,7 +329,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
       {showSuccess && (
         <div className="p-4 bg-green-50 border border-success/20 rounded-lg animate-fade-in">
-          <p className="text-sm text-success">プロフィールを保存しました</p>
+          <p className="text-sm text-success">Saved!</p>
         </div>
       )}
 
@@ -362,10 +362,10 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            保存中...
+            Saving...
           </span>
         ) : (
-          "保存する"
+          "Save"
         )}
       </button>
     </form>
