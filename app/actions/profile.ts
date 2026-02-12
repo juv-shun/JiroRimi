@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { profileSchema } from "@/lib/validations/profile"
 import type { ActionResult } from "@/lib/types/profile"
@@ -58,6 +59,9 @@ export async function updateProfile(
     console.error("Profile update failed:", error.message)
     return { success: false, error: "プロフィールの更新に失敗しました" }
   }
+
+  // ページを再検証して最新データを反映
+  revalidatePath("/mypage")
 
   return { success: true }
 }
