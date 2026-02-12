@@ -1,3 +1,4 @@
+import { createServerClient } from "@supabase/ssr"
 import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
@@ -6,6 +7,9 @@ const protectedRoutes: string[] = ["/mypage"]
 
 // 認証済みユーザーがアクセスすべきでないルート
 const authRoutes = ["/login"]
+
+// プロフィール未完了時に許可するルート
+const firstTimeSetupAllowedRoutes = ["/mypage", "/auth/callback"]
 
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request)
@@ -19,6 +23,47 @@ export async function proxy(request: NextRequest) {
   // ログイン済みユーザーが /login にアクセス → / へリダイレクト
   if (user && authRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  // 初回登録モード: ログイン済み＋許可ルート以外 → プロフィール完了チェック
+  if (
+    user &&
+    !firstTimeSetupAllowedRoutes.some((route) => pathname.startsWith(route))
+  ) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: () => {}, // proxyではcookie書き込み不要
+        },
+      },
+    )
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("player_name, x_id, gender, first_role, second_role, third_role")
+      .eq("id", user.id)
+      .single()
+
+    // 完了判定: profileがnullまたは必須フィールドが未入力なら未完了
+    const isComplete =
+      profile?.player_name &&
+      profile.player_name.trim() !== "" &&
+      profile.x_id &&
+      profile.x_id !== "PENDING" &&
+      profile.x_id.trim() !== "" &&
+      profile.gender &&
+      profile.first_role &&
+      profile.second_role &&
+      profile.third_role &&
+      new Set([profile.first_role, profile.second_role, profile.third_role])
+        .size === 3
+
+    if (!isComplete) {
+      return NextResponse.redirect(new URL("/mypage", request.url))
+    }
   }
 
   return response
