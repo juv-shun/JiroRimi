@@ -74,72 +74,79 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           プロフィール情報
         </h2>
         <div className="space-y-5">
-          {/* アバター */}
-          <div className="flex justify-center">
-            {profile.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt="プロフィール画像"
-                className="w-24 h-24 rounded-full border-2 border-primary/20 shadow-sm"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-border flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
-              </div>
-            )}
-          </div>
-
-          {/* プレイヤー名 */}
-          <div>
-            <label
-              htmlFor="player_name"
-              className="block text-sm font-medium text-text-primary mb-1.5"
-            >
-              プレイヤー名
-              <span className="text-error ml-1">*</span>
-            </label>
-            <input
-              id="player_name"
-              type="text"
-              {...register("player_name")}
-              placeholder="ゲーム内で表示される名前"
-              className="w-full px-4 py-3 rounded-lg border border-border text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-            />
-            {errors.player_name && (
-              <p className="mt-1.5 text-sm text-error">{errors.player_name.message}</p>
-            )}
-          </div>
-
-          {/* X ID */}
-          <div>
-            <label
-              htmlFor="x_id"
-              className="block text-sm font-medium text-text-primary mb-1.5"
-            >
-              X ID
-              <span className="text-error ml-1">*</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
-                @
-              </span>
-              <input
-                id="x_id"
-                type="text"
-                {...register("x_id")}
-                placeholder="username"
-                className="w-full pl-9 pr-4 py-3 rounded-lg border border-border text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-              />
+          {/* アバターとフォーム */}
+          <div className="flex gap-6">
+            {/* アバター */}
+            <div className="flex-shrink-0">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="プロフィール画像"
+                  className="w-24 h-24 rounded-full border-2 border-primary/20 shadow-sm"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-border flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                </div>
+              )}
             </div>
-            {errors.x_id && (
-              <p className="mt-1.5 text-sm text-error">{errors.x_id.message}</p>
-            )}
+
+            {/* プレイヤー名・X ID */}
+            <div className="flex-1 space-y-4">
+              {/* プレイヤー名 */}
+              <div>
+                <label
+                  htmlFor="player_name"
+                  className="block text-sm font-medium text-text-primary mb-1.5"
+                >
+                  プレイヤー名
+                  <span className="text-error ml-1">*</span>
+                </label>
+                <input
+                  id="player_name"
+                  type="text"
+                  {...register("player_name")}
+                  placeholder="ゲーム内で表示される名前"
+                  className="w-full px-4 py-3 rounded-lg border border-border text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                />
+                {errors.player_name && (
+                  <p className="mt-1.5 text-sm text-error">{errors.player_name.message}</p>
+                )}
+              </div>
+
+              {/* X ID */}
+              <div>
+                <label
+                  htmlFor="x_id"
+                  className="block text-sm font-medium text-text-primary mb-1.5"
+                >
+                  X ID
+                  <span className="text-error ml-1">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">
+                    @
+                  </span>
+                  <input
+                    id="x_id"
+                    type="text"
+                    {...register("x_id")}
+                    placeholder="username"
+                    className="w-full pl-9 pr-4 py-3 rounded-lg border border-border text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  />
+                </div>
+                {errors.x_id && (
+                  <p className="mt-1.5 text-sm text-error">{errors.x_id.message}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* 性別 */}
@@ -331,6 +338,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <circle
                 className="opacity-25"
