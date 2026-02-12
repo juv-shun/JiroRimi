@@ -30,6 +30,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   const {
     register,
     watch,
+    reset,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -43,6 +44,18 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     },
     mode: "onChange",
   })
+
+  // profile が変更されたらフォームをリセット
+  useEffect(() => {
+    reset({
+      player_name: profile.player_name ?? "",
+      x_id: profile.x_id === "PENDING" ? "" : (profile.x_id ?? ""),
+      gender: profile.gender ?? undefined,
+      first_role: profile.first_role ?? undefined,
+      second_role: profile.second_role ?? undefined,
+      third_role: profile.third_role ?? undefined,
+    })
+  }, [profile, reset])
 
   // 選択中のロールを監視
   const firstRole = watch("first_role")
