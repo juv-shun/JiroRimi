@@ -27,7 +27,7 @@ export default async function MyPage() {
           <div className="mb-6 rounded-lg border border-primary/20 bg-primary/10 p-4">
             <h2 className="font-semibold text-lg text-primary">Welcome!</h2>
             <p className="mt-1 text-sm text-text-secondary">
-              大会に参加するには、まずプロフィールを完成させてください。
+              プロフィールを完成させてください。
             </p>
           </div>
         )}
