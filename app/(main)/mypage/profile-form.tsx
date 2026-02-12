@@ -24,6 +24,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
     FormData
   >(updateProfile, null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
 
   const {
     register,
@@ -51,8 +52,18 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   useEffect(() => {
     if (state?.success) {
       setShowSuccess(true)
-      const timer = setTimeout(() => setShowSuccess(false), 3000)
-      return () => clearTimeout(timer)
+      setIsExiting(false)
+      // 2.5秒後にフェードアウト開始
+      const exitTimer = setTimeout(() => setIsExiting(true), 2500)
+      // 3秒後に完全に非表示
+      const hideTimer = setTimeout(() => {
+        setShowSuccess(false)
+        setIsExiting(false)
+      }, 3000)
+      return () => {
+        clearTimeout(exitTimer)
+        clearTimeout(hideTimer)
+      }
     }
   }, [state])
 
@@ -349,9 +360,30 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         </div>
       )}
 
+      {/* 成功トースト（画面右下固定） */}
       {showSuccess && (
-        <div className="p-4 bg-green-50 border border-success/20 rounded-lg animate-fade-in">
-          <p className="text-sm text-success">Saved!</p>
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-lg border border-success/20 ${
+            isExiting ? "animate-toast-out" : "animate-toast-in"
+          }`}
+        >
+          <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+            <svg
+              className="w-5 h-5 text-success"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <span className="text-sm font-medium text-text-primary">Saved!</span>
         </div>
       )}
 
