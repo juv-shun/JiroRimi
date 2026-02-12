@@ -6,12 +6,7 @@
 export type Gender = "boys" | "girls"
 
 // ロール
-export type Role =
-  | "top_carry"
-  | "bot_carry"
-  | "mid"
-  | "tank"
-  | "support"
+export type Role = "top_carry" | "bot_carry" | "mid" | "tank" | "support"
 
 // ロール一覧
 export const ROLES = [
@@ -55,6 +50,4 @@ export type Profile = {
 }
 
 // Server Action の戻り値型
-export type ActionResult =
-  | { success: true }
-  | { success: false; error: string }
+export type ActionResult = { success: true } | { success: false; error: string }

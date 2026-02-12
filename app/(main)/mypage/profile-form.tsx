@@ -19,10 +19,10 @@ type ProfileFormProps = {
 }
 
 export function ProfileForm({ profile }: ProfileFormProps) {
-  const [state, formAction, isPending] = useActionState<ActionResult | null, FormData>(
-    updateProfile,
-    null,
-  )
+  const [state, formAction, isPending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(updateProfile, null)
   const [showSuccess, setShowSuccess] = useState(false)
 
   const {
@@ -57,7 +57,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   }, [state])
 
   // 選択不可のロールを取得
-  const getDisabledRoles = (excludeField: "first" | "second" | "third"): Role[] => {
+  const getDisabledRoles = (
+    excludeField: "first" | "second" | "third",
+  ): Role[] => {
     const selected: Role[] = []
     if (excludeField !== "first" && firstRole) selected.push(firstRole)
     if (excludeField !== "second" && secondRole) selected.push(secondRole)
@@ -102,8 +104,19 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               )}
               {/* アバターの装飾 */}
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-3.5 h-3.5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
             </div>
@@ -126,7 +139,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
                 {errors.player_name && (
-                  <p className="mt-1 text-xs text-error">{errors.player_name.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.player_name.message}
+                  </p>
                 )}
               </div>
 
@@ -151,7 +166,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                   />
                 </div>
                 {errors.x_id && (
-                  <p className="mt-1 text-xs text-error">{errors.x_id.message}</p>
+                  <p className="mt-1 text-xs text-error">
+                    {errors.x_id.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -163,10 +180,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               </span>
               <div className="flex flex-col gap-1.5">
                 {(["boys", "girls"] as const).map((gender) => (
-                  <label
-                    key={gender}
-                    className="relative cursor-pointer"
-                  >
+                  <label key={gender} className="relative cursor-pointer">
                     <input
                       type="radio"
                       {...register("gender")}
@@ -192,7 +206,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 ))}
               </div>
               {errors.gender && (
-                <p className="mt-1 text-xs text-error text-center">{errors.gender.message}</p>
+                <p className="mt-1 text-xs text-error text-center">
+                  {errors.gender.message}
+                </p>
               )}
             </div>
           </div>
@@ -243,7 +259,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 ))}
               </select>
               {errors.first_role && (
-                <p className="mt-1 text-xs text-error text-center">{errors.first_role.message}</p>
+                <p className="mt-1 text-xs text-error text-center">
+                  {errors.first_role.message}
+                </p>
               )}
             </div>
 
@@ -278,7 +296,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 ))}
               </select>
               {errors.second_role && (
-                <p className="mt-1 text-xs text-error text-center">{errors.second_role.message}</p>
+                <p className="mt-1 text-xs text-error text-center">
+                  {errors.second_role.message}
+                </p>
               )}
             </div>
 
@@ -313,7 +333,9 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                 ))}
               </select>
               {errors.third_role && (
-                <p className="mt-1 text-xs text-error text-center">{errors.third_role.message}</p>
+                <p className="mt-1 text-xs text-error text-center">
+                  {errors.third_role.message}
+                </p>
               )}
             </div>
           </div>

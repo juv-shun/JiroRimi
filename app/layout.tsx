@@ -20,7 +20,9 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ja">
-      <body className={`${nunito.className} bg-background min-h-screen`}>{children}</body>
+      <body className={`${nunito.className} bg-background min-h-screen`}>
+        {children}
+      </body>
     </html>
   )
 }

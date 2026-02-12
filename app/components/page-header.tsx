@@ -4,7 +4,11 @@ type PageHeaderProps = {
   showIcons?: boolean
 }
 
-export function PageHeader({ title, subtitle, showIcons = true }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  subtitle,
+  showIcons = true,
+}: PageHeaderProps) {
   const StarIcon = () => (
     <svg
       className="w-8 h-8 text-primary animate-pulse"
