@@ -38,9 +38,14 @@ const navItems: NavItem[] = [
 type SidebarProps = {
   isLoggedIn: boolean
   userName?: string
+  isFirstTimeSetup?: boolean
 }
 
-export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
+export function Sidebar({
+  isLoggedIn,
+  userName,
+  isFirstTimeSetup = false,
+}: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -52,6 +57,11 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
   }
 
   const closeMenu = () => setIsOpen(false)
+
+  // 初回登録モード時にナビゲーションを非活性化するか判定
+  const isNavDisabled = (href: string) => {
+    return isFirstTimeSetup && href !== "/mypage"
+  }
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
@@ -71,6 +81,21 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const active = isActive(item.href)
+          const disabled = isNavDisabled(item.href)
+
+          if (disabled) {
+            return (
+              <div
+                key={item.href}
+                title="プロフィールを完了してください"
+                className="group flex cursor-not-allowed items-center gap-3 rounded-xl px-4 py-3 opacity-50"
+              >
+                <span>{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
+              </div>
+            )
+          }
+
           return (
             <Link
               key={item.href}
@@ -118,9 +143,21 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
             <form action={signOut}>
               <button
                 type="submit"
-                className="group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-text-secondary transition-all duration-200 hover:bg-error/10 hover:text-error"
+                disabled={isFirstTimeSetup}
+                title={
+                  isFirstTimeSetup
+                    ? "プロフィールを完了してください"
+                    : undefined
+                }
+                className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-text-secondary transition-all duration-200 ${
+                  isFirstTimeSetup
+                    ? "cursor-not-allowed opacity-50"
+                    : "hover:bg-error/10 hover:text-error"
+                }`}
               >
-                <LogOut className="size-5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                <LogOut
+                  className={`size-5 transition-transform duration-200 ${!isFirstTimeSetup && "group-hover:-translate-x-0.5"}`}
+                />
                 <span className="font-medium">Sign out</span>
               </button>
             </form>
