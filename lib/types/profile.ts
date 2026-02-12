@@ -33,8 +33,8 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 // 性別表示名
 export const GENDER_LABELS: Record<Gender, string> = {
-  boys: "ボーイズ",
-  girls: "ガールズ",
+  boys: "男",
+  girls: "女",
 }
 
 // プロフィール型

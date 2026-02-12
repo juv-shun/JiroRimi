@@ -67,25 +67,25 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   return (
     <form action={formAction} className="space-y-6">
-      {/* Discord情報カード */}
+      {/* プロフィール情報カード */}
       <section className="bg-white rounded-xl shadow-sm border border-border p-6 transition-all duration-200 hover:shadow-md">
         <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <span className="w-1.5 h-5 bg-[#5865F2] rounded-full" />
-          Discord連携情報
+          <span className="w-1.5 h-5 bg-primary rounded-full" />
+          プロフィール情報
         </h2>
-        <div className="flex items-start gap-6">
+        <div className="space-y-5">
           {/* アバター */}
-          <div className="flex-shrink-0">
+          <div className="flex justify-center">
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
-                alt={profile.discord_username ?? "Discord アバター"}
-                className="w-20 h-20 rounded-full border-2 border-[#5865F2]/20 shadow-sm"
+                alt="プロフィール画像"
+                className="w-24 h-24 rounded-full border-2 border-primary/20 shadow-sm"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-[#5865F2]/10 border-2 border-[#5865F2]/20 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-border flex items-center justify-center">
                 <svg
-                  className="w-10 h-10 text-[#5865F2]/50"
+                  className="w-12 h-12 text-gray-400"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -94,35 +94,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
               </div>
             )}
           </div>
-          {/* Discord情報 */}
-          <div className="flex-1 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                Discord ID
-              </label>
-              <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary font-mono text-sm border border-border">
-                {profile.discord_id}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">
-                ユーザー名
-              </label>
-              <div className="px-4 py-3 bg-gray-50 rounded-lg text-text-primary text-sm border border-border">
-                {profile.discord_username ?? "未設定"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* プロフィール情報カード */}
-      <section className="bg-white rounded-xl shadow-sm border border-border p-6 transition-all duration-200 hover:shadow-md">
-        <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-          <span className="w-1.5 h-5 bg-primary rounded-full" />
-          プロフィール情報
-        </h2>
-        <div className="space-y-5">
           {/* プレイヤー名 */}
           <div>
             <label
@@ -173,7 +145,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
           {/* 性別 */}
           <div>
             <span className="block text-sm font-medium text-text-primary mb-2">
-              参加カップ
+              性別
               <span className="text-error ml-1">*</span>
             </span>
             <div className="flex gap-4">
@@ -189,7 +161,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                     className="peer sr-only"
                   />
                   <div
-                    className={`p-4 rounded-lg border-2 text-center transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary-light ${
+                    className={`p-3 rounded-lg border-2 text-center transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary-light ${
                       gender === "boys"
                         ? "border-blue-200 hover:border-blue-300"
                         : "border-pink-200 hover:border-pink-300"
@@ -201,9 +173,6 @@ export function ProfileForm({ profile }: ProfileFormProps) {
                       }`}
                     >
                       {GENDER_LABELS[gender]}
-                    </span>
-                    <span className="block text-xs text-text-secondary mt-1">
-                      {gender === "boys" ? "じろカップ" : "りみカップ"}
                     </span>
                   </div>
                 </label>
