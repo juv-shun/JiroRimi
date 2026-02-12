@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { updateProfile } from "@/app/actions/profile"
@@ -17,9 +18,14 @@ import {
 
 type ProfileFormProps = {
   profile: Profile
+  isFirstTimeSetup?: boolean
 }
 
-export function ProfileForm({ profile }: ProfileFormProps) {
+export function ProfileForm({
+  profile,
+  isFirstTimeSetup = false,
+}: ProfileFormProps) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState<
     ActionResult | null,
     FormData
@@ -62,9 +68,15 @@ export function ProfileForm({ profile }: ProfileFormProps) {
   const secondRole = watch("second_role")
   const thirdRole = watch("third_role")
 
-  // 成功メッセージの表示制御
+  // 成功メッセージの表示制御と初回登録時のリダイレクト
   useEffect(() => {
     if (state?.success) {
+      // 初回登録モードの場合はホームにリダイレクト
+      if (isFirstTimeSetup) {
+        router.push("/")
+        return
+      }
+
       setShowSuccess(true)
       setIsExiting(false)
       // 2.5秒後にフェードアウト開始
@@ -79,7 +91,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         clearTimeout(hideTimer)
       }
     }
-  }, [state])
+  }, [state, isFirstTimeSetup, router])
 
   // 選択不可のロールを取得
   const getDisabledRoles = (
@@ -408,6 +420,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
             </svg>
             Saving...
           </span>
+        ) : isFirstTimeSetup ? (
+          "Complete Profile"
         ) : (
           "Save"
         )}
