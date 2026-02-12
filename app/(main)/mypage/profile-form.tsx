@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { updateProfile } from "@/app/actions/profile"
+import { Toast } from "@/app/components/toast"
 import { profileSchema, type ProfileFormData } from "@/lib/validations/profile"
 import {
   type Profile,
@@ -360,32 +361,8 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         </div>
       )}
 
-      {/* 成功トースト（画面右下固定） */}
-      {showSuccess && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-lg border border-success/20 ${
-            isExiting ? "animate-toast-out" : "animate-toast-in"
-          }`}
-        >
-          <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-success"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </div>
-          <span className="text-sm font-medium text-text-primary">Saved!</span>
-        </div>
-      )}
+      {/* 成功トースト */}
+      <Toast message="Saved!" show={showSuccess} isExiting={isExiting} />
 
       {/* 保存ボタン */}
       <button
