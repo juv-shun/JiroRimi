@@ -14,9 +14,17 @@ export async function Header() {
         <Link href="/" className="text-xl font-bold text-primary">
           じろりみ
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
           {user ? (
-            <LogoutButton />
+            <>
+              <Link
+                href="/mypage"
+                className="text-text-secondary hover:text-primary font-medium transition-colors"
+              >
+                マイページ
+              </Link>
+              <LogoutButton />
+            </>
           ) : (
             <Link
               href="/login"

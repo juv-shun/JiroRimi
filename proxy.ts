@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
-// 認証が必要なルート（1.3.1 以降で /mypage を追加）
-const protectedRoutes: string[] = []
+// 認証が必要なルート
+const protectedRoutes: string[] = ["/mypage"]
 
 // 認証済みユーザーがアクセスすべきでないルート
 const authRoutes = ["/login"]
