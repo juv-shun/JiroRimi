@@ -62,7 +62,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-lg text-text-primary tracking-tight">
-            じろりみ
+            JiroRimi
           </span>
           <span className="text-[10px] text-text-secondary leading-none">
             UNITE Tournament
@@ -150,7 +150,7 @@ export function Sidebar({ isLoggedIn, userName }: SidebarProps) {
           <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-amber-500">
             <Trophy className="size-4 text-white" />
           </div>
-          <span className="font-bold text-text-primary">じろりみ</span>
+          <span className="font-bold text-text-primary">JiroRimi</span>
         </div>
         <button
           type="button"
