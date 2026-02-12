@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
-import { useActionState, useEffect, useState } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { updateProfile } from "@/app/actions/profile"
 import { Toast } from "@/app/components/toast"
@@ -26,17 +26,16 @@ export function ProfileForm({
   isFirstTimeSetup = false,
 }: ProfileFormProps) {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState<
-    ActionResult | null,
-    FormData
-  >(updateProfile, null)
+  const [state, setState] = useState<ActionResult | null>(null)
+  const [isPending, startTransition] = useTransition()
   const [showSuccess, setShowSuccess] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const {
     register,
     watch,
-    reset,
+    handleSubmit,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -50,18 +49,6 @@ export function ProfileForm({
     },
     mode: "onChange",
   })
-
-  // profile が変更されたらフォームをリセット
-  useEffect(() => {
-    reset({
-      player_name: profile.player_name ?? "",
-      x_id: profile.x_id === "PENDING" ? "" : (profile.x_id ?? ""),
-      gender: profile.gender ?? undefined,
-      first_role: profile.first_role ?? undefined,
-      second_role: profile.second_role ?? undefined,
-      third_role: profile.third_role ?? undefined,
-    })
-  }, [profile, reset])
 
   // 選択中のロールを監視
   const firstRole = watch("first_role")
@@ -104,8 +91,18 @@ export function ProfileForm({
     return selected
   }
 
+  // フォーム送信処理
+  const onSubmit = handleSubmit(() => {
+    if (!formRef.current) return
+    const formData = new FormData(formRef.current)
+    startTransition(async () => {
+      const result = await updateProfile(state, formData)
+      setState(result)
+    })
+  })
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
       {/* プロフィール情報カード */}
       <section className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-200 hover:shadow-md">
         {/* ヘッダー部分：グラデーション背景 */}
