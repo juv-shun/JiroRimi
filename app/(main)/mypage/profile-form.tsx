@@ -17,7 +17,7 @@ import {
 import { type ProfileFormData, profileSchema } from "@/lib/validations/profile"
 
 type ProfileFormProps = {
-  profile: Profile
+  profile: Profile | null
   isFirstTimeSetup?: boolean
 }
 
@@ -40,12 +40,12 @@ export function ProfileForm({
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      player_name: profile.player_name ?? "",
-      x_id: profile.x_id === "PENDING" ? "" : (profile.x_id ?? ""),
-      gender: profile.gender ?? undefined,
-      first_role: profile.first_role ?? undefined,
-      second_role: profile.second_role ?? undefined,
-      third_role: profile.third_role ?? undefined,
+      player_name: profile?.player_name ?? "",
+      x_id: profile?.x_id === "PENDING" ? "" : (profile?.x_id ?? ""),
+      gender: profile?.gender ?? undefined,
+      first_role: profile?.first_role ?? undefined,
+      second_role: profile?.second_role ?? undefined,
+      third_role: profile?.third_role ?? undefined,
     },
     mode: "onChange",
   })
@@ -118,7 +118,7 @@ export function ProfileForm({
           <div className="grid grid-cols-[auto_1fr_auto] gap-6 items-start">
             {/* 左：アバター */}
             <div className="relative group">
-              {profile.avatar_url ? (
+              {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt="プロフィール画像"
