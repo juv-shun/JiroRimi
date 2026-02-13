@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
-import { updateProfile } from "@/app/actions/profile"
 import { Toast } from "@/app/components/toast"
 import {
   type ActionResult,
@@ -96,7 +95,11 @@ export function ProfileForm({
     if (!formRef.current) return
     const formData = new FormData(formRef.current)
     startTransition(async () => {
-      const result = await updateProfile(state, formData)
+      const response = await fetch("/api/profile", {
+        method: "POST",
+        body: formData,
+      })
+      const result: ActionResult = await response.json()
       setState(result)
     })
   })
