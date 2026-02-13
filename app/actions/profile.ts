@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { profileSchema } from "@/lib/validations/profile"
 import type { ActionResult } from "@/lib/types/profile"
+
+const VALID_GENDERS = ["boys", "girls"]
+const VALID_ROLES = ["top_carry", "bot_carry", "mid", "tank", "support"]
 
 /**
  * プロフィールを更新するServer Action
@@ -25,40 +27,56 @@ export async function updateProfile(
     }
 
     // FormDataから値を取得
-    const rawData = {
-      player_name: formData.get("player_name"),
-      x_id: formData.get("x_id"),
-      gender: formData.get("gender"),
-      first_role: formData.get("first_role"),
-      second_role: formData.get("second_role"),
-      third_role: formData.get("third_role"),
+    const player_name = formData.get("player_name") as string | null
+    const x_id = formData.get("x_id") as string | null
+    const gender = formData.get("gender") as string | null
+    const first_role = formData.get("first_role") as string | null
+    const second_role = formData.get("second_role") as string | null
+    const third_role = formData.get("third_role") as string | null
+
+    // 簡易バリデーション（Zodなし）
+    if (!player_name || player_name.trim() === "") {
+      return { success: false, error: "プレイヤー名は必須です" }
     }
-
-    // バリデーション
-    const validated = profileSchema.safeParse(rawData)
-
-    if (!validated.success) {
-      // 最初のエラーメッセージを返す
-      const firstError = validated.error.issues[0]
-      return { success: false, error: firstError.message }
+    if (!x_id || x_id.trim() === "") {
+      return { success: false, error: "X IDは必須です" }
+    }
+    if (!gender || !VALID_GENDERS.includes(gender)) {
+      return { success: false, error: "性別を選択してください" }
+    }
+    if (!first_role || !VALID_ROLES.includes(first_role)) {
+      return { success: false, error: "第1希望ロールを選択してください" }
+    }
+    if (!second_role || !VALID_ROLES.includes(second_role)) {
+      return { success: false, error: "第2希望ロールを選択してください" }
+    }
+    if (!third_role || !VALID_ROLES.includes(third_role)) {
+      return { success: false, error: "第3希望ロールを選択してください" }
+    }
+    if (
+      first_role === second_role ||
+      first_role === third_role ||
+      second_role === third_role
+    ) {
+      return { success: false, error: "ロールはすべて異なるものを選択してください" }
     }
 
     // DBを更新
     const { error } = await supabase
       .from("profiles")
       .update({
-        player_name: validated.data.player_name,
-        x_id: validated.data.x_id,
-        gender: validated.data.gender,
-        first_role: validated.data.first_role,
-        second_role: validated.data.second_role,
-        third_role: validated.data.third_role,
+        player_name: player_name.trim(),
+        x_id: x_id.trim(),
+        gender,
+        first_role,
+        second_role,
+        third_role,
       })
       .eq("id", user.id)
 
     if (error) {
       console.error("Profile update failed:", error.message)
-      return { success: false, error: "プロフィールの更新に失敗しました" }
+      return { success: false, error: `プロフィールの更新に失敗しました: ${error.message}` }
     }
 
     // ページを再検証して最新データを反映
