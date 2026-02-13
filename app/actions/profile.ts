@@ -1,17 +1,19 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/lib/types/profile"
 
 /**
- * プロフィールを更新するServer Action（Supabaseテスト版）
+ * プロフィールを更新するServer Action
+ * 注: 動的インポートを使用（Vercel上でのモジュールレベルクラッシュ回避）
  */
 export async function updateProfile(
   _prevState: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
   try {
+    const { revalidatePath } = await import("next/cache")
+    const { createClient } = await import("@/lib/supabase/server")
+
     const supabase = await createClient()
 
     const {
