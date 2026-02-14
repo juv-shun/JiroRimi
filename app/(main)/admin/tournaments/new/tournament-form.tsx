@@ -10,7 +10,7 @@ import {
   type TournamentCreateFormData,
   tournamentCreateSchema,
 } from "@/lib/validations/tournament"
-import { QualifierFields } from "./qualifier-fields"
+import { EventFields } from "./event-fields"
 
 export function TournamentForm() {
   const router = useRouter()
@@ -30,11 +30,11 @@ export function TournamentForm() {
       name: "",
       is_boys: false,
       is_girls: false,
-      matches_per_qualifier: 5,
+      matches_per_event: 5,
       gf_advance_count: 20,
       max_participants: undefined,
       rules: "",
-      qualifiers: [
+      events: [
         {
           scheduled_date: "",
           entry_start: "",
@@ -50,7 +50,7 @@ export function TournamentForm() {
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "qualifiers",
+    name: "events",
   })
 
   // 成功時のトーストとリダイレクト
@@ -163,22 +163,22 @@ export function TournamentForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
-                htmlFor="matches_per_qualifier"
+                htmlFor="matches_per_event"
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
               >
                 予選試合数
               </label>
               <input
-                id="matches_per_qualifier"
+                id="matches_per_event"
                 type="number"
-                {...register("matches_per_qualifier", { valueAsNumber: true })}
+                {...register("matches_per_event", { valueAsNumber: true })}
                 min={1}
                 max={10}
                 className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
               />
-              {errors.matches_per_qualifier && (
+              {errors.matches_per_event && (
                 <p className="mt-1 text-xs text-error">
-                  {errors.matches_per_qualifier.message}
+                  {errors.matches_per_event.message}
                 </p>
               )}
             </div>
@@ -248,7 +248,7 @@ export function TournamentForm() {
       </section>
 
       {/* 予選設定 */}
-      <QualifierFields
+      <EventFields
         fields={fields}
         append={append}
         remove={remove}

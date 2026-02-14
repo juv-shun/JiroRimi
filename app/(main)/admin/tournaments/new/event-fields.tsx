@@ -9,15 +9,15 @@ import type {
 } from "react-hook-form"
 import type { TournamentCreateFormData } from "@/lib/validations/tournament"
 
-type QualifierFieldsProps = {
+type EventFieldsProps = {
   fields: { id: string }[]
-  append: UseFieldArrayAppend<TournamentCreateFormData, "qualifiers">
+  append: UseFieldArrayAppend<TournamentCreateFormData, "events">
   remove: UseFieldArrayRemove
   register: UseFormRegister<TournamentCreateFormData>
   errors: FieldErrors<TournamentCreateFormData>
 }
 
-const EMPTY_QUALIFIER = {
+const EMPTY_EVENT = {
   scheduled_date: "",
   entry_start: "",
   entry_end: "",
@@ -26,13 +26,13 @@ const EMPTY_QUALIFIER = {
   rules: "",
 }
 
-export function QualifierFields({
+export function EventFields({
   fields,
   append,
   remove,
   register,
   errors,
-}: QualifierFieldsProps) {
+}: EventFieldsProps) {
   return (
     <div className="space-y-4">
       {fields.map((field, index) => (
@@ -61,20 +61,20 @@ export function QualifierFields({
             {/* 開催日 */}
             <div>
               <label
-                htmlFor={`qualifiers.${index}.scheduled_date`}
+                htmlFor={`events.${index}.scheduled_date`}
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
               >
                 開催日
               </label>
               <input
-                id={`qualifiers.${index}.scheduled_date`}
+                id={`events.${index}.scheduled_date`}
                 type="date"
-                {...register(`qualifiers.${index}.scheduled_date`)}
+                {...register(`events.${index}.scheduled_date`)}
                 className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
               />
-              {errors.qualifiers?.[index]?.scheduled_date && (
+              {errors.events?.[index]?.scheduled_date && (
                 <p className="mt-1 text-xs text-error">
-                  {errors.qualifiers[index].scheduled_date.message}
+                  {errors.events[index].scheduled_date.message}
                 </p>
               )}
             </div>
@@ -83,39 +83,39 @@ export function QualifierFields({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
-                  htmlFor={`qualifiers.${index}.entry_start`}
+                  htmlFor={`events.${index}.entry_start`}
                   className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
                 >
                   エントリー開始
                 </label>
                 <input
-                  id={`qualifiers.${index}.entry_start`}
+                  id={`events.${index}.entry_start`}
                   type="datetime-local"
-                  {...register(`qualifiers.${index}.entry_start`)}
+                  {...register(`events.${index}.entry_start`)}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
-                {errors.qualifiers?.[index]?.entry_start && (
+                {errors.events?.[index]?.entry_start && (
                   <p className="mt-1 text-xs text-error">
-                    {errors.qualifiers[index].entry_start.message}
+                    {errors.events[index].entry_start.message}
                   </p>
                 )}
               </div>
               <div>
                 <label
-                  htmlFor={`qualifiers.${index}.entry_end`}
+                  htmlFor={`events.${index}.entry_end`}
                   className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
                 >
                   エントリー締切
                 </label>
                 <input
-                  id={`qualifiers.${index}.entry_end`}
+                  id={`events.${index}.entry_end`}
                   type="datetime-local"
-                  {...register(`qualifiers.${index}.entry_end`)}
+                  {...register(`events.${index}.entry_end`)}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
-                {errors.qualifiers?.[index]?.entry_end && (
+                {errors.events?.[index]?.entry_end && (
                   <p className="mt-1 text-xs text-error">
-                    {errors.qualifiers[index].entry_end.message}
+                    {errors.events[index].entry_end.message}
                   </p>
                 )}
               </div>
@@ -125,39 +125,39 @@ export function QualifierFields({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
-                  htmlFor={`qualifiers.${index}.checkin_start`}
+                  htmlFor={`events.${index}.checkin_start`}
                   className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
                 >
                   チェックイン開始
                 </label>
                 <input
-                  id={`qualifiers.${index}.checkin_start`}
+                  id={`events.${index}.checkin_start`}
                   type="datetime-local"
-                  {...register(`qualifiers.${index}.checkin_start`)}
+                  {...register(`events.${index}.checkin_start`)}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
-                {errors.qualifiers?.[index]?.checkin_start && (
+                {errors.events?.[index]?.checkin_start && (
                   <p className="mt-1 text-xs text-error">
-                    {errors.qualifiers[index].checkin_start.message}
+                    {errors.events[index].checkin_start.message}
                   </p>
                 )}
               </div>
               <div>
                 <label
-                  htmlFor={`qualifiers.${index}.checkin_end`}
+                  htmlFor={`events.${index}.checkin_end`}
                   className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
                 >
                   チェックイン締切
                 </label>
                 <input
-                  id={`qualifiers.${index}.checkin_end`}
+                  id={`events.${index}.checkin_end`}
                   type="datetime-local"
-                  {...register(`qualifiers.${index}.checkin_end`)}
+                  {...register(`events.${index}.checkin_end`)}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 />
-                {errors.qualifiers?.[index]?.checkin_end && (
+                {errors.events?.[index]?.checkin_end && (
                   <p className="mt-1 text-xs text-error">
-                    {errors.qualifiers[index].checkin_end.message}
+                    {errors.events[index].checkin_end.message}
                   </p>
                 )}
               </div>
@@ -166,14 +166,14 @@ export function QualifierFields({
             {/* ルール */}
             <div>
               <label
-                htmlFor={`qualifiers.${index}.rules`}
+                htmlFor={`events.${index}.rules`}
                 className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
               >
                 ルール
               </label>
               <textarea
-                id={`qualifiers.${index}.rules`}
-                {...register(`qualifiers.${index}.rules`)}
+                id={`events.${index}.rules`}
+                {...register(`events.${index}.rules`)}
                 rows={3}
                 placeholder="予選固有のルールがあれば入力してください"
                 className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-y"
@@ -189,7 +189,7 @@ export function QualifierFields({
       {/* 予選追加ボタン */}
       <button
         type="button"
-        onClick={() => append(EMPTY_QUALIFIER)}
+        onClick={() => append(EMPTY_EVENT)}
         className="w-full py-3 border-2 border-dashed border-border hover:border-primary/50 rounded-2xl text-text-secondary hover:text-primary flex items-center justify-center gap-2 transition-all duration-200"
       >
         <Plus className="w-4 h-4" />
@@ -197,8 +197,8 @@ export function QualifierFields({
       </button>
 
       {/* 配列レベルのエラー */}
-      {errors.qualifiers?.root && (
-        <p className="text-xs text-error">{errors.qualifiers.root.message}</p>
+      {errors.events?.root && (
+        <p className="text-xs text-error">{errors.events.root.message}</p>
       )}
     </div>
   )

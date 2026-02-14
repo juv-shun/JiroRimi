@@ -23,7 +23,7 @@
 ```sql
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tournaments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.qualifiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.entries ENABLE ROW LEVEL SECURITY;
 ```
 
@@ -109,22 +109,22 @@ CREATE TRIGGER protect_role_column_trigger
 
 ---
 
-### qualifiers
+### events
 
 | 操作 | ポリシー名 | 対象ロール | USING | WITH CHECK | 説明 |
 |------|-----------|-----------|-------|------------|------|
-| SELECT | `qualifiers_select_public` | `public` | 親 tournament が公開済み（後述） | - | 公開済み大会の予選は全員閲覧可能 |
-| SELECT | `qualifiers_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全予選閲覧可能 |
-| INSERT | `qualifiers_insert_policy` | `authenticated` | - | `is_admin()` | 運営者のみ作成可能 |
-| UPDATE | `qualifiers_update_policy` | `authenticated` | `is_admin()` | `is_admin()` | 運営者のみ更新可能 |
-| DELETE | `qualifiers_delete_policy` | `authenticated` | `is_admin()` | - | 運営者のみ削除可能 |
+| SELECT | `events_select_public` | `public` | 親 tournament が公開済み（後述） | - | 公開済み大会のイベントは全員閲覧可能 |
+| SELECT | `events_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全イベント閲覧可能 |
+| INSERT | `events_insert_policy` | `authenticated` | - | `is_admin()` | 運営者のみ作成可能 |
+| UPDATE | `events_update_policy` | `authenticated` | `is_admin()` | `is_admin()` | 運営者のみ更新可能 |
+| DELETE | `events_delete_policy` | `authenticated` | `is_admin()` | - | 運営者のみ削除可能 |
 
 **親 tournament 公開判定**:
 
 ```sql
 EXISTS (
   SELECT 1 FROM public.tournaments t
-  WHERE t.id = qualifiers.tournament_id
+  WHERE t.id = events.tournament_id
   AND t.status != 'draft'
 )
 ```
@@ -149,12 +149,12 @@ EXISTS (
 profile_id = auth.uid()
 -- かつ、エントリー期間内であること
 AND EXISTS (
-  SELECT 1 FROM public.qualifiers q
-  JOIN public.tournaments t ON t.id = q.tournament_id
-  WHERE q.id = qualifier_id
+  SELECT 1 FROM public.events e
+  JOIN public.tournaments t ON t.id = e.tournament_id
+  WHERE e.id = event_id
   AND t.status != 'draft'
-  AND now() >= q.entry_start
-  AND now() <= q.entry_end
+  AND now() >= e.entry_start
+  AND now() <= e.entry_end
 )
 ```
 
@@ -166,7 +166,7 @@ AND EXISTS (
 |---------|--------|--------|--------|--------|
 | profiles | 全員 | 本人のみ（role=user固定） | 本人のみ（role変更不可） | 不可 |
 | tournaments | 公開済み: 全員 / draft: 運営者 | 運営者 | 運営者 | 運営者 |
-| qualifiers | 公開大会の予選: 全員 / それ以外: 運営者 | 運営者 | 運営者 | 運営者 |
+| events | 公開大会のイベント: 全員 / それ以外: 運営者 | 運営者 | 運営者 | 運営者 |
 | entries | 全員 | 本人（期間内）or 運営者 | 不可 | 本人 or 運営者 |
 
 ---

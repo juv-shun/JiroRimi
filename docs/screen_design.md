@@ -128,7 +128,7 @@
 | 2 | SCR-002 | マイページ（プロフィール設定） | `/mypage` | 認証済みユーザー | 1.3 |
 | 3 | SCR-003 | 大会一覧画面（参加者向け） | `/tournaments` | 全員（閲覧）/ 認証済み（エントリー） | 1.5 |
 | 4 | SCR-004 | 大会詳細画面 | `/tournaments/[id]` | 全員 | 1.5 |
-| 5 | SCR-005 | エントリー一覧画面 | `/tournaments/[id]/qualifiers/[qid]/entries` | 全員 | 1.6 |
+| 5 | SCR-005 | エントリー一覧画面 | `/tournaments/[id]/events/[eid]/entries` | 全員 | 1.6 |
 | 6 | SCR-006 | 大会管理一覧画面（運営者向け） | `/admin/tournaments` | 運営者のみ | 1.4 |
 | 7 | SCR-007 | 大会作成・編集画面 | `/admin/tournaments/new`, `/admin/tournaments/[id]/edit` | 運営者のみ | 1.4 |
 
@@ -278,13 +278,13 @@
 |------|------|
 | 大会名 | tournaments.name |
 | カテゴリ | is_boys/is_girls の組み合わせで表示（じろカップ / りみカップ / Jiro-Rimi Cup） |
-| 1予選あたりの試合数 | matches_per_qualifier |
+| 1イベントあたりの試合数 | matches_per_event |
 | GF進出人数 | gf_advance_count |
 
 **予選一覧テーブル**:
 | 項目 | 説明 |
 |------|------|
-| 予選番号 | qualifier_number（例: 予選1） |
+| 予選番号 | event_number（例: 予選1） |
 | 開催日 | scheduled_date |
 | エントリー期間 | entry_start 〜 entry_end |
 | チェックイン時間 | checkin_start 〜 checkin_end |
@@ -324,7 +324,7 @@
 | 項目 | 説明 |
 |------|------|
 | 大会名 | tournaments.name |
-| 予選番号 | qualifier_number |
+| 予選番号 | event_number |
 | 開催日 | scheduled_date |
 | エントリー人数 | X名 |
 
@@ -378,7 +378,7 @@
 | 大会名 | tournaments.name |
 | カテゴリ | is_boys / is_girls の組み合わせ |
 | ステータス | draft / open / in_progress / completed |
-| 予選数 | 関連する qualifiers の数 |
+| 予選数 | 関連する events の数 |
 | 作成日 | created_at |
 | 操作 | 編集 / 詳細 |
 

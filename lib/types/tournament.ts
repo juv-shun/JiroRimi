@@ -1,5 +1,5 @@
 /**
- * 大会・予選関連の型定義
+ * 大会・イベント関連の型定義
  */
 
 export type { ActionResult } from "./profile"
@@ -35,8 +35,8 @@ export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
   completed: "完了",
 }
 
-// 予選ステータス
-export type QualifierStatus =
+// イベントステータス
+export type EventStatus =
   | "scheduled"
   | "entry_open"
   | "entry_closed"
@@ -45,13 +45,23 @@ export type QualifierStatus =
   | "in_progress"
   | "completed"
 
+// イベント種別
+export type EventType = "qualifier" | "main"
+
+// 進行形式
+export type MatchFormat =
+  | "swiss"
+  | "double_elimination"
+  | "single_elimination"
+  | "round_robin"
+
 // 大会型
 export type Tournament = {
   id: string
   name: string
   is_boys: boolean
   is_girls: boolean
-  matches_per_qualifier: number
+  matches_per_event: number
   gf_advance_count: number
   max_participants: number | null
   rules: string | null
@@ -60,18 +70,20 @@ export type Tournament = {
   updated_at: string
 }
 
-// 予選型
-export type Qualifier = {
+// イベント型（DOM の Event との衝突回避のため TournamentEvent）
+export type TournamentEvent = {
   id: string
   tournament_id: string
-  qualifier_number: number
+  event_number: number
+  event_type: EventType
+  match_format: MatchFormat
   scheduled_date: string
   entry_start: string
   entry_end: string
   checkin_start: string
   checkin_end: string
   rules: string | null
-  status: QualifierStatus
+  status: EventStatus
   created_at: string
   updated_at: string
 }

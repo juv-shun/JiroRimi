@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         name: data.name,
         is_boys: data.is_boys,
         is_girls: data.is_girls,
-        matches_per_qualifier: data.matches_per_qualifier,
+        matches_per_event: data.matches_per_event,
         gf_advance_count: data.gf_advance_count,
         max_participants:
           data.max_participants && !Number.isNaN(data.max_participants)
@@ -84,10 +84,12 @@ export async function POST(request: Request) {
       )
     }
 
-    // 予選一括INSERT
-    const qualifiersToInsert = data.qualifiers.map((q, index) => ({
+    // イベント一括INSERT
+    const eventsToInsert = data.events.map((q, index) => ({
       tournament_id: tournament.id,
-      qualifier_number: index + 1,
+      event_number: index + 1,
+      event_type: "qualifier" as const,
+      match_format: "swiss" as const,
       scheduled_date: q.scheduled_date,
       entry_start: toTimestamptz(q.entry_start),
       entry_end: toTimestamptz(q.entry_end),
@@ -97,14 +99,14 @@ export async function POST(request: Request) {
       status: "scheduled",
     }))
 
-    const { error: qualifiersError } = await supabase
-      .from("qualifiers")
-      .insert(qualifiersToInsert)
+    const { error: eventsError } = await supabase
+      .from("events")
+      .insert(eventsToInsert)
 
-    if (qualifiersError) {
-      console.error("予選INSERT失敗:", qualifiersError.message)
+    if (eventsError) {
+      console.error("イベントINSERT失敗:", eventsError.message)
 
-      // 擬似トランザクション: 予選INSERT失敗時は大会を削除
+      // 擬似トランザクション: イベントINSERT失敗時は大会を削除
       const { error: deleteError } = await supabase
         .from("tournaments")
         .delete()
@@ -115,7 +117,7 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json(
-        { success: false, error: "予選の作成に失敗しました" },
+        { success: false, error: "イベントの作成に失敗しました" },
         { status: 500 },
       )
     }

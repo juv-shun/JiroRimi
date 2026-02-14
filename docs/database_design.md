@@ -10,8 +10,8 @@
 erDiagram
     auth_users ||--o| profiles : "1:1"
     profiles ||--o{ entries : "1:N"
-    tournaments ||--o{ qualifiers : "1:N"
-    qualifiers ||--o{ entries : "1:N"
+    tournaments ||--o{ events : "1:N"
+    events ||--o{ entries : "1:N"
 
     auth_users {
         uuid id PK
@@ -40,7 +40,7 @@ erDiagram
         string name
         bool is_boys
         bool is_girls
-        int matches_per_qualifier
+        int matches_per_event
         int gf_advance_count
         int max_participants
         text rules
@@ -49,10 +49,12 @@ erDiagram
         timestamp updated_at
     }
 
-    qualifiers {
+    events {
         uuid id PK
         uuid tournament_id FK
-        int qualifier_number
+        int event_number
+        text event_type
+        text match_format
         date scheduled_date
         timestamp entry_start
         timestamp entry_end
@@ -67,7 +69,7 @@ erDiagram
     entries {
         uuid id PK
         uuid profile_id FK
-        uuid qualifier_id FK
+        uuid event_id FK
         timestamp created_at
     }
 ```
@@ -122,7 +124,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | name | text | NO | - | 大会名 |
 | is_boys | boolean | NO | false | じろカップ（Boys）対象 |
 | is_girls | boolean | NO | false | りみカップ（Girls）対象 |
-| matches_per_qualifier | int | NO | 5 | 1予選あたりの試合数 |
+| matches_per_event | int | NO | 5 | 1イベントあたりの試合数 |
 | gf_advance_count | int | NO | 20 | GF進出人数 |
 | max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
 | rules | text | YES | NULL | 大会ルール（自由記載） |
@@ -147,22 +149,34 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ---
 
-### qualifiers（予選）
+### events（イベント）
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | tournament_id | uuid | NO | - | FK → tournaments.id |
-| qualifier_number | int | NO | - | 予選回数（1, 2, 3...） |
+| event_number | int | NO | - | イベント番号（大会内での連番） |
+| event_type | text | NO | 'qualifier' | イベント種別（後述） |
+| match_format | text | NO | 'swiss' | 進行形式（後述） |
 | scheduled_date | date | NO | - | 開催日 |
 | entry_start | timestamptz | NO | - | エントリー開始日時 |
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
 | checkin_start | timestamptz | NO | - | チェックイン開始時刻 |
 | checkin_end | timestamptz | NO | - | チェックイン締切時刻 |
-| rules | text | YES | NULL | 予選固有ルール（NULLの場合は大会ルールを適用） |
+| rules | text | YES | NULL | イベント固有ルール（NULLの場合は大会ルールを適用） |
 | status | text | NO | 'scheduled' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
+
+**イベント種別 (event_type)**:
+- `qualifier`: 予選
+- `main`: 本戦
+
+**進行形式 (match_format)**:
+- `swiss`: スイスドロー
+- `double_elimination`: ダブルエリミネーション
+- `single_elimination`: シングルエリミネーション
+- `round_robin`: ラウンドロビン
 
 **ステータス (status)**:
 - `scheduled`: 予定（エントリー開始前）
@@ -171,9 +185,9 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `checkin_open`: チェックイン受付中
 - `participants_confirmed`: 参加者確定
 - `in_progress`: 試合進行中
-- `completed`: 予選終了
+- `completed`: 終了
 
-**ユニーク制約**: (tournament_id, qualifier_number)
+**ユニーク制約**: (tournament_id, event_number)
 
 **時系列制約**: `entry_start < entry_end <= checkin_start < checkin_end`
 
@@ -185,13 +199,13 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | profile_id | uuid | NO | - | FK → profiles.id |
-| qualifier_id | uuid | NO | - | FK → qualifiers.id |
+| event_id | uuid | NO | - | FK → events.id |
 | created_at | timestamptz | NO | now() | エントリー日時 |
 
-**ユニーク制約**: (profile_id, qualifier_id) - 同一ユーザーは同一予選に1回のみエントリー可能
+**ユニーク制約**: (profile_id, event_id) - 同一ユーザーは同一イベントに1回のみエントリー可能
 
 **インデックス**:
-- `entries_qualifier_id_idx` on (qualifier_id)
+- `entries_event_id_idx` on (event_id)
 
 ---
 
@@ -248,10 +262,10 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 
 大会と予選の両方に `rules` カラムを持たせ、予選レベルでのルール上書きを可能にする:
 - `tournaments.rules`: 大会全体のデフォルトルール
-- `qualifiers.rules`: 予選固有のルール（NULL 許容）
-- 表示時の適用ルール: `COALESCE(qualifiers.rules, tournaments.rules)`
-- 予選の `rules` が NULL の場合、大会の `rules` がフォールバックとして適用される
-- 予選の `rules` が設定されている場合、大会のルールを完全に上書きする（マージではない）
+- `events.rules`: イベント固有のルール（NULL 許容）
+- 表示時の適用ルール: `COALESCE(events.rules, tournaments.rules)`
+- イベントの `rules` が NULL の場合、大会の `rules` がフォールバックとして適用される
+- イベントの `rules` が設定されている場合、大会のルールを完全に上書きする（マージではない）
 
 ### 6. プロフィール完了判定
 

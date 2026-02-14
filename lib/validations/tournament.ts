@@ -7,8 +7,8 @@ import { z } from "zod"
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 const datetimeLocalPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
 
-// 予選1件のスキーマ
-export const qualifierSchema = z
+// イベント1件のスキーマ
+export const eventSchema = z
   .object({
     scheduled_date: z
       .string()
@@ -70,7 +70,7 @@ export const tournamentCreateSchema = z
       .max(100, "大会名は100文字以内で入力してください"),
     is_boys: z.boolean(),
     is_girls: z.boolean(),
-    matches_per_qualifier: z
+    matches_per_event: z
       .number()
       .int("整数で入力してください")
       .min(1, "1以上の値を入力してください")
@@ -84,7 +84,7 @@ export const tournamentCreateSchema = z
       .union([z.nan(), z.null(), z.number().int().min(1)])
       .optional(),
     rules: z.string().optional(),
-    qualifiers: z.array(qualifierSchema).min(1, "予選は最低1つ必要です"),
+    events: z.array(eventSchema).min(1, "予選は最低1つ必要です"),
   })
   .refine((data) => data.is_boys || data.is_girls, {
     message: "カテゴリを少なくとも1つ選択してください",
