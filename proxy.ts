@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 // 認証が必要なルート
-const protectedRoutes: string[] = ["/mypage"]
+const protectedRoutes: string[] = ["/mypage", "/admin"]
 
 // 認証済みユーザーがアクセスすべきでないルート
 const authRoutes = ["/login"]
@@ -43,9 +43,17 @@ export async function proxy(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("player_name, x_id, gender, first_role, second_role, third_role")
+      .select(
+        "player_name, x_id, gender, first_role, second_role, third_role, role",
+      )
       .eq("id", user.id)
       .single()
+
+    // admin権限チェック: /admin パスへのアクセスは admin ロールのみ許可
+    const isAdminRoute = pathname.startsWith("/admin")
+    if (isAdminRoute && profile?.role !== "admin") {
+      return NextResponse.redirect(new URL("/forbidden", request.url))
+    }
 
     // 完了判定: profileがnullまたは必須フィールドが未入力なら未完了
     const isComplete =
@@ -61,7 +69,7 @@ export async function proxy(request: NextRequest) {
       new Set([profile.first_role, profile.second_role, profile.third_role])
         .size === 3
 
-    if (!isComplete) {
+    if (!isComplete && !isAdminRoute) {
       return NextResponse.redirect(new URL("/mypage", request.url))
     }
   }
