@@ -59,6 +59,7 @@ export function ProfileForm({
     if (state?.success) {
       // 初回登録モードの場合はホームにリダイレクト
       if (isFirstTimeSetup) {
+        router.refresh()
         router.push("/")
         return
       }
@@ -95,12 +96,19 @@ export function ProfileForm({
     if (!formRef.current) return
     const formData = new FormData(formRef.current)
     startTransition(async () => {
-      const response = await fetch("/api/profile", {
-        method: "POST",
-        body: formData,
-      })
-      const result: ActionResult = await response.json()
-      setState(result)
+      try {
+        const response = await fetch("/api/profile", {
+          method: "POST",
+          body: formData,
+        })
+        const result: ActionResult = await response.json()
+        setState(result)
+      } catch (e) {
+        setState({
+          success: false,
+          error: `通信エラー: ${e instanceof Error ? e.message : String(e)}`,
+        })
+      }
     })
   })
 

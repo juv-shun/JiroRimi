@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("profiles")
       .update({
         player_name: player_name.trim(),
@@ -50,11 +50,19 @@ export async function POST(request: Request) {
         third_role,
       })
       .eq("id", user.id)
+      .select()
 
     if (error) {
       return NextResponse.json(
         { success: false, error: `DB更新エラー: ${error.message}` },
         { status: 500 },
+      )
+    }
+
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "プロフィールの更新対象が見つかりませんでした" },
+        { status: 404 },
       )
     }
 
