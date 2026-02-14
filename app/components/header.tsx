@@ -12,7 +12,7 @@ export async function Header() {
     <header className="bg-white border-b border-border px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <Link href="/" className="text-xl font-bold text-primary">
-          じろりみ
+          Jiro-Rimi Cup
         </Link>
         <nav className="flex items-center gap-4">
           {user ? (

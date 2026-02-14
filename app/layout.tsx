@@ -9,7 +9,7 @@ const nunito = Nunito({
 })
 
 export const metadata: Metadata = {
-  title: "じろりみ",
+  title: "Jiro-Rimi Cup",
   description: "ポケモンユナイト ソロ大会運営アプリ",
 }
 

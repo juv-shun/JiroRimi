@@ -2,7 +2,7 @@
 
 ## 概要
 
-本ドキュメントは「じろりみ」のデータベース設計を定義する。Supabase（PostgreSQL）を使用し、Phase 1で必要なテーブルを設計する。
+本ドキュメントは「Jiro-Rimi Cup」のデータベース設計を定義する。Supabase（PostgreSQL）を使用し、Phase 1で必要なテーブルを設計する。
 
 ## ER図（Phase 1）
 

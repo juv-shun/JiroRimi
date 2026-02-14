@@ -25,7 +25,7 @@ export default async function LoginPage({
   return (
     <main className="min-h-screen bg-background flex flex-col items-center justify-center">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-text-primary mb-8">じろりみ</h1>
+        <h1 className="text-4xl font-bold text-text-primary mb-8">Jiro-Rimi Cup</h1>
 
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-error rounded-lg text-sm">

@@ -2,7 +2,7 @@
 
 ## 概要
 
-本ドキュメントは「じろりみ」のRow Level Security (RLS) ポリシーを定義する。Supabase の RLS 機能を使用し、テーブル単位でアクセス制御を実装する。
+本ドキュメントは「Jiro-Rimi Cup」のRow Level Security (RLS) ポリシーを定義する。Supabase の RLS 機能を使用し、テーブル単位でアクセス制御を実装する。
 
 **重要**: Supabase クライアントは DB へ直接アクセスできるため、書き込み制御は必ず DB 側（RLS/トリガー）で完結させる。
 

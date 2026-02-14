@@ -1,5 +1,6 @@
 "use client"
 
+import { signOut } from "@/app/actions/auth"
 import {
   Calendar,
   Home,
@@ -13,7 +14,6 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { signOut } from "@/app/actions/auth"
 
 type NavItem = {
   label: string
@@ -91,7 +91,7 @@ export function Sidebar({
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-lg text-text-primary tracking-tight">
-            JiroRimi
+            Jiro-Rimi Cup
           </span>
         </div>
       </div>
@@ -233,7 +233,7 @@ export function Sidebar({
           <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-amber-500">
             <Trophy className="size-4 text-white" />
           </div>
-          <span className="font-bold text-text-primary">JiroRimi</span>
+          <span className="font-bold text-text-primary">Jiro-Rimi Cup</span>
         </div>
         <button
           type="button"
