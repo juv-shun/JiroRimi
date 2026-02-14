@@ -42,6 +42,7 @@ erDiagram
         int matches_per_qualifier
         int gf_advance_count
         int max_participants
+        text rules
         enum status
         timestamp created_at
         timestamp updated_at
@@ -56,6 +57,7 @@ erDiagram
         timestamp entry_end
         timestamp checkin_start
         timestamp checkin_end
+        text rules
         enum status
         timestamp created_at
         timestamp updated_at
@@ -121,6 +123,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | matches_per_qualifier | int | NO | 5 | 1予選あたりの試合数 |
 | gf_advance_count | int | NO | 20 | GF進出人数 |
 | max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
+| rules | text | YES | NULL | 大会ルール（自由記載） |
 | status | text | NO | 'draft' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
@@ -149,6 +152,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
 | checkin_start | timestamptz | NO | - | チェックイン開始時刻 |
 | checkin_end | timestamptz | NO | - | チェックイン締切時刻 |
+| rules | text | YES | NULL | 予選固有ルール（NULLの場合は大会ルールを適用） |
 | status | text | NO | 'scheduled' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
@@ -233,7 +237,16 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 - 小規模アプリのため、シンプルさを優先
 - キャンセル後の再エントリーも可能
 
-### 5. プロフィール完了判定
+### 5. ルールの継承
+
+大会と予選の両方に `rules` カラムを持たせ、予選レベルでのルール上書きを可能にする:
+- `tournaments.rules`: 大会全体のデフォルトルール
+- `qualifiers.rules`: 予選固有のルール（NULL 許容）
+- 表示時の適用ルール: `COALESCE(qualifiers.rules, tournaments.rules)`
+- 予選の `rules` が NULL の場合、大会の `rules` がフォールバックとして適用される
+- 予選の `rules` が設定されている場合、大会のルールを完全に上書きする（マージではない）
+
+### 6. プロフィール完了判定
 
 アプリケーション側で以下の条件をチェック:
 - `player_name` が設定されている
