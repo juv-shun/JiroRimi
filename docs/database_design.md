@@ -40,8 +40,6 @@ erDiagram
         string name
         bool is_boys
         bool is_girls
-        int matches_per_event
-        int gf_advance_count
         int max_participants
         text rules
         enum status
@@ -54,7 +52,9 @@ erDiagram
         uuid tournament_id FK
         int event_number
         text event_type
+        text entry_type
         text match_format
+        int matches_per_event
         date scheduled_date
         timestamp entry_start
         timestamp entry_end
@@ -118,14 +118,14 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ### tournaments（大会）
 
+大会は複数のイベントを束ねるコンテナであり、大会自体の設定は最小限に留める（詳細は「設計思想」セクションを参照）。
+
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | name | text | NO | - | 大会名 |
 | is_boys | boolean | NO | false | じろカップ（Boys）対象 |
 | is_girls | boolean | NO | false | りみカップ（Girls）対象 |
-| matches_per_event | int | NO | 5 | 1イベントあたりの試合数 |
-| gf_advance_count | int | NO | 20 | GF進出人数 |
 | max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
 | rules | text | YES | NULL | 大会ルール（自由記載） |
 | status | text | NO | 'draft' | ステータス（後述） |
@@ -151,13 +151,17 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ### events（イベント）
 
+大会の構成単位。試合形式・エントリー方式・試合数など、運営に必要な設定はすべてイベント側に持たせる（詳細は「設計思想」セクションを参照）。
+
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | tournament_id | uuid | NO | - | FK → tournaments.id |
 | event_number | int | NO | - | イベント番号（大会内での連番） |
 | event_type | text | NO | 'qualifier' | イベント種別（後述） |
+| entry_type | text | NO | 'open' | エントリー方式（後述） |
 | match_format | text | NO | 'swiss' | 進行形式（後述） |
+| matches_per_event | int | NO | 5 | 試合数 |
 | scheduled_date | date | NO | - | 開催日 |
 | entry_start | timestamptz | NO | - | エントリー開始日時 |
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
@@ -171,6 +175,10 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 **イベント種別 (event_type)**:
 - `qualifier`: 予選
 - `main`: 本戦
+
+**エントリー方式 (entry_type)**:
+- `open`: オープン参加（誰でもエントリー可能）
+- `invite`: 招待制（運営者が招待したユーザーのみ参加可能）
 
 **進行形式 (match_format)**:
 - `swiss`: スイスドロー
@@ -211,23 +219,62 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ## Phase 2 以降で追加予定のテーブル（概要）
 
-### Phase 2: 予選進行関連
+### Phase 2: イベント進行関連
 
 | テーブル名 | 用途 |
 |-----------|------|
-| check_ins | チェックイン情報（ユーザー×予選） |
+| check_ins | チェックイン情報（ユーザー×イベント） |
 | matches | 試合情報（チーム構成、ロビー番号、ステータス） |
 | match_participants | 試合参加者（マッチ×ユーザー、チーム割り当て） |
 | match_results | 試合結果（個人入力、多数決結果、確定結果） |
 
-### Phase 3: グランドファイナル関連
+### Phase 3: 招待制イベント対応
+
+招待制（`entry_type = 'invite'`）のイベントに必要なテーブル。GF（グランドファイナル）はこの仕組みの上に構築する。
 
 | テーブル名 | 用途 |
 |-----------|------|
-| gf_participants | GF進出者 |
-| gf_teams | GFチーム（4チーム×5人） |
-| gf_brackets | ダブルエリミネーションブラケット |
-| gf_matches | GF試合情報 |
+| event_invitations | イベントへの招待（運営者が対象ユーザーを指定） |
+
+GF固有のチーム編成・ブラケット管理は Phase 3 の詳細設計時に決定する。
+
+---
+
+## 設計思想
+
+### イベント中心モデル
+
+本アプリケーションのDB設計は「イベント中心モデル」を採用する。
+
+**大会（Tournament）はイベントのコンテナ**であり、試合形式・エントリー方式・試合数などの運営設定はすべて **イベント（Event）側** に持たせる。アプリケーションに「予選」「本戦」「グランドファイナル」といった専用の概念は設けず、それらはイベントの設定値（`event_type`、`entry_type`、`match_format`）の組み合わせとして表現される。
+
+```
+Tournament（コンテナ）
+├── Event 1: qualifier / open / swiss      ← 実質「予選」
+├── Event 2: qualifier / open / swiss      ← 実質「予選」
+└── Event 3: main / invite / double_elim   ← 実質「グランドファイナル」
+```
+
+#### イベントの性質を決める3つの軸
+
+| 軸 | カラム | 値 | 説明 |
+|----|--------|-----|------|
+| 種別 | `event_type` | `qualifier` / `main` | 予選か本戦かの分類 |
+| 参加方式 | `entry_type` | `open` / `invite` | 誰でも参加 or 招待制 |
+| 進行形式 | `match_format` | `swiss` / `double_elimination` / ... | 試合の進め方 |
+
+#### 典型的な大会構成
+
+| 大会形式 | イベント構成 |
+|---------|------------|
+| 予選 + GF | Event 1-N: `qualifier` / `open` / `swiss` → GF: `main` / `invite` / `double_elimination` |
+| 本戦のみ（1日大会） | Event 1: `main` / `open` / `swiss` |
+
+#### この設計の利点
+
+1. **汎用性**: 「予選」「GF」などの概念をハードコードせず、イベントの設定値の組み合わせで表現する。新しい大会形式を追加する際にスキーマ変更が不要
+2. **招待制による参加者管理**: GF進出者の管理を `gf_advance_count` のような専用カラムではなく、招待制（`entry_type = 'invite'`）という汎用的な仕組みで実現する。運営者が成績に基づいて招待するか、将来的に自動選出するかは実装の問題であり、データモデルには影響しない
+3. **シンプルなコンテナ**: 大会（Tournament）は名前・カテゴリ・ルールといった共通情報のみを持ち、運営に関わる詳細はイベント側に委譲する
 
 ---
 
@@ -260,7 +307,7 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 
 ### 5. ルールの継承
 
-大会と予選の両方に `rules` カラムを持たせ、予選レベルでのルール上書きを可能にする:
+大会とイベントの両方に `rules` カラムを持たせ、イベントレベルでのルール上書きを可能にする:
 - `tournaments.rules`: 大会全体のデフォルトルール
 - `events.rules`: イベント固有のルール（NULL 許容）
 - 表示時の適用ルール: `COALESCE(events.rules, tournaments.rules)`
