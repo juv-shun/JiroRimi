@@ -62,30 +62,34 @@ export const qualifierSchema = z
   )
 
 // 大会作成のスキーマ
-export const tournamentCreateSchema = z.object({
-  name: z
-    .string()
-    .min(1, "大会名は必須です")
-    .max(100, "大会名は100文字以内で入力してください"),
-  gender: z.enum(["boys", "girls"], {
-    error: "性別を選択してください",
-  }),
-  matches_per_qualifier: z
-    .number()
-    .int("整数で入力してください")
-    .min(1, "1以上の値を入力してください")
-    .max(10, "10以下の値を入力してください"),
-  gf_advance_count: z
-    .number()
-    .int("整数で入力してください")
-    .min(1, "1以上の値を入力してください")
-    .max(100, "100以下の値を入力してください"),
-  max_participants: z
-    .union([z.nan(), z.null(), z.number().int().min(1)])
-    .optional(),
-  rules: z.string().optional(),
-  qualifiers: z.array(qualifierSchema).min(1, "予選は最低1つ必要です"),
-})
+export const tournamentCreateSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, "大会名は必須です")
+      .max(100, "大会名は100文字以内で入力してください"),
+    is_boys: z.boolean(),
+    is_girls: z.boolean(),
+    matches_per_qualifier: z
+      .number()
+      .int("整数で入力してください")
+      .min(1, "1以上の値を入力してください")
+      .max(10, "10以下の値を入力してください"),
+    gf_advance_count: z
+      .number()
+      .int("整数で入力してください")
+      .min(1, "1以上の値を入力してください")
+      .max(100, "100以下の値を入力してください"),
+    max_participants: z
+      .union([z.nan(), z.null(), z.number().int().min(1)])
+      .optional(),
+    rules: z.string().optional(),
+    qualifiers: z.array(qualifierSchema).min(1, "予選は最低1つ必要です"),
+  })
+  .refine((data) => data.is_boys || data.is_girls, {
+    message: "カテゴリを少なくとも1つ選択してください",
+    path: ["is_girls"],
+  })
 
 // バリデーション後の型
 export type TournamentCreateFormData = z.infer<typeof tournamentCreateSchema>

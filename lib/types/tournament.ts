@@ -4,13 +4,24 @@
 
 export type { ActionResult } from "./profile"
 
-// 大会性別
-export type TournamentGender = "boys" | "girls"
+// 大会カテゴリ
+export type TournamentCategory = "boys" | "girls" | "both"
 
-// 大会性別ラベル
-export const TOURNAMENT_GENDER_LABELS: Record<TournamentGender, string> = {
+// 大会カテゴリラベル
+export const TOURNAMENT_CATEGORY_LABELS: Record<TournamentCategory, string> = {
   boys: "じろカップ（Boys）",
   girls: "りみカップ（Girls）",
+  both: "Jiro-Rimi Cup（Boys & Girls）",
+}
+
+/** is_boys/is_girls フラグからカテゴリを導出する */
+export function getTournamentCategory(
+  is_boys: boolean,
+  is_girls: boolean,
+): TournamentCategory {
+  if (is_boys && is_girls) return "both"
+  if (is_boys) return "boys"
+  return "girls"
 }
 
 // 大会ステータス
@@ -38,7 +49,8 @@ export type QualifierStatus =
 export type Tournament = {
   id: string
   name: string
-  gender: TournamentGender
+  is_boys: boolean
+  is_girls: boolean
   matches_per_qualifier: number
   gf_advance_count: number
   max_participants: number | null

@@ -62,7 +62,8 @@ export async function POST(request: Request) {
       .from("tournaments")
       .insert({
         name: data.name,
-        gender: data.gender,
+        is_boys: data.is_boys,
+        is_girls: data.is_girls,
         matches_per_qualifier: data.matches_per_qualifier,
         gf_advance_count: data.gf_advance_count,
         max_participants:

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { Toast } from "@/app/components/toast"
-import type { ActionResult, TournamentGender } from "@/lib/types/tournament"
-import { TOURNAMENT_GENDER_LABELS } from "@/lib/types/tournament"
+import type { ActionResult } from "@/lib/types/tournament"
 import {
   type TournamentCreateFormData,
   tournamentCreateSchema,
@@ -29,7 +28,8 @@ export function TournamentForm() {
     resolver: zodResolver(tournamentCreateSchema),
     defaultValues: {
       name: "",
-      gender: undefined,
+      is_boys: false,
+      is_girls: false,
       matches_per_qualifier: 5,
       gf_advance_count: 20,
       max_participants: undefined,
@@ -121,36 +121,41 @@ export function TournamentForm() {
             )}
           </div>
 
-          {/* 性別 */}
+          {/* カテゴリ */}
           <div>
             <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">
               カテゴリ
             </span>
             <div className="flex gap-3">
-              {(["boys", "girls"] as const).map((gender: TournamentGender) => (
-                <label key={gender} className="relative cursor-pointer flex-1">
-                  <input
-                    type="radio"
-                    {...register("gender")}
-                    value={gender}
-                    className="peer sr-only"
-                  />
-                  <div
-                    className={`py-2.5 rounded-xl border-2 text-center transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md ${
-                      gender === "boys"
-                        ? "border-blue-200 hover:border-blue-300 bg-blue-50/50"
-                        : "border-pink-200 hover:border-pink-300 bg-pink-50/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium">
-                      {TOURNAMENT_GENDER_LABELS[gender]}
-                    </span>
-                  </div>
-                </label>
-              ))}
+              <label className="relative cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  {...register("is_boys")}
+                  className="peer sr-only"
+                />
+                <div className="py-2.5 rounded-xl border-2 text-center transition-all duration-200 border-blue-200 hover:border-blue-300 bg-blue-50/50 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md">
+                  <span className="text-sm font-medium">
+                    じろカップ（Boys）
+                  </span>
+                </div>
+              </label>
+              <label className="relative cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  {...register("is_girls")}
+                  className="peer sr-only"
+                />
+                <div className="py-2.5 rounded-xl border-2 text-center transition-all duration-200 border-pink-200 hover:border-pink-300 bg-pink-50/50 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md">
+                  <span className="text-sm font-medium">
+                    りみカップ（Girls）
+                  </span>
+                </div>
+              </label>
             </div>
-            {errors.gender && (
-              <p className="mt-1 text-xs text-error">{errors.gender.message}</p>
+            {errors.is_girls && (
+              <p className="mt-1 text-xs text-error">
+                {errors.is_girls.message}
+              </p>
             )}
           </div>
 
