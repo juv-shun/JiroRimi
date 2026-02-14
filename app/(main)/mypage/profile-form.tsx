@@ -59,7 +59,7 @@ export function ProfileForm({
     if (state?.success) {
       // 初回登録モードの場合はホームにリダイレクト
       if (isFirstTimeSetup) {
-        router.push("/")
+        window.location.href = "/"
         return
       }
 
