@@ -40,7 +40,6 @@ erDiagram
         string name
         bool is_boys
         bool is_girls
-        text rules
         enum status
         timestamp created_at
         timestamp updated_at
@@ -125,7 +124,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | name | text | NO | - | 大会名 |
 | is_boys | boolean | NO | false | じろカップ（Boys）対象 |
 | is_girls | boolean | NO | false | りみカップ（Girls）対象 |
-| rules | text | YES | NULL | 大会ルール（自由記載） |
 | status | text | NO | 'draft' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
@@ -165,7 +163,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
 | checkin_start | timestamptz | NO | - | チェックイン開始時刻 |
 | checkin_end | timestamptz | NO | - | チェックイン締切時刻 |
-| rules | text | YES | NULL | イベント固有ルール（NULLの場合は大会ルールを適用） |
+| rules | text | YES | NULL | ルール（自由記載） |
 | status | text | NO | 'scheduled' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
@@ -267,7 +265,7 @@ Tournament（コンテナ）
 
 1. **汎用性**: 「予選」「GF」などの概念をハードコードせず、イベントの設定値の組み合わせで表現する。新しい大会形式を追加する際にスキーマ変更が不要
 2. **招待制による参加者管理**: GF進出者の管理を `gf_advance_count` のような専用カラムではなく、招待制（`entry_type = 'invite'`）という汎用的な仕組みで実現する。運営者が成績に基づいて招待するか、将来的に自動選出するかは実装の問題であり、データモデルには影響しない
-3. **シンプルなコンテナ**: 大会（Tournament）は名前・カテゴリ・ルールといった共通情報のみを持ち、運営に関わる詳細はイベント側に委譲する
+3. **シンプルなコンテナ**: 大会（Tournament）は名前・カテゴリといった最小限の共通情報のみを持ち、ルール・試合数・参加上限など運営に関わる詳細はすべてイベント側に委譲する
 
 ---
 
@@ -298,16 +296,7 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 - 小規模アプリのため、シンプルさを優先
 - キャンセル後の再エントリーも可能
 
-### 5. ルールの継承
-
-大会とイベントの両方に `rules` カラムを持たせ、イベントレベルでのルール上書きを可能にする:
-- `tournaments.rules`: 大会全体のデフォルトルール
-- `events.rules`: イベント固有のルール（NULL 許容）
-- 表示時の適用ルール: `COALESCE(events.rules, tournaments.rules)`
-- イベントの `rules` が NULL の場合、大会の `rules` がフォールバックとして適用される
-- イベントの `rules` が設定されている場合、大会のルールを完全に上書きする（マージではない）
-
-### 6. プロフィール完了判定
+### 5. プロフィール完了判定
 
 アプリケーション側で以下の条件をチェック:
 - `player_name` が設定されている
