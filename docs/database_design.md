@@ -40,7 +40,6 @@ erDiagram
         string name
         bool is_boys
         bool is_girls
-        int max_participants
         text rules
         enum status
         timestamp created_at
@@ -51,10 +50,10 @@ erDiagram
         uuid id PK
         uuid tournament_id FK
         int event_number
-        text event_type
         text entry_type
         text match_format
         int matches_per_event
+        int max_participants
         date scheduled_date
         timestamp entry_start
         timestamp entry_end
@@ -126,7 +125,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | name | text | NO | - | 大会名 |
 | is_boys | boolean | NO | false | じろカップ（Boys）対象 |
 | is_girls | boolean | NO | false | りみカップ（Girls）対象 |
-| max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
 | rules | text | YES | NULL | 大会ルール（自由記載） |
 | status | text | NO | 'draft' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
@@ -158,10 +156,10 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | id | uuid | NO | gen_random_uuid() | PK |
 | tournament_id | uuid | NO | - | FK → tournaments.id |
 | event_number | int | NO | - | イベント番号（大会内での連番） |
-| event_type | text | NO | 'qualifier' | イベント種別（後述） |
 | entry_type | text | NO | 'open' | エントリー方式（後述） |
 | match_format | text | NO | 'swiss' | 進行形式（後述） |
 | matches_per_event | int | NO | 5 | 試合数 |
+| max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
 | scheduled_date | date | NO | - | 開催日 |
 | entry_start | timestamptz | NO | - | エントリー開始日時 |
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
@@ -171,10 +169,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | status | text | NO | 'scheduled' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
-
-**イベント種別 (event_type)**:
-- `qualifier`: 予選
-- `main`: 本戦
 
 **エントリー方式 (entry_type)**:
 - `open`: オープン参加（誰でもエントリー可能）
@@ -246,20 +240,19 @@ GF固有のチーム編成・ブラケット管理は Phase 3 の詳細設計時
 
 本アプリケーションのDB設計は「イベント中心モデル」を採用する。
 
-**大会（Tournament）はイベントのコンテナ**であり、試合形式・エントリー方式・試合数などの運営設定はすべて **イベント（Event）側** に持たせる。アプリケーションに「予選」「本戦」「グランドファイナル」といった専用の概念は設けず、それらはイベントの設定値（`event_type`、`entry_type`、`match_format`）の組み合わせとして表現される。
+**大会（Tournament）はイベントのコンテナ**であり、試合形式・エントリー方式・試合数・参加上限などの運営設定はすべて **イベント（Event）側** に持たせる。アプリケーションに「予選」「本戦」「グランドファイナル」といった専用の概念は設けず、それらはイベントの設定値（`entry_type`、`match_format`）の組み合わせとして表現される。
 
 ```
 Tournament（コンテナ）
-├── Event 1: qualifier / open / swiss      ← 実質「予選」
-├── Event 2: qualifier / open / swiss      ← 実質「予選」
-└── Event 3: main / invite / double_elim   ← 実質「グランドファイナル」
+├── Event 1: open / swiss           ← 実質「予選」
+├── Event 2: open / swiss           ← 実質「予選」
+└── Event 3: invite / double_elim   ← 実質「グランドファイナル」
 ```
 
-#### イベントの性質を決める3つの軸
+#### イベントの性質を決める2つの軸
 
 | 軸 | カラム | 値 | 説明 |
 |----|--------|-----|------|
-| 種別 | `event_type` | `qualifier` / `main` | 予選か本戦かの分類 |
 | 参加方式 | `entry_type` | `open` / `invite` | 誰でも参加 or 招待制 |
 | 進行形式 | `match_format` | `swiss` / `double_elimination` / ... | 試合の進め方 |
 
@@ -267,8 +260,8 @@ Tournament（コンテナ）
 
 | 大会形式 | イベント構成 |
 |---------|------------|
-| 予選 + GF | Event 1-N: `qualifier` / `open` / `swiss` → GF: `main` / `invite` / `double_elimination` |
-| 本戦のみ（1日大会） | Event 1: `main` / `open` / `swiss` |
+| 予選 + GF | Event 1-N: `open` / `swiss` → GF: `invite` / `double_elimination` |
+| 本戦のみ（1日大会） | Event 1: `open` / `swiss` |
 
 #### この設計の利点
 
