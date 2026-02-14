@@ -39,9 +39,31 @@ export async function POST(request: Request) {
       )
     }
 
-    const { data: updated, error } = await supabase
+    // Discord情報を認証データから取得（profilesレコードが未作成の場合に必要）
+    const discordIdentity = user.identities?.find(
+      (i) => i.provider === "discord",
+    )
+    const discord_id =
+      discordIdentity?.identity_data?.provider_id ??
+      user.user_metadata?.provider_id
+    const discord_username =
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      user.user_metadata?.preferred_username
+
+    if (!discord_id) {
+      return NextResponse.json(
+        { success: false, error: "Discord情報の取得に失敗しました" },
+        { status: 500 },
+      )
+    }
+
+    const { error } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: user.id,
+        discord_id,
+        discord_username: discord_username ?? null,
         player_name: player_name.trim(),
         x_id: x_id.trim(),
         gender,
@@ -49,20 +71,11 @@ export async function POST(request: Request) {
         second_role,
         third_role,
       })
-      .eq("id", user.id)
-      .select()
 
     if (error) {
       return NextResponse.json(
         { success: false, error: `DB更新エラー: ${error.message}` },
         { status: 500 },
-      )
-    }
-
-    if (!updated || updated.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "プロフィールの更新対象が見つかりませんでした" },
-        { status: 404 },
       )
     }
 
