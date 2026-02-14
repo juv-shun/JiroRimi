@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       )
     }
 
-    revalidatePath("/mypage")
+    revalidatePath("/", "layout")
     return NextResponse.json({ success: true })
   } catch (e) {
     return NextResponse.json(
