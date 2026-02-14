@@ -4,14 +4,32 @@
 
 import { z } from "zod"
 
+const datePattern = /^\d{4}-\d{2}-\d{2}$/
+const datetimeLocalPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
+
 // 予選1件のスキーマ
 export const qualifierSchema = z
   .object({
-    scheduled_date: z.string().min(1, "開催日は必須です"),
-    entry_start: z.string().min(1, "エントリー開始日時は必須です"),
-    entry_end: z.string().min(1, "エントリー締切日時は必須です"),
-    checkin_start: z.string().min(1, "チェックイン開始日時は必須です"),
-    checkin_end: z.string().min(1, "チェックイン締切日時は必須です"),
+    scheduled_date: z
+      .string()
+      .min(1, "開催日は必須です")
+      .regex(datePattern, "日付の形式が不正です"),
+    entry_start: z
+      .string()
+      .min(1, "エントリー開始日時は必須です")
+      .regex(datetimeLocalPattern, "日時の形式が不正です"),
+    entry_end: z
+      .string()
+      .min(1, "エントリー締切日時は必須です")
+      .regex(datetimeLocalPattern, "日時の形式が不正です"),
+    checkin_start: z
+      .string()
+      .min(1, "チェックイン開始日時は必須です")
+      .regex(datetimeLocalPattern, "日時の形式が不正です"),
+    checkin_end: z
+      .string()
+      .min(1, "チェックイン締切日時は必須です")
+      .regex(datetimeLocalPattern, "日時の形式が不正です"),
     rules: z.string().optional(),
   })
   .refine(
@@ -62,7 +80,9 @@ export const tournamentCreateSchema = z.object({
     .int("整数で入力してください")
     .min(1, "1以上の値を入力してください")
     .max(100, "100以下の値を入力してください"),
-  max_participants: z.union([z.nan(), z.number().int().min(1)]).optional(),
+  max_participants: z
+    .union([z.nan(), z.null(), z.number().int().min(1)])
+    .optional(),
   rules: z.string().optional(),
   qualifiers: z.array(qualifierSchema).min(1, "予選は最低1つ必要です"),
 })

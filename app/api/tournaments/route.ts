@@ -23,13 +23,21 @@ export async function POST(request: Request) {
     }
 
     // admin権限チェック
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single()
 
-    if (profile?.role !== "admin") {
+    if (profileError) {
+      console.error("プロフィール取得エラー:", profileError.message)
+      return NextResponse.json(
+        { success: false, error: "権限の確認に失敗しました" },
+        { status: 500 },
+      )
+    }
+
+    if (profile.role !== "admin") {
       return NextResponse.json(
         { success: false, error: "管理者権限が必要です" },
         { status: 403 },
@@ -68,11 +76,9 @@ export async function POST(request: Request) {
       .single()
 
     if (tournamentError || !tournament) {
+      console.error("大会INSERT失敗:", tournamentError?.message)
       return NextResponse.json(
-        {
-          success: false,
-          error: `大会の作成に失敗しました: ${tournamentError?.message}`,
-        },
+        { success: false, error: "大会の作成に失敗しました" },
         { status: 500 },
       )
     }
@@ -95,6 +101,8 @@ export async function POST(request: Request) {
       .insert(qualifiersToInsert)
 
     if (qualifiersError) {
+      console.error("予選INSERT失敗:", qualifiersError.message)
+
       // 擬似トランザクション: 予選INSERT失敗時は大会を削除
       const { error: deleteError } = await supabase
         .from("tournaments")
@@ -106,10 +114,7 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json(
-        {
-          success: false,
-          error: `予選の作成に失敗しました: ${qualifiersError.message}`,
-        },
+        { success: false, error: "予選の作成に失敗しました" },
         { status: 500 },
       )
     }
@@ -117,11 +122,9 @@ export async function POST(request: Request) {
     revalidatePath("/", "layout")
     return NextResponse.json({ success: true })
   } catch (e) {
+    console.error("大会作成エラー:", e)
     return NextResponse.json(
-      {
-        success: false,
-        error: `サーバーエラー: ${e instanceof Error ? e.message : String(e)}`,
-      },
+      { success: false, error: "サーバーエラーが発生しました" },
       { status: 500 },
     )
   }
