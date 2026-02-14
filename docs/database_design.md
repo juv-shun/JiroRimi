@@ -49,6 +49,7 @@ erDiagram
         uuid id PK
         uuid tournament_id FK
         int event_number
+        string name
         text entry_type
         text match_format
         int matches_per_event
@@ -154,6 +155,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | id | uuid | NO | gen_random_uuid() | PK |
 | tournament_id | uuid | NO | - | FK → tournaments.id |
 | event_number | int | NO | - | イベント番号（大会内での連番） |
+| name | text | NO | - | イベント名（例: 予選1、グランドファイナル） |
 | entry_type | text | NO | 'open' | エントリー方式（後述） |
 | match_format | text | NO | 'swiss' | 進行形式（後述） |
 | matches_per_event | int | NO | 5 | 試合数 |
