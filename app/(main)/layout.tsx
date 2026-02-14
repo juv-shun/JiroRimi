@@ -16,6 +16,7 @@ export default async function MainLayout({
   // プロフィールからユーザー名と完了状態を取得
   let userName: string | undefined
   let isFirstTimeSetup = false
+  let isAdmin = false
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -24,6 +25,7 @@ export default async function MainLayout({
       .single()
     userName = profile?.player_name ?? user.email?.split("@")[0]
     isFirstTimeSetup = !isProfileComplete(profile as Profile | null)
+    isAdmin = profile?.role === "admin"
   }
 
   return (
@@ -32,6 +34,7 @@ export default async function MainLayout({
         isLoggedIn={!!user}
         userName={userName}
         isFirstTimeSetup={isFirstTimeSetup}
+        isAdmin={isAdmin}
       />
       {/* Main Content */}
       <main className="pt-14 md:ml-64 md:pt-0">{children}</main>
