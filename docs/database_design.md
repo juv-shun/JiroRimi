@@ -38,7 +38,8 @@ erDiagram
     tournaments {
         uuid id PK
         string name
-        enum gender
+        bool is_boys
+        bool is_girls
         int matches_per_qualifier
         int gf_advance_count
         int max_participants
@@ -119,7 +120,8 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | name | text | NO | - | 大会名 |
-| gender | text | NO | - | 性別区分（後述） |
+| is_boys | boolean | NO | false | じろカップ（Boys）対象 |
+| is_girls | boolean | NO | false | りみカップ（Girls）対象 |
 | matches_per_qualifier | int | NO | 5 | 1予選あたりの試合数 |
 | gf_advance_count | int | NO | 20 | GF進出人数 |
 | max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
@@ -128,9 +130,14 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
 
-**性別区分 (gender)**:
-- `boys`: ボーイズ じろカップ
-- `girls`: ガールズ りみカップ
+**カテゴリ (is_boys, is_girls)**:
+| is_boys | is_girls | カテゴリ |
+|---------|----------|----------|
+| true | false | じろカップ（Boys） |
+| false | true | りみカップ（Girls） |
+| true | true | Jiro-Rimi Cup（Boys & Girls） |
+
+**制約**: `CHECK (is_boys OR is_girls)` — 両方 false は不可
 
 **ステータス (status)**:
 - `draft`: 下書き（非公開）
