@@ -7,3 +7,5 @@ out
 # Environment variables
 .env*.local
 .env
+.vercel
+tsconfig.tsbuildinfo
