@@ -1,6 +1,15 @@
 "use client"
 
-import { Calendar, Home, LogOut, Menu, Trophy, User, X } from "lucide-react"
+import {
+  Calendar,
+  Home,
+  LogOut,
+  Menu,
+  Settings,
+  Trophy,
+  User,
+  X,
+} from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -35,16 +44,26 @@ const navItems: NavItem[] = [
   },
 ]
 
+const adminNavItems: NavItem[] = [
+  {
+    label: "大会管理",
+    href: "/admin/tournaments",
+    icon: <Settings className="size-5" />,
+  },
+]
+
 type SidebarProps = {
   isLoggedIn: boolean
   userName?: string
   isFirstTimeSetup?: boolean
+  isAdmin?: boolean
 }
 
 export function Sidebar({
   isLoggedIn,
   userName,
   isFirstTimeSetup = false,
+  isAdmin = false,
 }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
@@ -119,6 +138,38 @@ export function Sidebar({
             </Link>
           )
         })}
+
+        {/* Admin Navigation */}
+        {isAdmin && (
+          <>
+            <div className="my-3 border-t border-primary/10" />
+            {adminNavItems.map((item) => {
+              const active = isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className={`group flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 ${
+                    active
+                      ? "bg-gradient-to-r from-primary to-primary-hover text-white shadow-md shadow-primary/30"
+                      : "text-text-secondary hover:bg-primary-light hover:text-primary"
+                  }`}
+                >
+                  <span
+                    className={`transition-transform duration-200 ${!active && "group-hover:scale-110"}`}
+                  >
+                    {item.icon}
+                  </span>
+                  <span className="font-medium">{item.label}</span>
+                  {active && (
+                    <span className="ml-auto size-2 animate-pulse rounded-full bg-white/80" />
+                  )}
+                </Link>
+              )
+            })}
+          </>
+        )}
       </nav>
 
       {/* User Section & Logout */}
