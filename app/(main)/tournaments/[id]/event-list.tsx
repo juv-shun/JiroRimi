@@ -113,25 +113,22 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
               </div>
 
               <div className="flex gap-2">
-                {event.rules && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setRulesModal({
-                        eventName: event.name,
-                        rules: event.rules as string,
-                      })
-                    }
-                    className="flex-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    ルール詳細
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRulesModal({
+                      eventName: event.name,
+                      rules: event.rules ?? "",
+                    })
+                  }
+                  className="flex-1 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  ルール詳細
+                </button>
                 <EntryButton
                   state={buttonState}
                   onClick={() => handleButtonClick(buttonState)}
-                  fullWidth={!event.rules}
-                  className={event.rules ? "flex-1" : ""}
+                  className="flex-1"
                 />
               </div>
             </div>
