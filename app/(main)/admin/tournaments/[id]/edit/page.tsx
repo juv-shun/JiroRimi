@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation"
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { TournamentStatus } from "@/lib/types/tournament"
+import type { MatchFormat, TournamentStatus } from "@/lib/types/tournament"
 import { timestamptzToDatetimeLocal } from "@/lib/utils/datetime"
 import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
 import { TournamentForm } from "../../new/tournament-form"
@@ -58,24 +58,36 @@ export default async function EditTournamentPage({
     notFound()
   }
 
+  // 旧 match_format を新形式に正規化
+  const normalizeMatchFormat = (format: string): MatchFormat => {
+    if (format === "double_elimination") return "double_elimination"
+    // swiss, single_elimination, round_robin などは qualifier に変換
+    return "qualifier"
+  }
+
   // フォーム用データに変換
   const defaultValues: TournamentUpdateFormData = {
     name: tournament.name,
     status: tournament.status as TournamentStatus,
-    events: events.map((ev) => ({
-      id: ev.id,
-      name: ev.name,
-      entry_type: ev.entry_type,
-      match_format: ev.match_format,
-      matches_per_event: ev.matches_per_event,
-      max_participants: ev.max_participants ?? undefined,
-      scheduled_date: ev.scheduled_date,
-      entry_start: timestamptzToDatetimeLocal(ev.entry_start),
-      entry_end: timestamptzToDatetimeLocal(ev.entry_end),
-      checkin_start: timestamptzToDatetimeLocal(ev.checkin_start),
-      checkin_end: timestamptzToDatetimeLocal(ev.checkin_end),
-      rules: ev.rules ?? "",
-    })),
+    events: events.map((ev) => {
+      const matchFormat = normalizeMatchFormat(ev.match_format)
+      return {
+        id: ev.id,
+        name: ev.name,
+        entry_type: ev.entry_type,
+        match_format: matchFormat,
+        // double_elimination の場合は matches_per_event を null に正規化
+        matches_per_event:
+          matchFormat === "double_elimination" ? null : ev.matches_per_event,
+        max_participants: ev.max_participants ?? undefined,
+        scheduled_date: ev.scheduled_date,
+        entry_start: timestamptzToDatetimeLocal(ev.entry_start),
+        entry_end: timestamptzToDatetimeLocal(ev.entry_end),
+        checkin_start: timestamptzToDatetimeLocal(ev.checkin_start),
+        checkin_end: timestamptzToDatetimeLocal(ev.checkin_end),
+        rules: ev.rules ?? "",
+      }
+    }),
   }
 
   return (

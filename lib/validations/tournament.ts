@@ -16,17 +16,13 @@ export const eventSchema = z
       .min(1, "イベント名は必須です")
       .max(100, "イベント名は100文字以内で入力してください"),
     entry_type: z.enum(["open", "invite"]),
-    match_format: z.enum([
-      "swiss",
-      "double_elimination",
-      "single_elimination",
-      "round_robin",
-    ]),
+    match_format: z.enum(["qualifier", "double_elimination"]),
     matches_per_event: z
       .number()
       .int("整数で入力してください")
       .min(1, "1以上の値を入力してください")
-      .max(10, "10以下の値を入力してください"),
+      .max(10, "10以下の値を入力してください")
+      .nullable(),
     max_participants: z
       .union([z.nan(), z.null(), z.number().int().min(1)])
       .optional(),
@@ -80,6 +76,27 @@ export const eventSchema = z
       path: ["checkin_end"],
     },
   )
+  .superRefine((data, ctx) => {
+    // qualifier の場合は matches_per_event 必須
+    if (data.match_format === "qualifier" && data.matches_per_event === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "予選形式では試合数を入力してください",
+        path: ["matches_per_event"],
+      })
+    }
+    // double_elimination の場合は matches_per_event は null であるべき
+    if (
+      data.match_format === "double_elimination" &&
+      data.matches_per_event !== null
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "ダブルエリミネーション形式では試合数は設定できません",
+        path: ["matches_per_event"],
+      })
+    }
+  })
 
 // 大会作成のスキーマ
 export const tournamentCreateSchema = z.object({

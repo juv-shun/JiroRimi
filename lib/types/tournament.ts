@@ -29,11 +29,7 @@ export type EventStatus =
 export type EntryType = "open" | "invite"
 
 // 進行形式
-export type MatchFormat =
-  | "swiss"
-  | "double_elimination"
-  | "single_elimination"
-  | "round_robin"
+export type MatchFormat = "qualifier" | "double_elimination"
 
 // エントリー方式ラベル
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
@@ -43,10 +39,8 @@ export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
 
 // 進行形式ラベル
 export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
-  swiss: "スイスドロー",
+  qualifier: "予選",
   double_elimination: "ダブルエリミネーション",
-  single_elimination: "シングルエリミネーション",
-  round_robin: "総当たり",
 }
 
 // 大会型（イベント数付き、一覧表示用）
@@ -75,7 +69,7 @@ export type TournamentEvent = {
   name: string
   entry_type: EntryType
   match_format: MatchFormat
-  matches_per_event: number
+  matches_per_event: number | null
   max_participants: number | null
   scheduled_date: string
   entry_start: string

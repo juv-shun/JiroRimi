@@ -6,6 +6,8 @@ import type {
   UseFieldArrayAppend,
   UseFieldArrayRemove,
   UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
 } from "react-hook-form"
 import {
   ENTRY_TYPE_LABELS,
@@ -20,13 +22,15 @@ type EventFieldsProps = {
   remove: UseFieldArrayRemove
   register: UseFormRegister<TournamentUpdateFormData>
   errors: FieldErrors<TournamentUpdateFormData>
+  watch: UseFormWatch<TournamentUpdateFormData>
+  setValue: UseFormSetValue<TournamentUpdateFormData>
 }
 
 const EMPTY_EVENT = {
   name: "",
   entry_type: "open" as EntryType,
-  match_format: "swiss" as MatchFormat,
-  matches_per_event: 5,
+  match_format: "qualifier" as MatchFormat,
+  matches_per_event: 5 as number | null,
   max_participants: undefined as number | undefined,
   scheduled_date: "",
   entry_start: "",
@@ -42,7 +46,18 @@ export function EventFields({
   remove,
   register,
   errors,
+  watch,
+  setValue,
 }: EventFieldsProps) {
+  // match_format 変更時のハンドラ
+  const handleMatchFormatChange = (index: number, value: MatchFormat) => {
+    if (value === "double_elimination") {
+      setValue(`events.${index}.matches_per_event`, null)
+    } else if (value === "qualifier") {
+      setValue(`events.${index}.matches_per_event`, 5)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {fields.map((field, index) => (
@@ -125,7 +140,10 @@ export function EventFields({
                 </label>
                 <select
                   id={`events.${index}.match_format`}
-                  {...register(`events.${index}.match_format`)}
+                  {...register(`events.${index}.match_format`, {
+                    onChange: (e) =>
+                      handleMatchFormatChange(index, e.target.value as MatchFormat),
+                  })}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 >
                   {Object.entries(MATCH_FORMAT_LABELS).map(([value, label]) => (
@@ -144,29 +162,49 @@ export function EventFields({
 
             {/* 試合数 / 参加上限 */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor={`events.${index}.matches_per_event`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-                >
-                  試合数
-                </label>
-                <input
-                  id={`events.${index}.matches_per_event`}
-                  type="number"
-                  {...register(`events.${index}.matches_per_event`, {
-                    valueAsNumber: true,
-                  })}
-                  min={1}
-                  max={10}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                />
-                {errors.events?.[index]?.matches_per_event && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.events[index].matches_per_event.message}
-                  </p>
-                )}
-              </div>
+              {(() => {
+                const matchFormat = watch(`events.${index}.match_format`)
+                const isDoubleElimination = matchFormat === "double_elimination"
+                return (
+                  <div>
+                    <label
+                      htmlFor={`events.${index}.matches_per_event`}
+                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                    >
+                      試合数
+                    </label>
+                    <input
+                      id={`events.${index}.matches_per_event`}
+                      type="number"
+                      {...register(`events.${index}.matches_per_event`, {
+                        setValueAs: (v) => {
+                          if (v === "" || v === null || v === undefined) return null
+                          const num = Number(v)
+                          return Number.isNaN(num) ? null : num
+                        },
+                      })}
+                      min={1}
+                      max={10}
+                      disabled={isDoubleElimination}
+                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                        isDoubleElimination
+                          ? "bg-gray-100 cursor-not-allowed opacity-60"
+                          : ""
+                      }`}
+                    />
+                    {isDoubleElimination && (
+                      <p className="mt-1 text-xs text-text-secondary">
+                        ダブルエリミネーション形式では試合数は自動決定されます
+                      </p>
+                    )}
+                    {errors.events?.[index]?.matches_per_event && (
+                      <p className="mt-1 text-xs text-error">
+                        {errors.events[index].matches_per_event.message}
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
               <div>
                 <label
                   htmlFor={`events.${index}.max_participants`}
