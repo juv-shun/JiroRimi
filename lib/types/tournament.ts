@@ -81,3 +81,33 @@ export type TournamentEvent = {
   created_at: string
   updated_at: string
 }
+
+// イベント型（エントリー数付き、大会詳細画面用）
+export type TournamentEventWithEntryCount = TournamentEvent & {
+  entries: { count: number }[]
+}
+
+// 大会詳細画面用のイベント型（表示に必要な最小限のフィールド）
+export type TournamentEventForDisplay = {
+  id: string
+  event_number: number
+  name: string
+  entry_type: EntryType
+  match_format: MatchFormat
+  matches_per_event: number | null
+  max_participants: number | null
+  scheduled_date: string
+  entry_start: string
+  entry_end: string
+  checkin_start: string
+  checkin_end: string
+  entries: { count: number }[]
+}
+
+// 大会詳細画面用の大会型（表示に必要な最小限のフィールド）
+export type TournamentDetail = {
+  id: string
+  name: string
+  status: TournamentStatus
+  events: TournamentEventForDisplay[]
+}

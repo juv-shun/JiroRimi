@@ -17,3 +17,33 @@ export const timestamptzToDatetimeLocal = (timestamptz: string): string => {
   const min = String(jst.getUTCMinutes()).padStart(2, "0")
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`
 }
+
+/** 日付を YYYY/MM/DD 形式（JST）でフォーマット */
+export const formatDateJST = (dateString: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Asia/Tokyo",
+  }).format(new Date(dateString))
+
+/** 時刻を HH:MM 形式（JST）でフォーマット */
+export const formatTimeJST = (timestamptz: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Tokyo",
+    hour12: false,
+  }).format(new Date(timestamptz))
+
+/** 日時を YYYY/MM/DD HH:MM 形式（JST）でフォーマット */
+export const formatDateTimeJST = (timestamptz: string): string =>
+  new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Tokyo",
+    hour12: false,
+  }).format(new Date(timestamptz))
