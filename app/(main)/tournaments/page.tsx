@@ -19,7 +19,7 @@ export default async function TournamentsPage() {
   return (
     <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <PageHeader title="大会一覧" />
+        <PageHeader title="Tournaments" />
 
         <TournamentList
           tournaments={tournaments as TournamentWithEventCount[]}
