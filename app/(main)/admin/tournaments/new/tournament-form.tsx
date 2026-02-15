@@ -7,15 +7,29 @@ import { useEffect, useState, useTransition } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import { Toast } from "@/app/components/toast"
 import type { ActionResult } from "@/lib/types/tournament"
-import {
-  TOURNAMENT_STATUS_LABELS,
-  type TournamentStatus,
-} from "@/lib/types/tournament"
+import type { TournamentStatus } from "@/lib/types/tournament"
 import {
   type TournamentUpdateFormData,
   tournamentUpdateSchema,
 } from "@/lib/validations/tournament"
 import { EventFields } from "./event-fields"
+
+const STATUS_LABELS: Record<TournamentStatus, string> = {
+  draft: "下書き",
+  open: "公開中",
+  in_progress: "進行中",
+  completed: "終了",
+}
+
+const STATUS_BADGE_STYLES: Record<TournamentStatus, string> = {
+  draft:
+    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-600",
+  open: "inline-block px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700",
+  in_progress:
+    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700",
+  completed:
+    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-700",
+}
 
 type TournamentFormProps = {
   mode: "create" | "edit"
@@ -29,6 +43,8 @@ export function TournamentForm({
   defaultValues,
 }: TournamentFormProps) {
   const router = useRouter()
+  const initialStatus: TournamentStatus =
+    defaultValues?.status ?? "draft"
   const [state, setState] = useState<ActionResult | null>(null)
   const [isPending, startTransition] = useTransition()
   const [showSuccess, setShowSuccess] = useState(false)
@@ -110,25 +126,26 @@ export function TournamentForm({
     })
   })
 
-  // 公開ボタン処理
-  const onPublish = handleSubmit((data) => {
-    startTransition(async () => {
-      try {
-        const response = await fetch(`/api/tournaments/${tournamentId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...data, status: "open" }),
-        })
-        const result: ActionResult = await response.json()
-        setState(result)
-      } catch (e) {
-        setState({
-          success: false,
-          error: `通信エラー: ${e instanceof Error ? e.message : String(e)}`,
-        })
-      }
-    })
-  })
+  // ステータス変更ボタン処理（公開 / 非公開化）
+  const onStatusChange = (newStatus: TournamentStatus) =>
+    handleSubmit((data) => {
+      startTransition(async () => {
+        try {
+          const response = await fetch(`/api/tournaments/${tournamentId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...data, status: newStatus }),
+          })
+          const result: ActionResult = await response.json()
+          setState(result)
+        } catch (e) {
+          setState({
+            success: false,
+            error: `通信エラー: ${e instanceof Error ? e.message : String(e)}`,
+          })
+        }
+      })
+    })()
 
   const toastMessage =
     mode === "create" ? "大会を作成しました！" : "大会を更新しました！"
@@ -165,33 +182,16 @@ export function TournamentForm({
             )}
           </div>
 
-          {/* ステータス（編集時のみ） */}
+          {/* ステータス表示（編集時のみ） */}
           {mode === "edit" && (
             <div>
-              <label
-                htmlFor="status"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-              >
+              <label className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
                 ステータス
               </label>
-              <select
-                id="status"
-                {...register("status")}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-              >
-                {Object.entries(TOURNAMENT_STATUS_LABELS).map(
-                  ([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ),
-                )}
-              </select>
-              {errors.status && (
-                <p className="mt-1 text-xs text-error">
-                  {errors.status.message}
-                </p>
-              )}
+              <input type="hidden" {...register("status")} />
+              <span className={STATUS_BADGE_STYLES[initialStatus]}>
+                {STATUS_LABELS[initialStatus]}
+              </span>
             </div>
           )}
         </div>
@@ -225,78 +225,85 @@ export function TournamentForm({
         >
           キャンセル
         </button>
-        {mode === "edit" && (
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={isPending}
-            className="flex-1 py-3 bg-success hover:bg-success/90 disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:shadow-none"
-          >
-            {isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                処理中...
-              </span>
-            ) : (
-              "公開"
-            )}
-          </button>
+        {/* draft → 公開ボタン */}
+        {mode === "edit" && initialStatus === "draft" && (
+          <StatusButton
+            label="公開"
+            isPending={isPending}
+            onClick={() => onStatusChange("open")}
+            className="bg-success hover:bg-success/90"
+          />
         )}
+        {/* open / in_progress → 非公開化ボタン */}
+        {mode === "edit" &&
+          (initialStatus === "open" || initialStatus === "in_progress") && (
+            <StatusButton
+              label="非公開化"
+              isPending={isPending}
+              onClick={() => onStatusChange("draft")}
+              className="bg-warning hover:bg-warning/90"
+            />
+          )}
         <button
           type="submit"
           disabled={isPending}
           className="flex-1 py-3 bg-primary hover:bg-primary-hover disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:shadow-none"
         >
-          {isPending ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg
-                className="animate-spin h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              保存中...
-            </span>
-          ) : (
-            "保存"
-          )}
+          {isPending ? <SpinnerLabel text="保存中..." /> : "保存"}
         </button>
       </div>
     </form>
+  )
+}
+
+function SpinnerLabel({ text }: { text: string }) {
+  return (
+    <span className="flex items-center justify-center gap-2">
+      <svg
+        className="animate-spin h-5 w-5"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+      </svg>
+      {text}
+    </span>
+  )
+}
+
+function StatusButton({
+  label,
+  isPending,
+  onClick,
+  className,
+}: {
+  label: string
+  isPending: boolean
+  onClick: () => void
+  className: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isPending}
+      className={`flex-1 py-3 disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:shadow-none ${className}`}
+    >
+      {isPending ? <SpinnerLabel text="処理中..." /> : label}
+    </button>
   )
 }
