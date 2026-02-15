@@ -49,80 +49,7 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
   }
 
   return (
-    <>
-      {/* デスクトップ: テーブル表示 */}
-      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-border overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-gray-500">
-              <th className="px-4 py-3 font-medium">イベント名</th>
-              <th className="px-4 py-3 font-medium text-center">試合数</th>
-              <th className="px-4 py-3 font-medium text-center">参加上限</th>
-              <th className="px-4 py-3 font-medium">開催日</th>
-              <th className="px-4 py-3 font-medium">エントリー期間</th>
-              <th className="px-4 py-3 font-medium">チェックイン</th>
-              <th className="px-4 py-3 font-medium text-center">
-                エントリー人数
-              </th>
-              <th className="px-4 py-3 font-medium text-center">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((event) => {
-              const isEntered = userEntries.includes(event.id)
-              const buttonState = getEntryButtonState(
-                event,
-                isLoggedIn,
-                isEntered,
-                now,
-              )
-              const entryCount = event.entries[0]?.count ?? 0
-
-              return (
-                <tr
-                  key={event.id}
-                  className="border-b border-border last:border-b-0 hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {event.name}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-600">
-                    {event.match_format === "double_elimination"
-                      ? "-"
-                      : event.matches_per_event}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-600">
-                    {event.max_participants ?? "無制限"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {formatDateJST(event.scheduled_date)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                    {formatDateTimeJST(event.entry_start)} 〜{" "}
-                    {formatTimeJST(event.entry_end)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                    {formatTimeJST(event.checkin_start)} 〜{" "}
-                    {formatTimeJST(event.checkin_end)}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-600">
-                    {entryCount}人
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <EntryButton
-                      state={buttonState}
-                      onClick={() => handleButtonClick(buttonState)}
-                    />
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* モバイル: カード表示 */}
-      <div className="md:hidden space-y-4">
+    <div className="space-y-4">
         {events.map((event) => {
           const isEntered = userEntries.includes(event.id)
           const buttonState = getEntryButtonState(
@@ -189,8 +116,7 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
             </div>
           )
         })}
-      </div>
-    </>
+    </div>
   )
 }
 
