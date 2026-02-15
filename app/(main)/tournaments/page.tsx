@@ -9,6 +9,7 @@ export default async function TournamentsPage() {
   const { data: tournaments, error } = await supabase
     .from("tournaments")
     .select("id, name, status, created_at, events(count)")
+    .neq("status", "draft")
     .order("created_at", { ascending: false })
 
   if (error) {
