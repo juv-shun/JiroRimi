@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react"
 import Link from "next/link"
 import type { TournamentWithEventCount } from "@/lib/types/tournament"
-import { StatusBadge } from "./status-badge"
+import { StatusBadge } from "@/app/components/status-badge"
 
 function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat("ja-JP", {
