@@ -101,6 +101,7 @@ export type TournamentEventForDisplay = {
   entry_end: string
   checkin_start: string
   checkin_end: string
+  rules: string | null
   entries: { count: number }[]
 }
 

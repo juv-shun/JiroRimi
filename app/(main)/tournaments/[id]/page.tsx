@@ -23,6 +23,7 @@ export default async function TournamentDetailPage({
         id, event_number, name, entry_type, match_format,
         matches_per_event, max_participants, scheduled_date,
         entry_start, entry_end, checkin_start, checkin_end,
+        rules,
         entries (count)
       )
     `,
