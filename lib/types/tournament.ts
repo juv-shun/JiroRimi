@@ -35,6 +35,20 @@ export type MatchFormat =
   | "single_elimination"
   | "round_robin"
 
+// エントリー方式ラベル
+export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
+  open: "オープン",
+  invite: "招待制",
+}
+
+// 進行形式ラベル
+export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
+  swiss: "スイスドロー",
+  double_elimination: "ダブルエリミネーション",
+  single_elimination: "シングルエリミネーション",
+  round_robin: "総当たり",
+}
+
 // 大会型
 export type Tournament = {
   id: string

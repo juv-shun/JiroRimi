@@ -80,8 +80,8 @@ export async function POST(request: Request) {
       tournament_id: tournament.id,
       event_number: index + 1,
       name: ev.name,
-      entry_type: "open" as const,
-      match_format: "swiss" as const,
+      entry_type: ev.entry_type,
+      match_format: ev.match_format,
       matches_per_event: ev.matches_per_event,
       max_participants:
         ev.max_participants && !Number.isNaN(ev.max_participants)

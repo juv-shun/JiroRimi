@@ -14,6 +14,13 @@ export const eventSchema = z
       .string()
       .min(1, "イベント名は必須です")
       .max(100, "イベント名は100文字以内で入力してください"),
+    entry_type: z.enum(["open", "invite"]),
+    match_format: z.enum([
+      "swiss",
+      "double_elimination",
+      "single_elimination",
+      "round_robin",
+    ]),
     matches_per_event: z
       .number()
       .int("整数で入力してください")

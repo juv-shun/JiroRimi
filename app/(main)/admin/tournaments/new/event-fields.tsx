@@ -7,6 +7,11 @@ import type {
   UseFieldArrayRemove,
   UseFormRegister,
 } from "react-hook-form"
+import {
+  ENTRY_TYPE_LABELS,
+  MATCH_FORMAT_LABELS,
+} from "@/lib/types/tournament"
+import type { EntryType, MatchFormat } from "@/lib/types/tournament"
 import type { TournamentCreateFormData } from "@/lib/validations/tournament"
 
 type EventFieldsProps = {
@@ -19,6 +24,8 @@ type EventFieldsProps = {
 
 const EMPTY_EVENT = {
   name: "",
+  entry_type: "open" as EntryType,
+  match_format: "swiss" as MatchFormat,
   matches_per_event: 5,
   max_participants: undefined as number | undefined,
   scheduled_date: "",
@@ -81,6 +88,58 @@ export function EventFields({
                   {errors.events[index].name.message}
                 </p>
               )}
+            </div>
+
+            {/* エントリー方式 / 進行形式 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor={`events.${index}.entry_type`}
+                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                >
+                  エントリー方式
+                </label>
+                <select
+                  id={`events.${index}.entry_type`}
+                  {...register(`events.${index}.entry_type`)}
+                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                >
+                  {Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                {errors.events?.[index]?.entry_type && (
+                  <p className="mt-1 text-xs text-error">
+                    {errors.events[index].entry_type.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor={`events.${index}.match_format`}
+                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                >
+                  進行形式
+                </label>
+                <select
+                  id={`events.${index}.match_format`}
+                  {...register(`events.${index}.match_format`)}
+                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                >
+                  {Object.entries(MATCH_FORMAT_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                {errors.events?.[index]?.match_format && (
+                  <p className="mt-1 text-xs text-error">
+                    {errors.events[index].match_format.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* 試合数 / 参加上限 */}
