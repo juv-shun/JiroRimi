@@ -12,14 +12,14 @@ import {
   MATCH_FORMAT_LABELS,
 } from "@/lib/types/tournament"
 import type { EntryType, MatchFormat } from "@/lib/types/tournament"
-import type { TournamentCreateFormData } from "@/lib/validations/tournament"
+import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
 
 type EventFieldsProps = {
   fields: { id: string }[]
-  append: UseFieldArrayAppend<TournamentCreateFormData, "events">
+  append: UseFieldArrayAppend<TournamentUpdateFormData, "events">
   remove: UseFieldArrayRemove
-  register: UseFormRegister<TournamentCreateFormData>
-  errors: FieldErrors<TournamentCreateFormData>
+  register: UseFormRegister<TournamentUpdateFormData>
+  errors: FieldErrors<TournamentUpdateFormData>
 }
 
 const EMPTY_EVENT = {

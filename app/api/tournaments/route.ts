@@ -1,10 +1,8 @@
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { datetimeLocalToTimestamptz } from "@/lib/utils/datetime"
 import { tournamentCreateSchema } from "@/lib/validations/tournament"
-
-/** datetime-local の値を timestamptz（JST）に変換 */
-const toTimestamptz = (dt: string): string => `${dt}:00+09:00`
 
 export async function POST(request: Request) {
   try {
@@ -88,10 +86,10 @@ export async function POST(request: Request) {
           ? ev.max_participants
           : null,
       scheduled_date: ev.scheduled_date,
-      entry_start: toTimestamptz(ev.entry_start),
-      entry_end: toTimestamptz(ev.entry_end),
-      checkin_start: toTimestamptz(ev.checkin_start),
-      checkin_end: toTimestamptz(ev.checkin_end),
+      entry_start: datetimeLocalToTimestamptz(ev.entry_start),
+      entry_end: datetimeLocalToTimestamptz(ev.entry_end),
+      checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
+      checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
       rules: ev.rules || null,
       status: "scheduled",
     }))

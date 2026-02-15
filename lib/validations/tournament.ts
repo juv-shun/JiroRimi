@@ -10,6 +10,7 @@ const datetimeLocalPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
 // イベント1件のスキーマ
 export const eventSchema = z
   .object({
+    id: z.string().uuid().optional(),
     name: z
       .string()
       .min(1, "イベント名は必須です")
@@ -89,5 +90,16 @@ export const tournamentCreateSchema = z.object({
   events: z.array(eventSchema).min(1, "イベントは最低1つ必要です"),
 })
 
+// 大会更新のスキーマ
+export const tournamentUpdateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "大会名は必須です")
+    .max(100, "大会名は100文字以内で入力してください"),
+  status: z.enum(["draft", "open", "in_progress", "completed"]),
+  events: z.array(eventSchema).min(1, "イベントは最低1つ必要です"),
+})
+
 // バリデーション後の型
 export type TournamentCreateFormData = z.infer<typeof tournamentCreateSchema>
+export type TournamentUpdateFormData = z.infer<typeof tournamentUpdateSchema>
