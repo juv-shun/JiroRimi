@@ -21,7 +21,7 @@ export default async function NewTournamentPage() {
     .single()
 
   if (profile?.role !== "admin") {
-    redirect("/admin/tournaments")
+    redirect("/")
   }
 
   return (

@@ -11,8 +11,8 @@ export type TournamentStatus = "draft" | "open" | "in_progress" | "completed"
 export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
   draft: "下書き",
   open: "公開中",
-  in_progress: "開催中",
-  completed: "完了",
+  in_progress: "進行中",
+  completed: "終了",
 }
 
 // イベントステータス
@@ -47,6 +47,15 @@ export const MATCH_FORMAT_LABELS: Record<MatchFormat, string> = {
   double_elimination: "ダブルエリミネーション",
   single_elimination: "シングルエリミネーション",
   round_robin: "総当たり",
+}
+
+// 大会型（イベント数付き、一覧表示用）
+export type TournamentWithEventCount = {
+  id: string
+  name: string
+  status: TournamentStatus
+  created_at: string
+  events: { count: number }[]
 }
 
 // 大会型
