@@ -21,9 +21,9 @@ type EventForButtonState = {
  *
  * 判定優先順位（上から順に評価）:
  * 1. invite: event.entry_type === "invite"
- * 2. not_logged_in: !isLoggedIn
- * 3. before_start: now < entry_start
- * 4. closed: now > entry_end（entry_end まではエントリー可能）
+ * 2. before_start: now < entry_start
+ * 3. closed: now > entry_end（entry_end まではエントリー可能）
+ * 4. not_logged_in: !isLoggedIn
  * 5. can_cancel: isEntered === true
  * 6. can_entry: isEntered === false
  */
@@ -35,16 +35,16 @@ export function getEntryButtonState(
 ): EntryButtonState {
   // 1. 招待制チェック（entry_type === "invite"）
   if (event.entry_type === "invite") return "invite"
-  // 2. ログインチェック
-  if (!isLoggedIn) return "not_logged_in"
 
   const entryStart = new Date(event.entry_start)
   const entryEnd = new Date(event.entry_end)
 
-  // 3. エントリー開始前
+  // 2. エントリー開始前
   if (now < entryStart) return "before_start"
-  // 4. エントリー締切後（entry_end を超えた場合のみ締切）
+  // 3. エントリー締切後（entry_end を超えた場合のみ締切）
   if (now > entryEnd) return "closed"
+  // 4. ログインチェック
+  if (!isLoggedIn) return "not_logged_in"
   // 5-6. エントリー期間中（entry_start <= now <= entry_end）
   return isEntered ? "can_cancel" : "can_entry"
 }
