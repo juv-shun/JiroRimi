@@ -54,6 +54,8 @@ export function TournamentForm({
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<TournamentUpdateFormData>({
     resolver: zodResolver(tournamentUpdateSchema),
@@ -64,7 +66,7 @@ export function TournamentForm({
         {
           name: "",
           entry_type: "open",
-          match_format: "swiss",
+          match_format: "qualifier",
           matches_per_event: 5,
           max_participants: undefined,
           scheduled_date: "",
@@ -204,6 +206,8 @@ export function TournamentForm({
         remove={remove}
         register={register}
         errors={errors}
+        watch={watch}
+        setValue={setValue}
       />
 
       {/* エラー表示 */}

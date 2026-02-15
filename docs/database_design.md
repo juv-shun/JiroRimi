@@ -144,8 +144,8 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | event_number | int | NO | - | イベント番号（大会内での連番） |
 | name | text | NO | - | イベント名（例: 予選1、グランドファイナル） |
 | entry_type | text | NO | 'open' | エントリー方式（後述） |
-| match_format | text | NO | 'swiss' | 進行形式（後述） |
-| matches_per_event | int | NO | 5 | 試合数 |
+| match_format | text | NO | 'qualifier' | 進行形式（後述） |
+| matches_per_event | int | YES | NULL | 試合数（予選の場合のみ、1-10。ダブルエリミネーションはNULL） |
 | max_participants | int | YES | NULL | 参加上限人数（NULL=無制限） |
 | scheduled_date | date | NO | - | 開催日 |
 | entry_start | timestamptz | NO | - | エントリー開始日時 |
@@ -162,10 +162,12 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `invite`: 招待制（運営者が招待したユーザーのみ参加可能）
 
 **進行形式 (match_format)**:
-- `swiss`: スイスドロー
-- `double_elimination`: ダブルエリミネーション
-- `single_elimination`: シングルエリミネーション
-- `round_robin`: ラウンドロビン
+- `qualifier`: 予選（試合数を1-10で指定）
+- `double_elimination`: ダブルエリミネーション（試合数は自動決定、matches_per_event = NULL）
+
+**CHECK制約**: `match_format` と `matches_per_event` の整合性を保証
+- `qualifier` の場合: `matches_per_event` は NOT NULL かつ 1-10
+- `double_elimination` の場合: `matches_per_event` は NULL
 
 **ステータス (status)**:
 - `scheduled`: 予定（エントリー開始前）
@@ -231,9 +233,9 @@ GF固有のチーム編成・ブラケット管理は Phase 3 の詳細設計時
 
 ```
 Tournament（コンテナ）
-├── Event 1: open / swiss           ← 実質「予選」
-├── Event 2: open / swiss           ← 実質「予選」
-└── Event 3: invite / double_elim   ← 実質「グランドファイナル」
+├── Event 1: open / qualifier           ← 実質「予選」
+├── Event 2: open / qualifier           ← 実質「予選」
+└── Event 3: invite / double_elimination ← 実質「グランドファイナル」
 ```
 
 #### イベントの性質を決める2つの軸
@@ -241,14 +243,14 @@ Tournament（コンテナ）
 | 軸 | カラム | 値 | 説明 |
 |----|--------|-----|------|
 | 参加方式 | `entry_type` | `open` / `invite` | 誰でも参加 or 招待制 |
-| 進行形式 | `match_format` | `swiss` / `double_elimination` / ... | 試合の進め方 |
+| 進行形式 | `match_format` | `qualifier` / `double_elimination` | 試合の進め方 |
 
 #### 典型的な大会構成
 
 | 大会形式 | イベント構成 |
 |---------|------------|
-| 予選 + GF | Event 1-N: `open` / `swiss` → GF: `invite` / `double_elimination` |
-| 本戦のみ（1日大会） | Event 1: `open` / `swiss` |
+| 予選 + GF | Event 1-N: `open` / `qualifier` → GF: `invite` / `double_elimination` |
+| 本戦のみ（1日大会） | Event 1: `open` / `qualifier` |
 
 #### この設計の利点
 

@@ -142,7 +142,8 @@ export async function PUT(
         name: ev.name,
         entry_type: ev.entry_type,
         match_format: ev.match_format,
-        matches_per_event: ev.matches_per_event,
+        matches_per_event:
+          ev.match_format === "double_elimination" ? null : ev.matches_per_event,
         max_participants:
           ev.max_participants && !Number.isNaN(ev.max_participants)
             ? ev.max_participants
