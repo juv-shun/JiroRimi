@@ -29,9 +29,6 @@ export function TournamentList({
             </h2>
             <StatusBadge status={tournament.status} />
           </div>
-          <p className="mt-2 text-sm text-gray-500">
-            イベント数: {tournament.events[0]?.count ?? 0}
-          </p>
         </Link>
       ))}
     </div>
