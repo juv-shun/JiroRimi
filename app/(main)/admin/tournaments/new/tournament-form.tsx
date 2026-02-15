@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
+
 import { useFieldArray, useForm } from "react-hook-form"
 import { Toast } from "@/app/components/toast"
 import type { ActionResult } from "@/lib/types/tournament"
@@ -28,14 +29,11 @@ export function TournamentForm() {
     resolver: zodResolver(tournamentCreateSchema),
     defaultValues: {
       name: "",
-      is_boys: false,
-      is_girls: false,
-      matches_per_event: 5,
-      gf_advance_count: 20,
-      max_participants: undefined,
-      rules: "",
       events: [
         {
+          name: "",
+          matches_per_event: 5,
+          max_participants: undefined,
           scheduled_date: "",
           entry_start: "",
           entry_end: "",
@@ -121,129 +119,6 @@ export function TournamentForm() {
             )}
           </div>
 
-          {/* カテゴリ */}
-          <div>
-            <span className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-2">
-              カテゴリ
-            </span>
-            <div className="flex gap-3">
-              <label className="relative cursor-pointer flex-1">
-                <input
-                  type="checkbox"
-                  {...register("is_boys")}
-                  className="peer sr-only"
-                />
-                <div className="py-2.5 rounded-xl border-2 text-center transition-all duration-200 border-blue-200 hover:border-blue-300 bg-blue-50/50 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md">
-                  <span className="text-sm font-medium">
-                    じろカップ（Boys）
-                  </span>
-                </div>
-              </label>
-              <label className="relative cursor-pointer flex-1">
-                <input
-                  type="checkbox"
-                  {...register("is_girls")}
-                  className="peer sr-only"
-                />
-                <div className="py-2.5 rounded-xl border-2 text-center transition-all duration-200 border-pink-200 hover:border-pink-300 bg-pink-50/50 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md">
-                  <span className="text-sm font-medium">
-                    りみカップ（Girls）
-                  </span>
-                </div>
-              </label>
-            </div>
-            {errors.is_girls && (
-              <p className="mt-1 text-xs text-error">
-                {errors.is_girls.message}
-              </p>
-            )}
-          </div>
-
-          {/* 予選試合数 / GF進出人数 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="matches_per_event"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-              >
-                予選試合数
-              </label>
-              <input
-                id="matches_per_event"
-                type="number"
-                {...register("matches_per_event", { valueAsNumber: true })}
-                min={1}
-                max={10}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-              />
-              {errors.matches_per_event && (
-                <p className="mt-1 text-xs text-error">
-                  {errors.matches_per_event.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="gf_advance_count"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-              >
-                GF進出人数
-              </label>
-              <input
-                id="gf_advance_count"
-                type="number"
-                {...register("gf_advance_count", { valueAsNumber: true })}
-                min={1}
-                max={100}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-              />
-              {errors.gf_advance_count && (
-                <p className="mt-1 text-xs text-error">
-                  {errors.gf_advance_count.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* 参加上限 */}
-          <div>
-            <label
-              htmlFor="max_participants"
-              className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-            >
-              参加上限（任意）
-            </label>
-            <input
-              id="max_participants"
-              type="number"
-              {...register("max_participants", { valueAsNumber: true })}
-              min={1}
-              placeholder="未設定の場合は上限なし"
-              className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-            />
-            {errors.max_participants && (
-              <p className="mt-1 text-xs text-error">
-                {errors.max_participants.message}
-              </p>
-            )}
-          </div>
-
-          {/* ルール */}
-          <div>
-            <label
-              htmlFor="rules"
-              className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-            >
-              大会ルール（任意）
-            </label>
-            <textarea
-              id="rules"
-              {...register("rules")}
-              rows={4}
-              placeholder="大会共通のルールを入力してください"
-              className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-y"
-            />
-          </div>
         </div>
       </section>
 

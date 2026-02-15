@@ -18,6 +18,9 @@ type EventFieldsProps = {
 }
 
 const EMPTY_EVENT = {
+  name: "",
+  matches_per_event: 5,
+  max_participants: undefined as number | undefined,
   scheduled_date: "",
   entry_start: "",
   entry_end: "",
@@ -44,7 +47,7 @@ export function EventFields({
           <div className="bg-gradient-to-r from-success/10 via-success/5 to-transparent px-6 py-4 border-b border-border/50 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
               <span className="w-1.5 h-5 bg-success rounded-full" />
-              予選 {index + 1}
+              イベント {index + 1}
             </h3>
             {fields.length > 1 && (
               <button
@@ -58,6 +61,78 @@ export function EventFields({
           </div>
 
           <div className="p-6 space-y-4">
+            {/* イベント名 */}
+            <div>
+              <label
+                htmlFor={`events.${index}.name`}
+                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+              >
+                イベント名
+              </label>
+              <input
+                id={`events.${index}.name`}
+                type="text"
+                {...register(`events.${index}.name`)}
+                placeholder="例: 予選1"
+                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+              />
+              {errors.events?.[index]?.name && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.events[index].name.message}
+                </p>
+              )}
+            </div>
+
+            {/* 試合数 / 参加上限 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor={`events.${index}.matches_per_event`}
+                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                >
+                  試合数
+                </label>
+                <input
+                  id={`events.${index}.matches_per_event`}
+                  type="number"
+                  {...register(`events.${index}.matches_per_event`, {
+                    valueAsNumber: true,
+                  })}
+                  min={1}
+                  max={10}
+                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                />
+                {errors.events?.[index]?.matches_per_event && (
+                  <p className="mt-1 text-xs text-error">
+                    {errors.events[index].matches_per_event.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor={`events.${index}.max_participants`}
+                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                >
+                  参加上限（任意）
+                </label>
+                <input
+                  id={`events.${index}.max_participants`}
+                  type="number"
+                  {...register(`events.${index}.max_participants`, {
+                    valueAsNumber: true,
+                  })}
+                  min={1}
+                  placeholder="上限なし"
+                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                />
+                {errors.events?.[index]?.max_participants && (
+                  <p className="mt-1 text-xs text-error">
+                    {errors.events[index].max_participants.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* 開催日 */}
             <div>
               <label
@@ -175,11 +250,11 @@ export function EventFields({
                 id={`events.${index}.rules`}
                 {...register(`events.${index}.rules`)}
                 rows={3}
-                placeholder="予選固有のルールがあれば入力してください"
+                placeholder="このイベントのルールを入力してください"
                 className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-y"
               />
               <p className="mt-1 text-xs text-text-secondary">
-                未設定の場合は大会ルールが適用されます
+                任意
               </p>
             </div>
           </div>
@@ -193,7 +268,7 @@ export function EventFields({
         className="w-full py-3 border-2 border-dashed border-border hover:border-primary/50 rounded-2xl text-text-secondary hover:text-primary flex items-center justify-center gap-2 transition-all duration-200"
       >
         <Plus className="w-4 h-4" />
-        予選を追加
+        イベントを追加
       </button>
 
       {/* 配列レベルのエラー */}

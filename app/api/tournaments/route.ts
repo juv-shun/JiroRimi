@@ -62,15 +62,6 @@ export async function POST(request: Request) {
       .from("tournaments")
       .insert({
         name: data.name,
-        is_boys: data.is_boys,
-        is_girls: data.is_girls,
-        matches_per_event: data.matches_per_event,
-        gf_advance_count: data.gf_advance_count,
-        max_participants:
-          data.max_participants && !Number.isNaN(data.max_participants)
-            ? data.max_participants
-            : null,
-        rules: data.rules || null,
         status: "draft",
       })
       .select("id")
@@ -85,17 +76,23 @@ export async function POST(request: Request) {
     }
 
     // イベント一括INSERT
-    const eventsToInsert = data.events.map((q, index) => ({
+    const eventsToInsert = data.events.map((ev, index) => ({
       tournament_id: tournament.id,
       event_number: index + 1,
-      event_type: "qualifier" as const,
+      name: ev.name,
+      entry_type: "open" as const,
       match_format: "swiss" as const,
-      scheduled_date: q.scheduled_date,
-      entry_start: toTimestamptz(q.entry_start),
-      entry_end: toTimestamptz(q.entry_end),
-      checkin_start: toTimestamptz(q.checkin_start),
-      checkin_end: toTimestamptz(q.checkin_end),
-      rules: q.rules || null,
+      matches_per_event: ev.matches_per_event,
+      max_participants:
+        ev.max_participants && !Number.isNaN(ev.max_participants)
+          ? ev.max_participants
+          : null,
+      scheduled_date: ev.scheduled_date,
+      entry_start: toTimestamptz(ev.entry_start),
+      entry_end: toTimestamptz(ev.entry_end),
+      checkin_start: toTimestamptz(ev.checkin_start),
+      checkin_end: toTimestamptz(ev.checkin_end),
+      rules: ev.rules || null,
       status: "scheduled",
     }))
 

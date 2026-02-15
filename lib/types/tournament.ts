@@ -4,26 +4,6 @@
 
 export type { ActionResult } from "./profile"
 
-// 大会カテゴリ
-export type TournamentCategory = "boys" | "girls" | "both"
-
-// 大会カテゴリラベル
-export const TOURNAMENT_CATEGORY_LABELS: Record<TournamentCategory, string> = {
-  boys: "じろカップ（Boys）",
-  girls: "りみカップ（Girls）",
-  both: "Jiro-Rimi Cup（Boys & Girls）",
-}
-
-/** is_boys/is_girls フラグからカテゴリを導出する */
-export function getTournamentCategory(
-  is_boys: boolean,
-  is_girls: boolean,
-): TournamentCategory {
-  if (is_boys && is_girls) return "both"
-  if (is_boys) return "boys"
-  return "girls"
-}
-
 // 大会ステータス
 export type TournamentStatus = "draft" | "open" | "in_progress" | "completed"
 
@@ -45,8 +25,8 @@ export type EventStatus =
   | "in_progress"
   | "completed"
 
-// イベント種別
-export type EventType = "qualifier" | "main"
+// エントリー方式
+export type EntryType = "open" | "invite"
 
 // 進行形式
 export type MatchFormat =
@@ -59,12 +39,6 @@ export type MatchFormat =
 export type Tournament = {
   id: string
   name: string
-  is_boys: boolean
-  is_girls: boolean
-  matches_per_event: number
-  gf_advance_count: number
-  max_participants: number | null
-  rules: string | null
   status: TournamentStatus
   created_at: string
   updated_at: string
@@ -75,8 +49,11 @@ export type TournamentEvent = {
   id: string
   tournament_id: string
   event_number: number
-  event_type: EventType
+  name: string
+  entry_type: EntryType
   match_format: MatchFormat
+  matches_per_event: number
+  max_participants: number | null
   scheduled_date: string
   entry_start: string
   entry_end: string
