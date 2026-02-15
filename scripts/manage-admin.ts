@@ -36,7 +36,9 @@ async function grantAdmin(discordId: string): Promise<void> {
     .single()
 
   if (selectError || !profile) {
-    console.error(`エラー: Discord ID "${discordId}" のユーザーが見つかりません`)
+    console.error(
+      `エラー: Discord ID "${discordId}" のユーザーが見つかりません`,
+    )
     process.exit(1)
   }
 
@@ -70,7 +72,9 @@ async function revokeAdmin(discordId: string): Promise<void> {
     .single()
 
   if (selectError || !profile) {
-    console.error(`エラー: Discord ID "${discordId}" のユーザーが見つかりません`)
+    console.error(
+      `エラー: Discord ID "${discordId}" のユーザーが見つかりません`,
+    )
     process.exit(1)
   }
 

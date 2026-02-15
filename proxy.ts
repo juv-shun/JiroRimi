@@ -9,7 +9,11 @@ const protectedRoutes: string[] = ["/mypage", "/admin"]
 const authRoutes = ["/login"]
 
 // プロフィール未完了時に許可するルート
-const firstTimeSetupAllowedRoutes = ["/mypage", "/auth/callback", "/api/profile"]
+const firstTimeSetupAllowedRoutes = [
+  "/mypage",
+  "/auth/callback",
+  "/api/profile",
+]
 
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request)

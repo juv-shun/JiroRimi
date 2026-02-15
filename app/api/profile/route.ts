@@ -58,19 +58,17 @@ export async function POST(request: Request) {
       )
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        discord_id,
-        discord_username: discord_username ?? null,
-        player_name: player_name.trim(),
-        x_id: x_id.trim(),
-        gender,
-        first_role,
-        second_role,
-        third_role,
-      })
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      discord_id,
+      discord_username: discord_username ?? null,
+      player_name: player_name.trim(),
+      x_id: x_id.trim(),
+      gender,
+      first_role,
+      second_role,
+      third_role,
+    })
 
     if (error) {
       return NextResponse.json(

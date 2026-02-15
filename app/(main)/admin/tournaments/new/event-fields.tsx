@@ -9,10 +9,7 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form"
-import {
-  ENTRY_TYPE_LABELS,
-  MATCH_FORMAT_LABELS,
-} from "@/lib/types/tournament"
+import { ENTRY_TYPE_LABELS, MATCH_FORMAT_LABELS } from "@/lib/types/tournament"
 import type { EntryType, MatchFormat } from "@/lib/types/tournament"
 import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
 
@@ -142,7 +139,10 @@ export function EventFields({
                   id={`events.${index}.match_format`}
                   {...register(`events.${index}.match_format`, {
                     onChange: (e) =>
-                      handleMatchFormatChange(index, e.target.value as MatchFormat),
+                      handleMatchFormatChange(
+                        index,
+                        e.target.value as MatchFormat,
+                      ),
                   })}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 >
@@ -178,7 +178,8 @@ export function EventFields({
                       type="number"
                       {...register(`events.${index}.matches_per_event`, {
                         setValueAs: (v) => {
-                          if (v === "" || v === null || v === undefined) return null
+                          if (v === "" || v === null || v === undefined)
+                            return null
                           const num = Number(v)
                           return Number.isNaN(num) ? null : num
                         },
@@ -350,9 +351,7 @@ export function EventFields({
                 placeholder="このイベントのルールを入力してください"
                 className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-y"
               />
-              <p className="mt-1 text-xs text-text-secondary">
-                任意
-              </p>
+              <p className="mt-1 text-xs text-text-secondary">任意</p>
             </div>
           </div>
         </section>

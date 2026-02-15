@@ -43,8 +43,7 @@ export function TournamentForm({
   defaultValues,
 }: TournamentFormProps) {
   const router = useRouter()
-  const initialStatus: TournamentStatus =
-    defaultValues?.status ?? "draft"
+  const initialStatus: TournamentStatus = defaultValues?.status ?? "draft"
   const [state, setState] = useState<ActionResult | null>(null)
   const [isPending, startTransition] = useTransition()
   const [showSuccess, setShowSuccess] = useState(false)

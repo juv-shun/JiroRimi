@@ -33,7 +33,12 @@ const toastConfig: Record<
   },
 }
 
-export function Toast({ message, type = "success", show, isExiting = false }: ToastProps) {
+export function Toast({
+  message,
+  type = "success",
+  show,
+  isExiting = false,
+}: ToastProps) {
   if (!show) return null
 
   const config = toastConfig[type]
