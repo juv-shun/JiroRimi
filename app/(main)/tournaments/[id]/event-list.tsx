@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
+import { Toast } from "@/app/components/toast"
 import type { TournamentEventForDisplay } from "@/lib/types/tournament"
 import {
   formatDateJST,
@@ -28,6 +29,14 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     eventName: string
     rules: string
   } | null>(null)
+  const [loadingEventId, setLoadingEventId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{
+    message: string
+    type: "success" | "error"
+  } | null>(null)
+  const [isExiting, setIsExiting] = useState(false)
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // 1分ごとに現在時刻を更新（ボタン状態の再評価用）
   useEffect(() => {
@@ -37,6 +46,26 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     return () => clearInterval(timer)
   }, [])
 
+  // アンマウント時のトーストタイマークリーンアップ
+  useEffect(() => {
+    return () => {
+      clearTimeout(exitTimerRef.current)
+      clearTimeout(hideTimerRef.current)
+    }
+  }, [])
+
+  const showToast = (message: string, type: "success" | "error") => {
+    clearTimeout(exitTimerRef.current)
+    clearTimeout(hideTimerRef.current)
+    setToast({ message, type })
+    setIsExiting(false)
+    exitTimerRef.current = setTimeout(() => setIsExiting(true), 2500)
+    hideTimerRef.current = setTimeout(() => {
+      setToast(null)
+      setIsExiting(false)
+    }, 3000)
+  }
+
   if (events.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center text-gray-500">
@@ -45,11 +74,37 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     )
   }
 
-  const handleButtonClick = (state: EntryButtonState) => {
+  const handleButtonClick = async (state: EntryButtonState, eventId: string) => {
     if (state === "not_logged_in") {
       router.push("/login")
+      return
     }
-    // can_entry, can_cancel は 1.5.3, 1.5.4 で実装
+
+    if (state === "can_entry") {
+      setLoadingEventId(eventId)
+      try {
+        const res = await fetch("/api/entries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: eventId }),
+        })
+        const data = await res.json()
+
+        if (data.success) {
+          showToast("エントリーしました", "success")
+          router.refresh()
+        } else if (res.status === 401) {
+          router.push("/login")
+        } else {
+          showToast(data.error || "エントリーに失敗しました", "error")
+        }
+      } catch {
+        showToast("エントリーに失敗しました", "error")
+      } finally {
+        setLoadingEventId(null)
+      }
+    }
+    // can_cancel は 1.5.4 で実装
   }
 
   return (
@@ -127,7 +182,8 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
                 </button>
                 <EntryButton
                   state={buttonState}
-                  onClick={() => handleButtonClick(buttonState)}
+                  onClick={() => handleButtonClick(buttonState, event.id)}
+                  loading={loadingEventId === event.id}
                   className="flex-1"
                 />
               </div>
@@ -142,6 +198,15 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
           onClose={() => setRulesModal(null)}
         />
       )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          show={true}
+          isExiting={isExiting}
+        />
+      )}
     </div>
   )
 }
@@ -150,23 +215,23 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
 function EntryButton({
   state,
   onClick,
+  loading = false,
   fullWidth = false,
   className: additionalClassName = "",
 }: {
   state: EntryButtonState
   onClick: () => void
+  loading?: boolean
   fullWidth?: boolean
   className?: string
 }) {
-  const label = ENTRY_BUTTON_LABELS[state]
+  const label = loading ? "エントリー中..." : ENTRY_BUTTON_LABELS[state]
 
-  // 1.5.2 では can_entry, can_cancel は未実装のため disabled
-  // not_logged_in のみ onClick でログインページへ遷移
   const isDisabled =
+    loading ||
     state === "invite" ||
     state === "before_start" ||
     state === "closed" ||
-    state === "can_entry" ||
     state === "can_cancel"
 
   // スタイルの決定
@@ -176,13 +241,15 @@ function EntryButton({
   if (state === "invite" || state === "before_start" || state === "closed") {
     className += " bg-gray-200 text-gray-500 cursor-not-allowed"
   }
-  // キャンセルボタン（赤系）- 1.5.2では未実装だがスタイルは適用
+  // キャンセルボタン（赤系）- 1.5.4で実装予定のため disabled
   else if (state === "can_cancel") {
     className += " bg-red-500 text-white opacity-50 cursor-not-allowed"
   }
-  // エントリーボタン（プライマリ）- 1.5.2では未実装だがスタイルは適用
+  // エントリーボタン（プライマリ・活性）
   else if (state === "can_entry") {
-    className += " bg-primary text-white opacity-50 cursor-not-allowed"
+    className += loading
+      ? " bg-primary text-white opacity-50 cursor-not-allowed"
+      : " bg-primary hover:bg-primary-hover text-white"
   }
   // ログインボタン（活性）
   else {
