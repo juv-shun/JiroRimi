@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 import { Toast } from "@/app/components/toast"
@@ -17,12 +18,13 @@ import {
 } from "./get-entry-button-state"
 
 type EventListProps = {
+  tournamentId: string
   events: TournamentEventForDisplay[]
   isLoggedIn: boolean
   userEntries: string[]
 }
 
-export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
+export function EventList({ tournamentId, events, isLoggedIn, userEntries }: EventListProps) {
   const router = useRouter()
   const [now, setNow] = useState(() => new Date())
   const [rulesModal, setRulesModal] = useState<{
@@ -218,7 +220,12 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
                 </div>
                 <div className="col-span-2">
                   <span className="text-gray-500">エントリー人数:</span>{" "}
-                  <span className="text-gray-900">{entryCount}人</span>
+                  <Link
+                    href={`/tournaments/${tournamentId}/events/${event.id}/entries`}
+                    className="text-primary hover:text-primary-hover underline"
+                  >
+                    {entryCount}人
+                  </Link>
                 </div>
               </div>
 

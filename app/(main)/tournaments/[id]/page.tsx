@@ -60,6 +60,7 @@ export default async function TournamentDetailPage({
         <PageHeader title={tournament.name} />
 
         <EventList
+          tournamentId={tournament.id}
           events={tournament.events as TournamentEventForDisplay[]}
           isLoggedIn={!!user}
           userEntries={userEntries}
