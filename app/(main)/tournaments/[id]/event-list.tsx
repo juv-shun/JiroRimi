@@ -29,6 +29,8 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     eventName: string
     rules: string
   } | null>(null)
+  const [confirmEvent, setConfirmEvent] =
+    useState<TournamentEventForDisplay | null>(null)
   const [loadingEventId, setLoadingEventId] = useState<string | null>(null)
   const [toast, setToast] = useState<{
     message: string
@@ -74,37 +76,47 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     )
   }
 
-  const handleButtonClick = async (state: EntryButtonState, eventId: string) => {
+  const handleButtonClick = (
+    state: EntryButtonState,
+    event: TournamentEventForDisplay,
+  ) => {
     if (state === "not_logged_in") {
       router.push("/login")
       return
     }
 
     if (state === "can_entry") {
-      setLoadingEventId(eventId)
-      try {
-        const res = await fetch("/api/entries", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event_id: eventId }),
-        })
-        const data = await res.json()
-
-        if (data.success) {
-          showToast("エントリーしました", "success")
-          router.refresh()
-        } else if (res.status === 401) {
-          router.push("/login")
-        } else {
-          showToast(data.error || "エントリーに失敗しました", "error")
-        }
-      } catch {
-        showToast("エントリーに失敗しました", "error")
-      } finally {
-        setLoadingEventId(null)
-      }
+      setConfirmEvent(event)
     }
     // can_cancel は 1.5.4 で実装
+  }
+
+  const handleEntryConfirm = async () => {
+    if (!confirmEvent) return
+    const eventId = confirmEvent.id
+    setConfirmEvent(null)
+    setLoadingEventId(eventId)
+    try {
+      const res = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: eventId }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast("エントリーしました", "success")
+        router.refresh()
+      } else if (res.status === 401) {
+        router.push("/login")
+      } else {
+        showToast(data.error || "エントリーに失敗しました", "error")
+      }
+    } catch {
+      showToast("エントリーに失敗しました", "error")
+    } finally {
+      setLoadingEventId(null)
+    }
   }
 
   return (
@@ -182,7 +194,7 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
                 </button>
                 <EntryButton
                   state={buttonState}
-                  onClick={() => handleButtonClick(buttonState, event.id)}
+                  onClick={() => handleButtonClick(buttonState, event)}
                   loading={loadingEventId === event.id}
                   className="flex-1"
                 />
@@ -196,6 +208,14 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
           eventName={rulesModal.eventName}
           rules={rulesModal.rules}
           onClose={() => setRulesModal(null)}
+        />
+      )}
+
+      {confirmEvent && (
+        <EntryConfirmModal
+          event={confirmEvent}
+          onConfirm={handleEntryConfirm}
+          onClose={() => setConfirmEvent(null)}
         />
       )}
 
@@ -273,6 +293,83 @@ function EntryButton({
     >
       {label}
     </button>
+  )
+}
+
+// エントリー確認モーダル
+function EntryConfirmModal({
+  event,
+  onConfirm,
+  onClose,
+}: {
+  event: TournamentEventForDisplay
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", handleEsc)
+    return () => document.removeEventListener("keydown", handleEsc)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+        aria-label="モーダルを閉じる"
+      />
+      <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-gray-900">
+            エントリー確認
+          </h2>
+        </div>
+        <div className="px-6 py-4">
+          <p className="text-sm text-gray-700 mb-3">
+            以下のイベントにエントリーしますか？
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
+            <div>
+              <span className="text-gray-500">イベント:</span>{" "}
+              <span className="font-medium text-gray-900">{event.name}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">開催日:</span>{" "}
+              <span className="text-gray-900">
+                {formatDateJST(event.scheduled_date)}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">チェックイン:</span>{" "}
+              <span className="text-gray-900">
+                {formatTimeJST(event.checkin_start)} 〜{" "}
+                {formatTimeJST(event.checkin_end)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-border flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors"
+          >
+            エントリーする
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
