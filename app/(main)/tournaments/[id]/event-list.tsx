@@ -168,9 +168,18 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
           return (
             <div
               key={event.id}
-              className="bg-white rounded-2xl shadow-sm border border-border p-4"
+              className={`bg-white rounded-2xl shadow-sm border p-4 ${
+                isEntered ? "border-primary" : "border-border"
+              }`}
             >
-              <h3 className="font-medium text-gray-900 mb-3">{event.name}</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="font-medium text-gray-900">{event.name}</h3>
+                {isEntered && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary-light text-orange-700 font-medium whitespace-nowrap">
+                    エントリー済
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                 <div>
