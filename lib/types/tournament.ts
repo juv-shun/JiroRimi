@@ -112,3 +112,12 @@ export type TournamentDetail = {
   status: TournamentStatus
   events: TournamentEventForDisplay[]
 }
+
+// 大会型（イベント詳細付き、大会一覧画面用）
+export type TournamentWithEvents = {
+  id: string
+  name: string
+  status: TournamentStatus
+  created_at: string
+  events: TournamentEventForDisplay[]
+}

@@ -1,11 +1,15 @@
-import Link from "next/link"
-import type { TournamentWithEventCount } from "@/lib/types/tournament"
+import type { TournamentWithEvents } from "@/lib/types/tournament"
 import { StatusBadge } from "@/app/components/status-badge"
+import { EventList } from "./event-list"
 
 export function TournamentList({
   tournaments,
+  isLoggedIn,
+  userEntries,
 }: {
-  tournaments: TournamentWithEventCount[]
+  tournaments: TournamentWithEvents[]
+  isLoggedIn: boolean
+  userEntries: string[]
 }) {
   if (tournaments.length === 0) {
     return (
@@ -16,20 +20,23 @@ export function TournamentList({
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="space-y-8">
       {tournaments.map((tournament) => (
-        <Link
-          key={tournament.id}
-          href={`/tournaments/${tournament.id}`}
-          className="block bg-white rounded-2xl shadow-sm border border-border p-5 hover:shadow-md hover:border-primary/30 transition-all"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
+        <section key={tournament.id}>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">
               {tournament.name}
             </h2>
             <StatusBadge status={tournament.status} />
           </div>
-        </Link>
+
+          <EventList
+            tournamentId={tournament.id}
+            events={tournament.events}
+            isLoggedIn={isLoggedIn}
+            userEntries={userEntries}
+          />
+        </section>
       ))}
     </div>
   )

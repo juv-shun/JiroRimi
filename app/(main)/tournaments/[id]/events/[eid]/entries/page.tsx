@@ -85,11 +85,11 @@ export default async function EntryListPage({
     <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <Link
-          href={`/tournaments/${id}`}
+          href="/tournaments"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
-          大会詳細に戻る
+          大会一覧に戻る
         </Link>
 
         <PageHeader
