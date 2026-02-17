@@ -31,7 +31,10 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
   } | null>(null)
   const [confirmEvent, setConfirmEvent] =
     useState<TournamentEventForDisplay | null>(null)
+  const [cancelConfirmEvent, setCancelConfirmEvent] =
+    useState<TournamentEventForDisplay | null>(null)
   const [loadingEventId, setLoadingEventId] = useState<string | null>(null)
+  const [cancellingEventId, setCancellingEventId] = useState<string | null>(null)
   const [toast, setToast] = useState<{
     message: string
     type: "success" | "error"
@@ -88,7 +91,10 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
     if (state === "can_entry") {
       setConfirmEvent(event)
     }
-    // can_cancel は 1.5.4 で実装
+
+    if (state === "can_cancel") {
+      setCancelConfirmEvent(event)
+    }
   }
 
   const handleEntryConfirm = async () => {
@@ -116,6 +122,34 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
       showToast("エントリーに失敗しました", "error")
     } finally {
       setLoadingEventId(null)
+    }
+  }
+
+  const handleCancelConfirm = async () => {
+    if (!cancelConfirmEvent) return
+    const eventId = cancelConfirmEvent.id
+    setCancelConfirmEvent(null)
+    setCancellingEventId(eventId)
+    try {
+      const res = await fetch("/api/entries", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: eventId }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast("エントリーをキャンセルしました", "success")
+        router.refresh()
+      } else if (res.status === 401) {
+        router.push("/login")
+      } else {
+        showToast(data.error || "キャンセルに失敗しました", "error")
+      }
+    } catch {
+      showToast("キャンセルに失敗しました", "error")
+    } finally {
+      setCancellingEventId(null)
     }
   }
 
@@ -196,6 +230,7 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
                   state={buttonState}
                   onClick={() => handleButtonClick(buttonState, event)}
                   loading={loadingEventId === event.id}
+                  cancelling={cancellingEventId === event.id}
                   className="flex-1"
                 />
               </div>
@@ -219,6 +254,14 @@ export function EventList({ events, isLoggedIn, userEntries }: EventListProps) {
         />
       )}
 
+      {cancelConfirmEvent && (
+        <CancelConfirmModal
+          event={cancelConfirmEvent}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setCancelConfirmEvent(null)}
+        />
+      )}
+
       {toast && (
         <Toast
           message={toast.message}
@@ -236,23 +279,29 @@ function EntryButton({
   state,
   onClick,
   loading = false,
+  cancelling = false,
   fullWidth = false,
   className: additionalClassName = "",
 }: {
   state: EntryButtonState
   onClick: () => void
   loading?: boolean
+  cancelling?: boolean
   fullWidth?: boolean
   className?: string
 }) {
-  const label = loading ? "エントリー中..." : ENTRY_BUTTON_LABELS[state]
+  const label = cancelling
+    ? "キャンセル中..."
+    : loading
+      ? "エントリー中..."
+      : ENTRY_BUTTON_LABELS[state]
 
   const isDisabled =
     loading ||
+    cancelling ||
     state === "invite" ||
     state === "before_start" ||
-    state === "closed" ||
-    state === "can_cancel"
+    state === "closed"
 
   // スタイルの決定
   let className = "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
@@ -261,9 +310,11 @@ function EntryButton({
   if (state === "invite" || state === "before_start" || state === "closed") {
     className += " bg-gray-200 text-gray-500 cursor-not-allowed"
   }
-  // キャンセルボタン（赤系）- 1.5.4で実装予定のため disabled
+  // キャンセルボタン（赤系）
   else if (state === "can_cancel") {
-    className += " bg-red-500 text-white opacity-50 cursor-not-allowed"
+    className += cancelling
+      ? " bg-red-500 text-white opacity-50 cursor-not-allowed"
+      : " bg-red-500 hover:bg-red-600 text-white"
   }
   // エントリーボタン（プライマリ・活性）
   else if (state === "can_entry") {
@@ -366,6 +417,76 @@ function EntryConfirmModal({
             className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-primary hover:bg-primary-hover text-white transition-colors"
           >
             エントリーする
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// キャンセル確認モーダル
+function CancelConfirmModal({
+  event,
+  onConfirm,
+  onClose,
+}: {
+  event: TournamentEventForDisplay
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", handleEsc)
+    return () => document.removeEventListener("keydown", handleEsc)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+        aria-label="モーダルを閉じる"
+      />
+      <div className="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-gray-900">
+            キャンセル確認
+          </h2>
+        </div>
+        <div className="px-6 py-4">
+          <p className="text-sm text-gray-700 mb-3">
+            以下のイベントのエントリーをキャンセルしますか？
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 space-y-1 text-sm">
+            <div>
+              <span className="text-gray-500">イベント:</span>{" "}
+              <span className="font-medium text-gray-900">{event.name}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">開催日:</span>{" "}
+              <span className="text-gray-900">
+                {formatDateJST(event.scheduled_date)}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-border flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            戻る
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors"
+          >
+            キャンセルする
           </button>
         </div>
       </div>
