@@ -70,8 +70,8 @@ export default async function HomePage() {
             <Image
               src="/logo.png"
               alt="Jiro-Rimi Cup"
-              width={160}
-              height={160}
+              width={240}
+              height={240}
               className="mx-auto"
               priority
             />
@@ -80,7 +80,7 @@ export default async function HomePage() {
           {/* Catchcopy */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
             <span className="bg-gradient-to-r from-primary via-orange-500 to-amber-400 bg-clip-text text-transparent">
-              仲間と競い合う、ソロ大会の新境地
+              本気で競うソロ大会の新境地
             </span>
           </h1>
           <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-8">
@@ -88,12 +88,6 @@ export default async function HomePage() {
             <br className="sm:hidden" />
             チームワークと個人スキルを磨こう
           </p>
-
-          {/* CTA */}
-          <Link href="/tournaments" className="glow-button inline-flex items-center gap-2">
-            大会一覧を見る
-            <ChevronRight className="w-5 h-5" />
-          </Link>
         </div>
       </section>
 
@@ -123,7 +117,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <p className="text-text-secondary">
-                昼開催の男子ソロ大会。熱い戦いを繰り広げよう！
+                男子ソロ大会。熱い戦いを繰り広げよう！
               </p>
             </div>
 
@@ -146,7 +140,7 @@ export default async function HomePage() {
                 </div>
               </div>
               <p className="text-text-secondary">
-                夜開催の女子ソロ大会。輝くプレイを見せよう！
+                女子ソロ大会。輝くプレイを見せよう！
               </p>
             </div>
           </div>
