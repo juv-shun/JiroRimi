@@ -11,6 +11,7 @@ import {
   User,
   X,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -85,15 +86,18 @@ export function Sidebar({
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       {/* Logo / App Name */}
-      <div className="flex h-16 items-center gap-3 border-b border-primary/20 px-6">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-amber-500 shadow-lg shadow-primary/25">
-          <Trophy className="size-5 text-white" />
-        </div>
-        <div className="flex flex-col">
-          <span className="font-bold text-lg text-text-primary tracking-tight">
-            Jiro-Rimi Cup
-          </span>
-        </div>
+      <div className="flex h-16 items-center gap-3 border-b border-primary/20 px-4">
+        <Image
+          src="/logo.png"
+          alt="Jiro-Rimi Cup"
+          width={48}
+          height={48}
+          className="size-12"
+          priority
+        />
+        <span className="font-bold text-lg text-text-primary tracking-tight">
+          Jiro-Rimi Cup
+        </span>
       </div>
 
       {/* Navigation */}
@@ -230,9 +234,14 @@ export function Sidebar({
       {/* Mobile Header */}
       <header className="fixed top-0 right-0 left-0 z-40 flex h-14 items-center justify-between border-b border-primary/10 bg-white/95 px-4 backdrop-blur-sm md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-amber-500">
-            <Trophy className="size-4 text-white" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="Jiro-Rimi Cup"
+            width={36}
+            height={36}
+            className="size-9"
+            priority
+          />
           <span className="font-bold text-text-primary">Jiro-Rimi Cup</span>
         </div>
         <button
