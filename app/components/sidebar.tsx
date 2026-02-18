@@ -33,11 +33,11 @@ const navItems: NavItem[] = [
     href: "/tournaments",
     icon: <Trophy className="size-5" />,
   },
-  {
-    label: "Schedule",
-    href: "/schedule",
-    icon: <Calendar className="size-5" />,
-  },
+  // {
+  //   label: "Schedule",
+  //   href: "/schedule",
+  //   icon: <Calendar className="size-5" />,
+  // },
   {
     label: "My Page",
     href: "/mypage",
