@@ -278,15 +278,6 @@
   letter-spacing: 0.025em;
 }
 
-.status-badge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
 /* Entry badge */
 .entry-badge {
   display: inline-flex;
