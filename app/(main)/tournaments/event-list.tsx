@@ -255,7 +255,7 @@ export function EventList({
               <InfoRow
                 icon={<ClockIcon />}
                 label="エントリー"
-                value={`${formatDateTimeJST(event.entry_start)} 〜 ${formatTimeJST(event.entry_end)}`}
+                value={`${formatDateTimeJST(event.entry_start)} 〜 ${formatDateTimeJST(event.entry_end)}`}
                 fullWidth
               />
               <InfoRow
