@@ -43,8 +43,8 @@ export default function HomePage() {
                 <Image
                   src="/jiro-icon.png"
                   alt="じろカップ"
-                  width={48}
-                  height={48}
+                  width={64}
+                  height={64}
                   className="rounded-lg"
                 />
                 <div>
@@ -70,8 +70,8 @@ export default function HomePage() {
                 <Image
                   src="/rimi-icon.png"
                   alt="りみカップ"
-                  width={48}
-                  height={48}
+                  width={64}
+                  height={64}
                   className="rounded-lg"
                 />
                 <div>
