@@ -83,24 +83,17 @@ export default async function HomePage() {
               本気で競うソロ大会の新境地
             </span>
           </h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-8">
+          <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
             ポケモンユナイトのソロ大会で、
             <br className="sm:hidden" />
             チームワークと個人スキルを磨こう
           </p>
-        </div>
-      </section>
 
-      {/* 大会紹介 Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8 text-text-primary">
-            2つの大会
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          {/* 大会紹介カード */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {/* じろカップ */}
             <div
-              className="rich-card p-6 opacity-0"
+              className="rich-card p-6 opacity-0 text-left"
               style={{
                 animation: "card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards",
               }}
@@ -123,7 +116,7 @@ export default async function HomePage() {
 
             {/* りみカップ */}
             <div
-              className="rich-card p-6 opacity-0"
+              className="rich-card p-6 opacity-0 text-left"
               style={{
                 animation: "card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards",
               }}
