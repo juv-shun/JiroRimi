@@ -1,4 +1,3 @@
-import { Star, Trophy } from "lucide-react"
 import Image from "next/image"
 
 export default function HomePage() {
@@ -41,9 +40,13 @@ export default function HomePage() {
               }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
+                <Image
+                  src="/jiro-icon.png"
+                  alt="じろカップ"
+                  width={48}
+                  height={48}
+                  className="rounded-lg"
+                />
                 <div>
                   <h3 className="text-xl font-bold text-text-primary">
                     じろカップ
@@ -64,9 +67,13 @@ export default function HomePage() {
               }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white" />
-                </div>
+                <Image
+                  src="/rimi-icon.png"
+                  alt="りみカップ"
+                  width={48}
+                  height={48}
+                  className="rounded-lg"
+                />
                 <div>
                   <h3 className="text-xl font-bold text-text-primary">
                     りみカップ
