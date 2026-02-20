@@ -2,16 +2,21 @@
 
 ## 概要
 
-本ドキュメントは「Jiro-Rimi Cup」のデータベース設計を定義する。Supabase（PostgreSQL）を使用し、Phase 1で必要なテーブルを設計する。
+本ドキュメントは「Jiro-Rimi Cup」のデータベース設計を定義する。Supabase（PostgreSQL）を使用する。
 
-## ER図（Phase 1）
+## ER図
 
 ```mermaid
 erDiagram
     auth_users ||--o| profiles : "1:1"
     profiles ||--o{ entries : "1:N"
+    profiles ||--o{ check_ins : "1:N"
+    profiles ||--o{ match_participants : "1:N"
     tournaments ||--o{ events : "1:N"
     events ||--o{ entries : "1:N"
+    events ||--o{ check_ins : "1:N"
+    events ||--o{ matches : "1:N"
+    matches ||--o{ match_participants : "1:N"
 
     auth_users {
         uuid id PK
@@ -68,6 +73,36 @@ erDiagram
         uuid profile_id FK
         uuid event_id FK
         timestamp created_at
+    }
+
+    check_ins {
+        uuid id PK
+        uuid profile_id FK
+        uuid event_id FK
+        timestamp created_at
+    }
+
+    matches {
+        uuid id PK
+        uuid event_id FK
+        int round_number
+        int match_index
+        text lobby_number
+        text status
+        text result
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    match_participants {
+        uuid id PK
+        uuid match_id FK
+        uuid profile_id FK
+        text team
+        text assigned_role
+        text vote
+        timestamp created_at
+        timestamp updated_at
     }
 ```
 
@@ -170,13 +205,11 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `double_elimination` の場合: `matches_per_event` は NULL
 
 **ステータス (status)**:
-- `scheduled`: 予定（エントリー開始前）
-- `entry_open`: エントリー受付中
-- `entry_closed`: エントリー締切済
-- `checkin_open`: チェックイン受付中
-- `participants_confirmed`: 参加者確定
+- `scheduled`: 予定（デフォルト。試合開始前）
 - `in_progress`: 試合進行中
 - `completed`: 終了
+
+> **Note**: エントリー受付中・エントリー締切済・チェックイン受付中などの時間ベースのフェーズは、`entry_start` / `entry_end` / `checkin_start` / `checkin_end` からアプリ層で算出する（後述「ステータス管理」セクション参照）。
 
 **ユニーク制約**: (tournament_id, event_number)
 
@@ -200,16 +233,185 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ---
 
-## Phase 2 以降で追加予定のテーブル（概要）
+### check_ins（チェックイン）
 
-### Phase 2: イベント進行関連
+イベント当日の出席確認。エントリー済みの参加者がチェックイン可能時間帯にチェックインする。
 
-| テーブル名 | 用途 |
-|-----------|------|
-| check_ins | チェックイン情報（ユーザー×イベント） |
-| matches | 試合情報（チーム構成、ロビー番号、ステータス） |
-| match_participants | 試合参加者（マッチ×ユーザー、チーム割り当て） |
-| match_results | 試合結果（個人入力、多数決結果、確定結果） |
+| カラム名 | 型 | NULL | デフォルト | 説明 |
+|---------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| profile_id | uuid | NO | - | FK → profiles.id |
+| event_id | uuid | NO | - | FK → events.id |
+| created_at | timestamptz | NO | now() | チェックイン日時 |
+
+**ユニーク制約**: (profile_id, event_id) - 同一ユーザーは同一イベントに1回のみチェックイン可能
+
+**インデックス**:
+- `check_ins_event_id_idx` on (event_id)
+
+**設計判断**:
+- entries テーブルと同構造。「チェックイン済み」の事実のみをシンプルに保持
+- 参加者自身によるチェックイン取り消しは不可（運営者がDELETEで対応）
+- チェックイン時間帯の制御: events テーブルの `checkin_start` / `checkin_end` を参照（RLS で強制）
+- エントリー済みであることの検証: entries テーブルの存在チェック（RLS で強制）
+
+---
+
+### matches（マッチ）
+
+イベント内の各試合（5v5マッチ）の情報。ラウンド（第N試合）× マッチ番号の2軸で管理する。
+
+| カラム名 | 型 | NULL | デフォルト | 説明 |
+|---------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| event_id | uuid | NO | - | FK → events.id |
+| round_number | int | NO | - | 試合番号（第何試合目か。1〜matches_per_event） |
+| match_index | int | NO | - | ラウンド内マッチ番号（1〜N。N=参加者数÷10） |
+| lobby_number | text | YES | NULL | ロビー番号（後勝ち方式） |
+| status | text | NO | 'waiting' | マッチステータス（後述） |
+| result | text | YES | NULL | 運営者確定結果（後述） |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**マッチステータス (status)**:
+- `waiting`: 待機中（チーム編成済み、試合開始前）
+- `in_progress`: 進行中（試合開始〜運営者確定前）
+- `confirmed`: 確定済（運営者が結果を確定）
+
+**確定結果 (result)**:
+- `team_a`: チームAの勝利
+- `team_b`: チームBの勝利
+- NULL: 未確定
+
+**CHECK制約**:
+- `status IN ('waiting', 'in_progress', 'confirmed')`
+- `result IN ('team_a', 'team_b')`
+- `round_number >= 1`
+- `match_index >= 1`
+
+**ユニーク制約**: (event_id, round_number, match_index)
+
+**インデックス**:
+- `matches_event_id_idx` on (event_id)
+
+**設計判断**:
+- `round_number` = 「第N試合」、`match_index` = 「ラウンド内のM番目のマッチ」の2軸で管理
+- ラウンドテーブルを設けない理由: ラウンド単位の操作（一斉開始、一括確定）は WHERE 句で十分。テーブルを増やす複雑さに対してメリットが小さい
+- 「試合開始」操作 = 同一ラウンドの全マッチを `waiting` → `in_progress` に一括更新
+- 「結果確定」操作 = 同一ラウンドの全マッチを `in_progress` → `confirmed` に一括更新
+- ロビー番号: マッチ単位で1つ。後勝ち方式のため、マッチ参加者なら誰でも上書き可能
+- 仮結果（多数決）はDBに保存せず、`match_participants.vote` から都度算出（アプリ層）。保存すると vote との整合性管理が必要になり、参加者50人規模では算出コストも無視できる
+- 試合開始前の対戦情報は RLS で非公開（運営者のみ閲覧可）
+
+---
+
+### match_participants（マッチ参加者）
+
+マッチごとのチーム編成と個人の勝敗入力を管理する。チーム割り当て・ロール・勝敗投票を1テーブルに統合。
+
+| カラム名 | 型 | NULL | デフォルト | 説明 |
+|---------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| match_id | uuid | NO | - | FK → matches.id |
+| profile_id | uuid | NO | - | FK → profiles.id |
+| team | text | NO | - | 所属チーム（後述） |
+| assigned_role | text | YES | NULL | アサインされたロール（後述） |
+| vote | text | YES | NULL | 個人の勝敗入力（後述） |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+**チーム (team)**:
+- `team_a`
+- `team_b`
+
+**ロール (assigned_role)**:
+- `top_carry`: 上キャリー
+- `bot_carry`: 下キャリー
+- `mid`: 中央
+- `tank`: タンク
+- `support`: サポート
+
+**勝敗入力 (vote)**:
+- `win`: 勝ち
+- `lose`: 負け
+- NULL: 未入力
+
+**CHECK制約**:
+- `team IN ('team_a', 'team_b')`
+- `assigned_role IN ('top_carry', 'bot_carry', 'mid', 'tank', 'support')`
+- `vote IN ('win', 'lose')`
+
+**ユニーク制約**: (match_id, profile_id) - 同一マッチに同じユーザーは1回のみ
+
+**インデックス**:
+- `match_participants_match_id_idx` on (match_id)
+- `match_participants_profile_id_idx` on (profile_id)
+
+**設計判断**:
+- `vote` を match_participants に持たせることで、参加者テーブルと勝敗入力テーブルを統合しシンプルに保つ
+- 多数決による仮結果は `vote` から算出（team_a の win 数 vs team_b の win 数）。アプリ層で計算
+- `assigned_role` は nullable。運営者がロール指定なしで編成する場合も許容
+- 運営者は任意の参加者の `vote` を入力・変更可能
+- 試合開始前の参加者情報は RLS で非公開（運営者のみ閲覧可）
+
+---
+
+### ステータス管理
+
+#### イベントステータス
+
+イベントの進行フェーズは「DBステータス」と「時間ベースのフェーズ」の2層で管理する。
+
+**DBステータス（events.status）** — 運営者の操作で遷移:
+
+| ステータス | トリガー |
+|-----------|---------|
+| `scheduled` | デフォルト（イベント作成時） |
+| `in_progress` | 運営者が試合開始操作 |
+| `completed` | 運営者が試合完了操作 |
+
+**時間ベースのフェーズ** — アプリ層で `entry_start` / `entry_end` / `checkin_start` / `checkin_end` から算出:
+
+| 条件 | 表示フェーズ |
+|------|------------|
+| `now() < entry_start` | 予定 |
+| `entry_start <= now() < entry_end` | エントリー受付中 |
+| `entry_end <= now() < checkin_start` | エントリー締切済 |
+| `checkin_start <= now() < checkin_end` | チェックイン受付中 |
+| `checkin_end <= now()` かつ `status = 'scheduled'` | チェックイン締切済（試合開始待ち） |
+| `status = 'in_progress'` | 試合進行中 |
+| `status = 'completed'` | 終了 |
+
+> **設計判断**: 時間ベースで算出可能なフェーズをDBステータスとして持つと、バッチ処理によるステータス更新が必要になり、タイミングのズレや障害時の不整合リスクが発生する。時間カラムから都度算出することでこれらの問題を回避する。RLSポリシーでも `entry_start <= now()` のようにSQL内で直接判定可能。
+
+#### マッチステータス
+
+**DBステータス（matches.status）**:
+
+| マッチ進行フェーズ | matches.status |
+|------------------|----------------|
+| 待機中（チーム編成済み、試合開始前） | `waiting` |
+| 進行中（試合開始〜運営者確定前） | `in_progress` |
+| 確定済（運営者が結果を確定） | `confirmed` |
+
+---
+
+### 多数決による仮結果の算出ロジック
+
+DBには保存せず、アプリ層で算出:
+
+```
+team_a_win_votes = team_a の参加者のうち vote = 'win' の人数
+team_b_win_votes = team_b の参加者のうち vote = 'win' の人数
+
+if team_a_win_votes > team_b_win_votes → 仮結果: team_a
+if team_b_win_votes > team_a_win_votes → 仮結果: team_b
+if team_a_win_votes == team_b_win_votes → 不一致（運営者通知）
+```
+
+---
+
+## Phase 3 以降で追加予定のテーブル（概要）
 
 ### Phase 3: 招待制イベント対応
 
@@ -295,10 +497,22 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 - `gender` が設定されている
 - `first_role`, `second_role`, `third_role` がすべて設定されている
 
----
+### 6. チェックインの前提条件
 
-## 次のステップ
+RLS で以下を強制:
+- エントリー済みであること（entries テーブルに対応レコードが存在）
+- チェックイン可能時間帯内であること（events.checkin_start 〜 checkin_end）
+- 運営者はこれらの制約を受けない（任意のタイミングで追加・削除可能）
 
-1. 本設計書のレビュー・承認
-2. Supabase マイグレーションファイルの作成（1.1.4 完了）
-3. Row Level Security (RLS) ポリシーの設計・実装（1.1.5）
+### 7. カラムレベルのアクセス制御
+
+既存の `protect_role_column` パターンを踏襲し、トリガーで非運営者のカラム変更を制限:
+- **matches**: 非運営者は `lobby_number` のみ変更可（`status`, `result` の変更を防止）
+- **match_participants**: 非運営者は `vote` のみ変更可（`team`, `assigned_role` の変更を防止）
+
+### 8. 試合開始前の情報非公開
+
+Supabase はクライアントから直接クエリ可能なため、アプリ層での非表示制御だけでは不十分。RLS で制御:
+- **matches**: `status IN ('in_progress', 'confirmed')` の場合のみ一般公開。`waiting` は運営者のみ閲覧可
+- **match_participants**: 親マッチが `in_progress` or `confirmed` の場合のみ一般公開
+- **勝敗入力・ロビー番号の更新**: マッチが `in_progress` の場合のみ許可
