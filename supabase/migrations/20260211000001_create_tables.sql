@@ -72,7 +72,7 @@ CREATE TABLE public.qualifiers (
   entry_end timestamptz NOT NULL,
   checkin_start timestamptz NOT NULL,
   checkin_end timestamptz NOT NULL,
-  status text NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'entry_open', 'entry_closed', 'checkin_open', 'participants_confirmed', 'in_progress', 'completed')),
+  status text NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'in_progress', 'completed')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (tournament_id, qualifier_number)
@@ -86,7 +86,7 @@ COMMENT ON COLUMN public.qualifiers.entry_start IS 'エントリー開始日時'
 COMMENT ON COLUMN public.qualifiers.entry_end IS 'エントリー締切日時';
 COMMENT ON COLUMN public.qualifiers.checkin_start IS 'チェックイン開始時刻';
 COMMENT ON COLUMN public.qualifiers.checkin_end IS 'チェックイン締切時刻';
-COMMENT ON COLUMN public.qualifiers.status IS 'ステータス: scheduled, entry_open, entry_closed, checkin_open, participants_confirmed, in_progress, completed';
+COMMENT ON COLUMN public.qualifiers.status IS 'ステータス: scheduled, in_progress, completed';
 
 -- ============================================
 -- 4. entries テーブル

@@ -18,10 +18,6 @@ export const TOURNAMENT_STATUS_LABELS: Record<TournamentStatus, string> = {
 // イベントステータス
 export type EventStatus =
   | "scheduled"
-  | "entry_open"
-  | "entry_closed"
-  | "checkin_open"
-  | "participants_confirmed"
   | "in_progress"
   | "completed"
 
