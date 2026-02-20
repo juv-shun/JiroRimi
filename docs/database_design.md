@@ -10,11 +10,9 @@
 erDiagram
     auth_users ||--o| profiles : "1:1"
     profiles ||--o{ entries : "1:N"
-    profiles ||--o{ check_ins : "1:N"
     profiles ||--o{ match_participants : "1:N"
     tournaments ||--o{ events : "1:N"
     events ||--o{ entries : "1:N"
-    events ||--o{ check_ins : "1:N"
     events ||--o{ matches : "1:N"
     matches ||--o{ match_participants : "1:N"
 
@@ -72,13 +70,7 @@ erDiagram
         uuid id PK
         uuid profile_id FK
         uuid event_id FK
-        timestamp created_at
-    }
-
-    check_ins {
-        uuid id PK
-        uuid profile_id FK
-        uuid event_id FK
+        timestamp checked_in_at
         timestamp created_at
     }
 
@@ -224,6 +216,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | id | uuid | NO | gen_random_uuid() | PK |
 | profile_id | uuid | NO | - | FK → profiles.id |
 | event_id | uuid | NO | - | FK → events.id |
+| checked_in_at | timestamptz | YES | NULL | チェックイン日時（NULL=未チェックイン） |
 | created_at | timestamptz | NO | now() | エントリー日時 |
 
 **ユニーク制約**: (profile_id, event_id) - 同一ユーザーは同一イベントに1回のみエントリー可能
@@ -231,29 +224,17 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 **インデックス**:
 - `entries_event_id_idx` on (event_id)
 
----
-
-### check_ins（チェックイン）
-
-イベント当日の出席確認。エントリー済みの参加者がチェックイン可能時間帯にチェックインする。
-
-| カラム名 | 型 | NULL | デフォルト | 説明 |
-|---------|------|------|-----------|------|
-| id | uuid | NO | gen_random_uuid() | PK |
-| profile_id | uuid | NO | - | FK → profiles.id |
-| event_id | uuid | NO | - | FK → events.id |
-| created_at | timestamptz | NO | now() | チェックイン日時 |
-
-**ユニーク制約**: (profile_id, event_id) - 同一ユーザーは同一イベントに1回のみチェックイン可能
-
-**インデックス**:
-- `check_ins_event_id_idx` on (event_id)
+**チェックイン判定**:
+- `checked_in_at IS NOT NULL` → チェックイン済み
+- `checked_in_at IS NULL` → 未チェックイン
+- チェックイン操作 = `checked_in_at` に現在時刻を設定（UPDATE）
+- チェックイン取り消し = 運営者が `checked_in_at` を NULL に戻す（UPDATE）
 
 **設計判断**:
-- entries テーブルと同構造。「チェックイン済み」の事実のみをシンプルに保持
-- 参加者自身によるチェックイン取り消しは不可（運営者がDELETEで対応）
+- チェックインをエントリーのライフサイクル（エントリー → チェックイン）として entries テーブルに統合
+- 別テーブルにしない理由: エントリーとチェックインは1:1の関係であり、1カラムで「済みかどうか」と「いつチェックインしたか」の両方を表現できる
+- 参加者自身によるチェックイン取り消しは不可（運営者が `checked_in_at` を NULL に戻す）
 - チェックイン時間帯の制御: events テーブルの `checkin_start` / `checkin_end` を参照（RLS で強制）
-- エントリー済みであることの検証: entries テーブルの存在チェック（RLS で強制）
 
 ---
 
@@ -497,16 +478,17 @@ ENUM 型ではなく TEXT + CHECK 制約を使用:
 - `gender` が設定されている
 - `first_role`, `second_role`, `third_role` がすべて設定されている
 
-### 6. チェックインの前提条件
+### 6. チェックインの管理
 
-RLS で以下を強制:
-- エントリー済みであること（entries テーブルに対応レコードが存在）
+entries テーブルの `checked_in_at` カラムで管理。RLS で以下を強制:
 - チェックイン可能時間帯内であること（events.checkin_start 〜 checkin_end）
-- 運営者はこれらの制約を受けない（任意のタイミングで追加・削除可能）
+- 参加者は自分の `checked_in_at` のみ更新可能（NULL → 現在時刻の設定のみ）
+- 運営者は任意のタイミングで `checked_in_at` の設定・NULL 戻しが可能
 
 ### 7. カラムレベルのアクセス制御
 
 既存の `protect_role_column` パターンを踏襲し、トリガーで非運営者のカラム変更を制限:
+- **entries**: 非運営者は `checked_in_at` のみ変更可（`profile_id`, `event_id` の変更を防止）
 - **matches**: 非運営者は `lobby_number` のみ変更可（`status`, `result` の変更を防止）
 - **match_participants**: 非運営者は `vote` のみ変更可（`team`, `assigned_role` の変更を防止）
 
