@@ -148,6 +148,7 @@ EXISTS (
 -- 本人であること
 profile_id = auth.uid()
 -- かつ、エントリー期間内であること
+-- かつ、性別制限をクリアしていること
 AND EXISTS (
   SELECT 1 FROM public.events e
   JOIN public.tournaments t ON t.id = e.tournament_id
@@ -155,8 +156,14 @@ AND EXISTS (
   AND t.status != 'draft'
   AND now() >= e.entry_start
   AND now() <= e.entry_end
+  AND (
+    e.gender IS NULL
+    OR e.gender = (SELECT p.gender FROM public.profiles p WHERE p.id = auth.uid())
+  )
 )
 ```
+
+> **Note**: `entries_insert_admin`（`is_admin()` で無条件許可）は変更不要。運営者は性別制限を自動バイパスする。
 
 ---
 

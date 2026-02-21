@@ -60,6 +60,7 @@ erDiagram
         timestamp entry_end
         timestamp checkin_start
         timestamp checkin_end
+        text gender
         text rules
         enum status
         timestamp created_at
@@ -179,6 +180,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | entry_end | timestamptz | NO | - | エントリー締切日時 |
 | checkin_start | timestamptz | NO | - | チェックイン開始時刻 |
 | checkin_end | timestamptz | NO | - | チェックイン締切時刻 |
+| gender | text | YES | NULL | 性別制限（後述） |
 | rules | text | YES | NULL | ルール（自由記載） |
 | status | text | NO | 'scheduled' | ステータス（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
@@ -191,6 +193,13 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 **進行形式 (match_format)**:
 - `qualifier`: 予選（試合数を1-10で指定）
 - `double_elimination`: ダブルエリミネーション（試合数は自動決定、matches_per_event = NULL）
+
+**性別制限 (gender)**:
+- `boys`: ボーイズ限定（profiles.gender = 'boys' のユーザーのみエントリー可）
+- `girls`: ガールズ限定（profiles.gender = 'girls' のユーザーのみエントリー可）
+- `NULL`: 制限なし（誰でもエントリー可）
+
+**CHECK制約**: `gender IS NULL OR gender IN ('boys', 'girls')`
 
 **CHECK制約**: `match_format` と `matches_per_event` の整合性を保証
 - `qualifier` の場合: `matches_per_event` は NOT NULL かつ 1-10
@@ -439,7 +448,7 @@ Tournament（コンテナ）
 
 1. **汎用性**: 「予選」「GF」などの概念をハードコードせず、イベントの設定値の組み合わせで表現する。新しい大会形式を追加する際にスキーマ変更が不要
 2. **招待制による参加者管理**: GF進出者の管理を `gf_advance_count` のような専用カラムではなく、招待制（`entry_type = 'invite'`）という汎用的な仕組みで実現する。運営者が成績に基づいて招待するか、将来的に自動選出するかは実装の問題であり、データモデルには影響しない
-3. **シンプルなコンテナ**: 大会（Tournament）は名前とステータスのみを持ち、ルール・試合数・参加上限・参加条件など運営に関わる詳細はすべてイベント側に委譲する。参加条件（性別制限等）はスキーマで制約せず、イベントのルール欄での記載と運営者の管理に委ねる
+3. **シンプルなコンテナ**: 大会（Tournament）は名前とステータスのみを持ち、ルール・試合数・参加上限・参加条件など運営に関わる詳細はすべてイベント側に委譲する。性別制限は `events.gender` カラムで制御する（`NULL` = 制限なし、`"boys"` / `"girls"` = 該当性別のみエントリー可）。RLS・API・UIの3層で検証する
 
 ---
 
