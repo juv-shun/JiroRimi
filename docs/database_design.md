@@ -79,7 +79,6 @@ erDiagram
         uuid id PK
         uuid event_id FK
         int round_number
-        int match_index
         text lobby_number
         text status
         text result
@@ -92,7 +91,6 @@ erDiagram
         uuid match_id FK
         uuid profile_id FK
         text team
-        text assigned_role
         text vote
         timestamp created_at
         timestamp updated_at
@@ -249,14 +247,13 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ### matches（マッチ）
 
-イベント内の各試合（5v5マッチ）の情報。ラウンド（第N試合）× マッチ番号の2軸で管理する。
+イベント内の各試合（5v5マッチ）の情報。
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |---------|------|------|-----------|------|
 | id | uuid | NO | gen_random_uuid() | PK |
 | event_id | uuid | NO | - | FK → events.id |
-| round_number | int | NO | - | 試合番号（第何試合目か。1〜matches_per_event） |
-| match_index | int | NO | - | ラウンド内マッチ番号（1〜N。N=参加者数÷10） |
+| round_number | int | NO | - | ラウンド番号（第何ラウンド目か。1〜matches_per_event） |
 | lobby_number | text | YES | NULL | ロビー番号（後勝ち方式） |
 | status | text | NO | 'waiting' | マッチステータス（後述） |
 | result | text | YES | NULL | 運営者確定結果（後述） |
@@ -277,15 +274,12 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `status IN ('waiting', 'in_progress', 'confirmed')`
 - `result IN ('team_a', 'team_b')`
 - `round_number >= 1`
-- `match_index >= 1`
-
-**ユニーク制約**: (event_id, round_number, match_index)
 
 **インデックス**:
-- `matches_event_id_idx` on (event_id)
+- `matches_event_id_round_number_idx` on (event_id, round_number) — ラウンド単位の一括操作用
 
 **設計判断**:
-- `round_number` = 「第N試合」、`match_index` = 「ラウンド内のM番目のマッチ」の2軸で管理
+- 同一ラウンド内の複数マッチは UUID で識別。表示順が必要な場合は `created_at` でソート
 - ラウンドテーブルを設けない理由: ラウンド単位の操作（一斉開始、一括確定）は WHERE 句で十分。テーブルを増やす複雑さに対してメリットが小さい
 - 「試合開始」操作 = 同一ラウンドの全マッチを `waiting` → `in_progress` に一括更新
 - 「結果確定」操作 = 同一ラウンドの全マッチを `in_progress` → `confirmed` に一括更新
@@ -305,7 +299,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | match_id | uuid | NO | - | FK → matches.id |
 | profile_id | uuid | NO | - | FK → profiles.id |
 | team | text | NO | - | 所属チーム（後述） |
-| assigned_role | text | YES | NULL | アサインされたロール（後述） |
 | vote | text | YES | NULL | 個人の勝敗入力（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
@@ -314,13 +307,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `team_a`
 - `team_b`
 
-**ロール (assigned_role)**:
-- `top_carry`: 上キャリー
-- `bot_carry`: 下キャリー
-- `mid`: 中央
-- `tank`: タンク
-- `support`: サポート
-
 **勝敗入力 (vote)**:
 - `win`: 勝ち
 - `lose`: 負け
@@ -328,7 +314,6 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 **CHECK制約**:
 - `team IN ('team_a', 'team_b')`
-- `assigned_role IN ('top_carry', 'bot_carry', 'mid', 'tank', 'support')`
 - `vote IN ('win', 'lose')`
 
 **ユニーク制約**: (match_id, profile_id) - 同一マッチに同じユーザーは1回のみ
@@ -340,7 +325,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 **設計判断**:
 - `vote` を match_participants に持たせることで、参加者テーブルと勝敗入力テーブルを統合しシンプルに保つ
 - 多数決による仮結果は `vote` から算出（team_a の win 数 vs team_b の win 数）。アプリ層で計算
-- `assigned_role` は nullable。運営者がロール指定なしで編成する場合も許容
+- ロール情報はDBに保存しない。AIがチーム分け時にロール希望を考慮するが、選手に特定ロールを強要するものではないため
 - 運営者は任意の参加者の `vote` を入力・変更可能
 - 試合開始前の参加者情報は RLS で非公開（運営者のみ閲覧可）
 
@@ -499,7 +484,7 @@ entries テーブルの `checked_in_at` カラムで管理。RLS で以下を強
 既存の `protect_role_column` パターンを踏襲し、トリガーで非運営者のカラム変更を制限:
 - **entries**: 非運営者は `checked_in_at` のみ変更可（`profile_id`, `event_id` の変更を防止）
 - **matches**: 非運営者は `lobby_number` のみ変更可（`status`, `result` の変更を防止）
-- **match_participants**: 非運営者は `vote` のみ変更可（`team`, `assigned_role` の変更を防止）
+- **match_participants**: 非運営者は `vote` のみ変更可（`team` の変更を防止）
 
 ### 8. 試合開始前の情報非公開
 
