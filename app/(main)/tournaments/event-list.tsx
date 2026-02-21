@@ -24,6 +24,7 @@ type EventListProps = {
   isLoggedIn: boolean
   userEntries: string[]
   userGender: string | null
+  isAdmin: boolean
 }
 
 export function EventList({
@@ -32,6 +33,7 @@ export function EventList({
   isLoggedIn,
   userEntries,
   userGender,
+  isAdmin,
 }: EventListProps) {
   const router = useRouter()
   const [now, setNow] = useState(() => new Date())
@@ -191,6 +193,7 @@ export function EventList({
           isEntered,
           now,
           userGender,
+          isAdmin,
         )
         const entryCount = event.entries[0]?.count ?? 0
 

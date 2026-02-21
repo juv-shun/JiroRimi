@@ -26,8 +26,8 @@ type EventForButtonState = {
  * 2. before_start: now < entry_start
  * 3. closed: now > entry_end（entry_end まではエントリー可能）
  * 4. not_logged_in: !isLoggedIn
- * 5. gender_mismatch: event.gender が設定されており、userGender と不一致
- * 6. can_cancel: isEntered === true
+ * 5. can_cancel: isEntered === true（既エントリー者は常にキャンセル可能）
+ * 6. gender_mismatch: event.gender が設定されており、userGender と不一致（admin はスキップ）
  * 7. can_entry: isEntered === false
  */
 export function getEntryButtonState(
@@ -36,6 +36,7 @@ export function getEntryButtonState(
   isEntered: boolean,
   now: Date,
   userGender: string | null = null,
+  isAdmin = false,
 ): EntryButtonState {
   // 1. 招待制チェック（entry_type === "invite"）
   if (event.entry_type === "invite") return "invite"
@@ -49,10 +50,13 @@ export function getEntryButtonState(
   if (now > entryEnd) return "closed"
   // 4. ログインチェック
   if (!isLoggedIn) return "not_logged_in"
-  // 5. 性別制限チェック
-  if (event.gender && event.gender !== userGender) return "gender_mismatch"
-  // 6-7. エントリー期間中（entry_start <= now <= entry_end）
-  return isEntered ? "can_cancel" : "can_entry"
+  // 5. 既エントリー者は常にキャンセル可能
+  if (isEntered) return "can_cancel"
+  // 6. 性別制限チェック（admin はスキップ）
+  if (!isAdmin && event.gender && event.gender !== userGender)
+    return "gender_mismatch"
+  // 7. エントリー可能
+  return "can_entry"
 }
 
 // ボタン状態に応じたラベル

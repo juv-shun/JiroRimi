@@ -8,11 +8,13 @@ export function TournamentList({
   isLoggedIn,
   userEntries,
   userGender,
+  isAdmin,
 }: {
   tournaments: TournamentWithEvents[]
   isLoggedIn: boolean
   userEntries: string[]
   userGender: string | null
+  isAdmin: boolean
 }) {
   if (tournaments.length === 0) {
     return (
@@ -64,6 +66,7 @@ export function TournamentList({
             isLoggedIn={isLoggedIn}
             userEntries={userEntries}
             userGender={userGender}
+            isAdmin={isAdmin}
           />
         </section>
       ))}

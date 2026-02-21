@@ -32,13 +32,15 @@ export default async function TournamentsPage() {
 
   let userEntries: string[] = []
   let userGender: string | null = null
+  let isAdmin = false
   if (user) {
     const { data: userProfile } = await supabase
       .from("profiles")
-      .select("gender")
+      .select("gender, role")
       .eq("id", user.id)
       .single()
     userGender = userProfile?.gender ?? null
+    isAdmin = userProfile?.role === "admin"
     const allEventIds = tournaments?.flatMap((t) => t.events.map((e) => e.id)) ?? []
     if (allEventIds.length > 0) {
       const { data: entries, error: entriesError } = await supabase
@@ -63,6 +65,7 @@ export default async function TournamentsPage() {
           isLoggedIn={!!user}
           userEntries={userEntries}
           userGender={userGender}
+          isAdmin={isAdmin}
         />
       </div>
     </main>
