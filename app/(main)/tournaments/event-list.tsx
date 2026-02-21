@@ -23,6 +23,7 @@ type EventListProps = {
   events: TournamentEventForDisplay[]
   isLoggedIn: boolean
   userEntries: string[]
+  userGender: string | null
 }
 
 export function EventList({
@@ -30,6 +31,7 @@ export function EventList({
   events,
   isLoggedIn,
   userEntries,
+  userGender,
 }: EventListProps) {
   const router = useRouter()
   const [now, setNow] = useState(() => new Date())
@@ -188,6 +190,7 @@ export function EventList({
           isLoggedIn,
           isEntered,
           now,
+          userGender,
         )
         const entryCount = event.entries[0]?.count ?? 0
 
@@ -207,6 +210,17 @@ export function EventList({
                 <h3 className="font-semibold text-gray-900 text-lg">
                   {event.name}
                 </h3>
+                {event.gender && (
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      event.gender === "boys"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-pink-100 text-pink-700"
+                    }`}
+                  >
+                    {event.gender === "boys" ? "Boys" : "Girls"}
+                  </span>
+                )}
               </div>
               {isEntered && (
                 <span className="entry-badge">
@@ -536,7 +550,8 @@ function EntryButton({
     cancelling ||
     state === "invite" ||
     state === "before_start" ||
-    state === "closed"
+    state === "closed" ||
+    state === "gender_mismatch"
 
   const isCancel = state === "can_cancel"
   const isActive = state === "can_entry" || state === "not_logged_in"
@@ -544,7 +559,7 @@ function EntryButton({
   let className =
     "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
 
-  if (state === "invite" || state === "before_start" || state === "closed") {
+  if (state === "invite" || state === "before_start" || state === "closed" || state === "gender_mismatch") {
     className += " bg-gray-100 text-gray-400 cursor-not-allowed"
   } else if (isCancel) {
     className += cancelling

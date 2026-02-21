@@ -14,7 +14,7 @@ export default async function TournamentsPage() {
         id, event_number, name, entry_type, match_format,
         matches_per_event, max_participants, scheduled_date,
         entry_start, entry_end, checkin_start, checkin_end,
-        rules,
+        rules, gender,
         entries (count)
       )
     `)
@@ -31,7 +31,14 @@ export default async function TournamentsPage() {
   } = await supabase.auth.getUser()
 
   let userEntries: string[] = []
+  let userGender: string | null = null
   if (user) {
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("gender")
+      .eq("id", user.id)
+      .single()
+    userGender = userProfile?.gender ?? null
     const allEventIds = tournaments?.flatMap((t) => t.events.map((e) => e.id)) ?? []
     if (allEventIds.length > 0) {
       const { data: entries, error: entriesError } = await supabase
@@ -55,6 +62,7 @@ export default async function TournamentsPage() {
           tournaments={tournaments as TournamentWithEvents[]}
           isLoggedIn={!!user}
           userEntries={userEntries}
+          userGender={userGender}
         />
       </div>
     </main>
