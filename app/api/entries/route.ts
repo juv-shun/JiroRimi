@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     // イベント取得（エントリー数も同時取得）
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id, entry_type, entry_start, entry_end, max_participants, entries(count)")
+      .select("id, entry_type, entry_start, entry_end, max_participants, gender, entries(count)")
       .eq("id", eventId)
       .single()
 
@@ -63,6 +63,46 @@ export async function POST(request: Request) {
         { success: false, error: "招待制イベントにはエントリーできません" },
         { status: 400 },
       )
+    }
+
+    // 性別制限チェック
+    if (event.gender) {
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("gender, role")
+        .eq("id", user.id)
+        .single()
+
+      if (profileError || !userProfile) {
+        return NextResponse.json(
+          { success: false, error: "プロフィール情報の取得に失敗しました" },
+          { status: 500 },
+        )
+      }
+
+      // 運営者は性別制限をバイパス
+      if (userProfile.role !== "admin") {
+        if (!userProfile.gender) {
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                "性別が設定されていません。マイページで性別を設定してください",
+            },
+            { status: 400 },
+          )
+        }
+        if (userProfile.gender !== event.gender) {
+          const genderLabel = event.gender === "boys" ? "ボーイズ" : "ガールズ"
+          return NextResponse.json(
+            {
+              success: false,
+              error: `このイベントは${genderLabel}限定です`,
+            },
+            { status: 403 },
+          )
+        }
+      }
     }
 
     // エントリー期間チェック
