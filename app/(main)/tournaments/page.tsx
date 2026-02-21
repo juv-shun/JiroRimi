@@ -1,6 +1,6 @@
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { TournamentWithEvents } from "@/lib/types/tournament"
+import type { TournamentWithEvents, UserEntryInfo } from "@/lib/types/tournament"
 import { TournamentList } from "./tournament-list"
 
 export default async function TournamentsPage() {
@@ -30,7 +30,7 @@ export default async function TournamentsPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  let userEntries: string[] = []
+  let userEntries: UserEntryInfo[] = []
   let userGender: string | null = null
   let isAdmin = false
   if (user) {
@@ -45,13 +45,13 @@ export default async function TournamentsPage() {
     if (allEventIds.length > 0) {
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
-        .select("event_id")
+        .select("event_id, checked_in_at")
         .eq("profile_id", user.id)
         .in("event_id", allEventIds)
       if (entriesError) {
         throw entriesError
       }
-      userEntries = entries?.map((e) => e.event_id) ?? []
+      userEntries = entries ?? []
     }
   }
 

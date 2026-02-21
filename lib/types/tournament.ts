@@ -120,3 +120,9 @@ export type TournamentWithEvents = {
   created_at: string
   events: TournamentEventForDisplay[]
 }
+
+// ユーザーのエントリー情報（チェックイン状態付き）
+export type UserEntryInfo = {
+  event_id: string
+  checked_in_at: string | null
+}

@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/app/components/status-badge"
-import type { TournamentWithEvents } from "@/lib/types/tournament"
+import type { TournamentWithEvents, UserEntryInfo } from "@/lib/types/tournament"
 
 import { EventList } from "./event-list"
 
@@ -12,7 +12,7 @@ export function TournamentList({
 }: {
   tournaments: TournamentWithEvents[]
   isLoggedIn: boolean
-  userEntries: string[]
+  userEntries: UserEntryInfo[]
   userGender: string | null
   isAdmin: boolean
 }) {

@@ -5,13 +5,21 @@ import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
 import { Toast } from "@/app/components/toast"
-import type { TournamentEventForDisplay } from "@/lib/types/tournament"
+import type {
+  TournamentEventForDisplay,
+  UserEntryInfo,
+} from "@/lib/types/tournament"
 import {
   formatDateJST,
   formatDateTimeJST,
   formatTimeJST,
 } from "@/lib/utils/datetime"
 
+import {
+  CHECKIN_BUTTON_LABELS,
+  type CheckinButtonState,
+  getCheckinButtonState,
+} from "./get-checkin-button-state"
 import {
   ENTRY_BUTTON_LABELS,
   type EntryButtonState,
@@ -22,7 +30,7 @@ type EventListProps = {
   tournamentId: string
   events: TournamentEventForDisplay[]
   isLoggedIn: boolean
-  userEntries: string[]
+  userEntries: UserEntryInfo[]
   userGender: string | null
   isAdmin: boolean
 }
@@ -49,6 +57,9 @@ export function EventList({
   const [cancellingEventId, setCancellingEventId] = useState<string | null>(
     null,
   )
+  const [checkinLoadingEventId, setCheckinLoadingEventId] = useState<
+    string | null
+  >(null)
   const [toast, setToast] = useState<{
     message: string
     type: "success" | "error"
@@ -183,10 +194,36 @@ export function EventList({
     }
   }
 
+  const handleCheckin = async (eventId: string) => {
+    setCheckinLoadingEventId(eventId)
+    try {
+      const res = await fetch("/api/entries/checkin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: eventId }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        showToast("チェックインしました", "success")
+        router.refresh()
+      } else if (res.status === 401) {
+        router.push("/login")
+      } else {
+        showToast(data.error || "チェックインに失敗しました", "error")
+      }
+    } catch {
+      showToast("チェックインに失敗しました", "error")
+    } finally {
+      setCheckinLoadingEventId(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       {events.map((event, index) => {
-        const isEntered = userEntries.includes(event.id)
+        const entryInfo = userEntries.find((e) => e.event_id === event.id)
+        const isEntered = !!entryInfo
         const buttonState = getEntryButtonState(
           event,
           isLoggedIn,
@@ -343,6 +380,18 @@ export function EventList({
                 cancelling={cancellingEventId === event.id}
                 className="flex-1"
               />
+              {entryInfo && (
+                <CheckinButton
+                  state={getCheckinButtonState(
+                    event,
+                    entryInfo.checked_in_at,
+                    now,
+                  )}
+                  onClick={() => handleCheckin(event.id)}
+                  loading={checkinLoadingEventId === event.id}
+                  className="flex-1"
+                />
+              )}
             </div>
           </div>
         )
@@ -586,6 +635,73 @@ function EntryButton({
       className={className}
     >
       {(loading || cancelling) && (
+        <svg
+          className="w-4 h-4 animate-spin"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      )}
+      {label}
+    </button>
+  )
+}
+
+// Checkin button component
+function CheckinButton({
+  state,
+  onClick,
+  loading = false,
+  className: additionalClassName = "",
+}: {
+  state: CheckinButtonState
+  onClick: () => void
+  loading?: boolean
+  className?: string
+}) {
+  const label = loading ? "チェックイン中..." : CHECKIN_BUTTON_LABELS[state]
+  const isDisabled = loading || state !== "can_checkin"
+
+  let className =
+    "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+
+  if (state === "checked_in") {
+    className += " bg-green-100 text-green-700 cursor-not-allowed"
+  } else if (state === "can_checkin") {
+    className += loading
+      ? " glow-button text-white cursor-not-allowed opacity-70"
+      : " glow-button text-white"
+  } else {
+    // before_checkin / checkin_closed
+    className += " bg-gray-100 text-gray-400 cursor-not-allowed"
+  }
+
+  if (additionalClassName) {
+    className += ` ${additionalClassName}`
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={onClick}
+      className={className}
+    >
+      {loading && (
         <svg
           className="w-4 h-4 animate-spin"
           fill="none"
