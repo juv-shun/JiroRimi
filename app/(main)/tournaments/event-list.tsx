@@ -674,6 +674,20 @@ function EntryConfirmModal({
               <span className="text-xs text-gray-500 w-20">イベント</span>
               <span className="font-semibold text-gray-900">{event.name}</span>
             </div>
+            {event.gender && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-20">性別区分</span>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    event.gender === "boys"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-pink-100 text-pink-700"
+                  }`}
+                >
+                  {event.gender === "boys" ? "Boys" : "Girls"}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 w-20">開催日</span>
               <span className="text-sm text-gray-700">
