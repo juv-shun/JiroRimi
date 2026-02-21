@@ -9,6 +9,7 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form"
+import { GENDER_LABELS } from "@/lib/types/profile"
 import { ENTRY_TYPE_LABELS, MATCH_FORMAT_LABELS } from "@/lib/types/tournament"
 import type { EntryType, MatchFormat } from "@/lib/types/tournament"
 import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
@@ -34,6 +35,7 @@ const EMPTY_EVENT = {
   entry_end: "",
   checkin_start: "",
   checkin_end: "",
+  gender: null as "boys" | "girls" | null,
   rules: "",
 }
 
@@ -334,6 +336,38 @@ export function EventFields({
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* 性別区分 */}
+            <div>
+              <label
+                htmlFor={`events.${index}.gender`}
+                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+              >
+                性別区分
+              </label>
+              <select
+                id={`events.${index}.gender`}
+                {...register(`events.${index}.gender`, {
+                  setValueAs: (v) => (v === "" ? null : v),
+                })}
+                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+              >
+                <option value="">制限なし</option>
+                {Object.entries(GENDER_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-text-secondary">
+                設定すると該当の性別のみエントリー可能になります
+              </p>
+              {errors.events?.[index]?.gender && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.events[index].gender.message}
+                </p>
+              )}
             </div>
 
             {/* ルール */}

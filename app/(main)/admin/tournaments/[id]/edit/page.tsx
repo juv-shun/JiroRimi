@@ -49,7 +49,7 @@ export default async function EditTournamentPage({
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, name, entry_type, match_format, matches_per_event, max_participants, scheduled_date, entry_start, entry_end, checkin_start, checkin_end, rules",
+      "id, name, entry_type, match_format, matches_per_event, max_participants, scheduled_date, entry_start, entry_end, checkin_start, checkin_end, gender, rules",
     )
     .eq("tournament_id", id)
     .order("event_number", { ascending: true })
@@ -85,6 +85,7 @@ export default async function EditTournamentPage({
         entry_end: timestamptzToDatetimeLocal(ev.entry_end),
         checkin_start: timestamptzToDatetimeLocal(ev.checkin_start),
         checkin_end: timestamptzToDatetimeLocal(ev.checkin_end),
+        gender: ev.gender ?? null,
         rules: ev.rules ?? "",
       }
     }),

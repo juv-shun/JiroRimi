@@ -73,6 +73,7 @@ export function TournamentForm({
           entry_end: "",
           checkin_start: "",
           checkin_end: "",
+          gender: null,
           rules: "",
         },
       ],
