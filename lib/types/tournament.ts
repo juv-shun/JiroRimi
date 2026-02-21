@@ -3,6 +3,7 @@
  */
 
 export type { ActionResult } from "./profile"
+import type { Gender } from "./profile"
 
 // 大会ステータス
 export type TournamentStatus = "draft" | "open" | "in_progress" | "completed"
@@ -73,6 +74,7 @@ export type TournamentEvent = {
   checkin_start: string
   checkin_end: string
   rules: string | null
+  gender: Gender | null
   status: EventStatus
   created_at: string
   updated_at: string
@@ -98,6 +100,7 @@ export type TournamentEventForDisplay = {
   checkin_start: string
   checkin_end: string
   rules: string | null
+  gender: Gender | null
   entries: { count: number }[]
 }
 

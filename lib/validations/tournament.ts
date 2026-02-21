@@ -46,6 +46,7 @@ export const eventSchema = z
       .string()
       .min(1, "チェックイン締切日時は必須です")
       .regex(datetimeLocalPattern, "日時の形式が不正です"),
+    gender: z.enum(["boys", "girls"]).nullable().default(null),
     rules: z.string().optional(),
   })
   .refine(
