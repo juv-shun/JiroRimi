@@ -91,6 +91,7 @@ export async function POST(request: Request) {
       entry_end: datetimeLocalToTimestamptz(ev.entry_end),
       checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
       checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
+      gender: ev.gender ?? null,
       rules: ev.rules || null,
       status: "scheduled",
     }))

@@ -155,6 +155,7 @@ export async function PUT(
         entry_end: datetimeLocalToTimestamptz(ev.entry_end),
         checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
         checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
+        gender: ev.gender ?? null,
         rules: ev.rules || null,
         updated_at: new Date().toISOString(),
       }
