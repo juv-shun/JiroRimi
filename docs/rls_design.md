@@ -138,7 +138,8 @@ EXISTS (
 | SELECT | `entries_select_policy` | `public` | `true` | - | 全員閲覧可能 |
 | INSERT | `entries_insert_own` | `authenticated` | - | 本人 AND エントリー期間内（後述） | 自分のエントリーのみ作成可能 |
 | INSERT | `entries_insert_admin` | `authenticated` | - | `is_admin()` | 運営者は制限なく作成可能 |
-| UPDATE | - | - | - | - | 更新不可 |
+| UPDATE | `entries_update_checkin_own` | `authenticated` | `profile_id = auth.uid() AND checked_in_at IS NULL` | 本人 AND `checked_in_at IS NOT NULL` AND チェックイン期間内 | 参加者が自分の未チェックインエントリーにチェックインを設定（1回のみ・取り消し不可） |
+| UPDATE | `entries_update_checkin_admin` | `authenticated` | `public.is_admin()` | `public.is_admin()` | 運営者は時間帯制限なしで更新可能 |
 | DELETE | `entries_delete_own` | `authenticated` | `profile_id = auth.uid()` | - | 自分のエントリーのみ削除可能 |
 | DELETE | `entries_delete_admin` | `authenticated` | `is_admin()` | - | 運営者は全エントリー削除可能 |
 
@@ -165,6 +166,52 @@ AND EXISTS (
 
 > **Note**: `entries_insert_admin`（`is_admin()` で無条件許可）は変更不要。運営者は性別制限を自動バイパスする。
 
+**entries_update_checkin_own の WITH CHECK 条件**:
+
+```sql
+-- 本人であること
+profile_id = auth.uid()
+-- かつ、チェックインを取り消せない（NULL に戻せない）
+AND checked_in_at IS NOT NULL
+-- かつ、チェックイン期間内であること
+AND EXISTS (
+  SELECT 1 FROM public.events e
+  WHERE e.id = event_id
+  AND now() >= e.checkin_start
+  AND now() <= e.checkin_end
+)
+```
+
+**カラム保護トリガー**（`protect_entry_columns`）:
+
+非管理者が `checked_in_at` 以外のカラム（`id`, `profile_id`, `event_id`, `created_at`）を変更しようとした場合、変更を無効化するトリガー。また、非管理者の `checked_in_at` はサーバー時刻（`now()`）を強制し、改ざんを防止する。`profiles` テーブルの `protect_role_column` と同じパターン。
+
+```sql
+CREATE OR REPLACE FUNCTION public.protect_entry_columns()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 非管理者は checked_in_at 以外の変更を無効化し、checked_in_at はサーバー時刻を強制
+  IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+    NEW.id := OLD.id;
+    NEW.profile_id := OLD.profile_id;
+    NEW.event_id := OLD.event_id;
+    NEW.created_at := OLD.created_at;
+    NEW.checked_in_at := now();
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER protect_entry_columns_trigger
+  BEFORE UPDATE ON public.entries
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_entry_columns();
+```
+
 ---
 
 ## ポリシー一覧サマリー
@@ -174,7 +221,7 @@ AND EXISTS (
 | profiles | 全員 | 本人のみ（role=user固定） | 本人のみ（role変更不可） | 不可 |
 | tournaments | 公開済み: 全員 / draft: 運営者 | 運営者 | 運営者 | 運営者 |
 | events | 公開大会のイベント: 全員 / それ以外: 運営者 | 運営者 | 運営者 | 運営者 |
-| entries | 全員 | 本人（期間内）or 運営者 | 不可 | 本人 or 運営者 |
+| entries | 全員 | 本人（期間内）or 運営者 | 本人（期間内・取り消し不可）or 運営者 | 本人 or 運営者 |
 
 ---
 
