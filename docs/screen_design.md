@@ -283,7 +283,7 @@
 
 ### SCR-005: エントリー一覧画面
 
-**パス**: `/tournaments/[id]/qualifiers/[qid]/entries`
+**パス**: `/tournaments/[id]/events/[eid]/entries`
 
 **概要**: 予選ごとのエントリー者一覧を表示する画面
 
