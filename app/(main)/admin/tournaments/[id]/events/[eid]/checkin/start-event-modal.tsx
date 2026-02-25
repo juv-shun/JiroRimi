@@ -18,19 +18,19 @@ export function StartEventModal({
   onClose,
   onSuccess,
 }: StartEventModalProps) {
-  // チェックイン時刻昇順（早い順）にソート
+  // チェックイン時刻降順（遅い順）にソート → 除外候補が上部に来る
   const sortedEntries = [...entries].sort((a, b) => {
     const aTime = a.checked_in_at ?? ""
     const bTime = b.checked_in_at ?? ""
-    return aTime.localeCompare(bTime)
+    return bTime.localeCompare(aTime)
   })
 
   // 除外人数 = チェックイン済み人数 % 10
   const excludeCount = sortedEntries.length % 10
 
-  // 初期状態: 末尾（チェックインが遅い順）から除外
+  // 初期状態: 先頭（チェックインが遅い順）から除外
   const initialExcluded = new Set(
-    sortedEntries.slice(sortedEntries.length - excludeCount).map((e) => e.id),
+    sortedEntries.slice(0, excludeCount).map((e) => e.id),
   )
 
   const [excludedIds, setExcludedIds] = useState<Set<string>>(initialExcluded)
