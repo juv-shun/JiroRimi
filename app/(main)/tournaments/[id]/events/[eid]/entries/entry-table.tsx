@@ -1,8 +1,8 @@
-import { User } from "lucide-react"
+import { Check, User } from "lucide-react"
 
 import type { EntryWithProfile } from "@/lib/types/entry"
-import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
+import { ROLE_LABELS } from "@/lib/types/profile"
 import { formatDateTimeJST } from "@/lib/utils/datetime"
 
 type EntryTableProps = {
@@ -67,6 +67,9 @@ export function EntryTable({ entries }: EntryTableProps) {
               <th className="px-4 py-3 text-left font-medium text-gray-500">
                 第3希望
               </th>
+              <th className="px-4 py-3 text-center font-medium text-gray-500">
+                チェックイン
+              </th>
               <th className="px-4 py-3 text-left font-medium text-gray-500">
                 エントリー日時
               </th>
@@ -113,11 +116,22 @@ export function EntryTable({ entries }: EntryTableProps) {
                     <td className="px-4 py-3">
                       <AvatarPlaceholder />
                     </td>
-                    <td className="px-4 py-3 text-gray-400" colSpan={4}>
+                    <td className="px-4 py-3 text-gray-400" colSpan={5}>
                       （削除されたユーザー）
                     </td>
                   </>
                 )}
+                <td className="px-4 py-3 text-center">
+                  {entry.checked_in_at ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                      <Check className="w-3 h-3" />済
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                      未
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                   {formatDateTimeJST(entry.created_at)}
                 </td>

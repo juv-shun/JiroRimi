@@ -1,6 +1,6 @@
+import { Calendar, Check, ChevronLeft, Users } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Calendar, Users } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
@@ -8,8 +8,8 @@ import type { EntryWithProfile, RoleDistribution } from "@/lib/types/entry"
 import type { Role } from "@/lib/types/profile"
 import { ROLES } from "@/lib/types/profile"
 import { formatDateJST } from "@/lib/utils/datetime"
-import { RoleDistributionChart } from "./role-distribution-chart"
 import { EntryTable } from "./entry-table"
+import { RoleDistributionChart } from "./role-distribution-chart"
 
 function calculateRoleDistribution(
   entries: EntryWithProfile[],
@@ -73,9 +73,12 @@ export default async function EntryListPage({
     created_at: entry.created_at,
     checked_in_at: entry.checked_in_at,
     profiles: Array.isArray(entry.profiles)
-      ? entry.profiles[0] ?? null
+      ? (entry.profiles[0] ?? null)
       : entry.profiles,
   }))
+  const checkedInCount = entryList.filter(
+    (e) => e.checked_in_at !== null,
+  ).length
   const distribution = calculateRoleDistribution(entryList)
   // tournaments は !inner JOIN で単一オブジェクトだが、型推論では配列になるためキャスト
   const tournament = Array.isArray(event.tournaments)
@@ -100,7 +103,7 @@ export default async function EntryListPage({
 
         {/* サマリーカード */}
         <div className="bg-white rounded-2xl shadow-sm border border-border p-6 mb-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="flex items-center gap-3">
               <Calendar className="w-5 h-5 text-gray-400" />
               <div>
@@ -116,6 +119,15 @@ export default async function EntryListPage({
                 <p className="text-xs text-gray-500">エントリー人数</p>
                 <p className="text-sm font-medium text-gray-900">
                   {entryList.length}人
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Check className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">チェックイン</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {checkedInCount}/{entryList.length}人
                 </p>
               </div>
             </div>
