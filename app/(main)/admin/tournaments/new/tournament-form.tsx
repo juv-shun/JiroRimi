@@ -208,6 +208,8 @@ export function TournamentForm({
         errors={errors}
         watch={watch}
         setValue={setValue}
+        mode={mode}
+        tournamentId={tournamentId}
       />
 
       {/* エラー表示 */}

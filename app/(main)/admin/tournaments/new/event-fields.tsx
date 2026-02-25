@@ -1,6 +1,7 @@
 "use client"
 
-import { Plus, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { ClipboardCheck, Plus, Trash2 } from "lucide-react"
 import type {
   FieldErrors,
   UseFieldArrayAppend,
@@ -22,6 +23,8 @@ type EventFieldsProps = {
   errors: FieldErrors<TournamentUpdateFormData>
   watch: UseFormWatch<TournamentUpdateFormData>
   setValue: UseFormSetValue<TournamentUpdateFormData>
+  mode?: "create" | "edit"
+  tournamentId?: string
 }
 
 const EMPTY_EVENT = {
@@ -47,6 +50,8 @@ export function EventFields({
   errors,
   watch,
   setValue,
+  mode,
+  tournamentId,
 }: EventFieldsProps) {
   // match_format 変更時のハンドラ
   const handleMatchFormatChange = (index: number, value: MatchFormat) => {
@@ -70,15 +75,32 @@ export function EventFields({
               <span className="w-1.5 h-5 bg-success rounded-full" />
               イベント {index + 1}
             </h3>
-            {fields.length > 1 && (
-              <button
-                type="button"
-                onClick={() => remove(index)}
-                className="p-1.5 text-text-secondary hover:text-error hover:bg-error/10 rounded-lg transition-colors duration-200"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {(() => {
+                const eventId = mode === "edit" ? watch(`events.${index}.id`) : undefined
+                if (mode === "edit" && tournamentId && eventId) {
+                  return (
+                    <Link
+                      href={`/admin/tournaments/${tournamentId}/events/${eventId}/checkin`}
+                      className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
+                      title="チェックイン管理"
+                    >
+                      <ClipboardCheck className="w-4 h-4" />
+                    </Link>
+                  )
+                }
+                return null
+              })()}
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="p-1.5 text-text-secondary hover:text-error hover:bg-error/10 rounded-lg transition-colors duration-200"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="p-6 space-y-4">
