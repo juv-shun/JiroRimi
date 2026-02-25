@@ -116,7 +116,7 @@ export function EntryTable({ entries }: EntryTableProps) {
                     <td className="px-4 py-3">
                       <AvatarPlaceholder />
                     </td>
-                    <td className="px-4 py-3 text-gray-400" colSpan={5}>
+                    <td className="px-4 py-3 text-gray-400" colSpan={4}>
                       （削除されたユーザー）
                     </td>
                   </>
