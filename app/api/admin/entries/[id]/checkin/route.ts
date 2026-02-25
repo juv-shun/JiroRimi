@@ -6,6 +6,9 @@ type RouteContext = {
   params: Promise<{ id: string }>
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function authorize(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
@@ -20,11 +23,21 @@ async function authorize(supabase: Awaited<ReturnType<typeof createClient>>) {
     }
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single()
+
+  if (profileError) {
+    console.error("Profile fetch error:", profileError)
+    return {
+      error: NextResponse.json(
+        { success: false, error: "権限の確認に失敗しました" },
+        { status: 500 },
+      ),
+    }
+  }
 
   if (profile?.role !== "admin") {
     return {
@@ -41,6 +54,14 @@ async function authorize(supabase: Awaited<ReturnType<typeof createClient>>) {
 export async function PATCH(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { success: false, error: "エントリーIDの形式が不正です" },
+        { status: 400 },
+      )
+    }
+
     const supabase = await createClient()
 
     const auth = await authorize(supabase)
@@ -83,6 +104,14 @@ export async function PATCH(_request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { success: false, error: "エントリーIDの形式が不正です" },
+        { status: 400 },
+      )
+    }
+
     const supabase = await createClient()
 
     const auth = await authorize(supabase)

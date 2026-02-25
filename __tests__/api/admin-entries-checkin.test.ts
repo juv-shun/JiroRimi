@@ -12,12 +12,12 @@ vi.mock("next/headers", () => ({
 
 const ADMIN_USER = { id: "admin-uuid" }
 const NORMAL_USER = { id: "user-uuid" }
-const ENTRY_ID = "entry-uuid"
+const VALID_ENTRY_ID = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
 
 interface TableMocks {
   profiles_select?: {
     data: { role: string } | null
-    error: null
+    error: { code?: string; message?: string } | null
   }
   entries_update?: {
     count: number | null
@@ -55,13 +55,13 @@ function buildSupabase(user: object | null, tables: TableMocks = {}) {
 }
 
 function makeRequest(method: string): Request {
-  return new Request(`http://localhost/api/admin/entries/${ENTRY_ID}/checkin`, {
+  return new Request(`http://localhost/api/admin/entries/${VALID_ENTRY_ID}/checkin`, {
     method,
   })
 }
 
-function makeContext() {
-  return { params: Promise.resolve({ id: ENTRY_ID }) }
+function makeContext(id: string = VALID_ENTRY_ID) {
+  return { params: Promise.resolve({ id }) }
 }
 
 beforeEach(() => {
@@ -121,6 +121,28 @@ describe("admin entries checkin API contract test", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout")
   })
 
+  it("C07: PATCH 不正なUUIDは400", async () => {
+    const res = await PATCH(makeRequest("PATCH"), makeContext("invalid-id"))
+    const json = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(json.error).toBe("エントリーIDの形式が不正です")
+  })
+
+  it("C08: PATCH profiles取得エラーは500", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      buildSupabase(ADMIN_USER, {
+        profiles_select: { data: null, error: { message: "db error" } },
+      }) as never,
+    )
+
+    const res = await PATCH(makeRequest("PATCH"), makeContext())
+    const json = await res.json()
+
+    expect(res.status).toBe(500)
+    expect(json.error).toBe("権限の確認に失敗しました")
+  })
+
   // DELETE tests
   it("C05: DELETE 未認証は401", async () => {
     vi.mocked(createClient).mockResolvedValue(buildSupabase(null) as never)
@@ -139,5 +161,19 @@ describe("admin entries checkin API contract test", () => {
     expect(res.status).toBe(200)
     expect(json.success).toBe(true)
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout")
+  })
+
+  it("C09: DELETE エントリー不存在は404", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      buildSupabase(ADMIN_USER, {
+        entries_update: { count: 0, error: null },
+      }) as never,
+    )
+
+    const res = await DELETE(makeRequest("DELETE"), makeContext())
+    const json = await res.json()
+
+    expect(res.status).toBe(404)
+    expect(json.error).toBe("エントリーが見つかりません")
   })
 })
