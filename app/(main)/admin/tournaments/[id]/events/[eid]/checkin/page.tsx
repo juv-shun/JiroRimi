@@ -54,7 +54,7 @@ export default async function AdminCheckinPage({
   const { data: entries, error: entriesError } = await supabase
     .from("entries")
     .select(
-      "id, created_at, checked_in_at, profiles (player_name, avatar_url, first_role)",
+      "id, created_at, checked_in_at, profiles (player_name, avatar_url, first_role, second_role, third_role)",
     )
     .eq("event_id", eid)
     .order("created_at", { ascending: true })
