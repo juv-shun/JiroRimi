@@ -44,13 +44,21 @@ export async function PATCH(request: Request) {
     }
 
     // イベントステータス確認（開始後はチェックイン不可）
-    const { data: eventData } = await supabase
+    const { data: eventData, error: eventFetchError } = await supabase
       .from("events")
       .select("status")
       .eq("id", eventId)
       .single()
 
-    if (eventData && eventData.status !== "scheduled") {
+    if (eventFetchError) {
+      console.error("Event fetch error:", eventFetchError)
+      return NextResponse.json(
+        { success: false, error: "イベントの確認に失敗しました" },
+        { status: 500 },
+      )
+    }
+
+    if (eventData.status !== "scheduled") {
       return NextResponse.json(
         { success: false, error: "イベント開始後はチェックインできません" },
         { status: 400 },

@@ -68,13 +68,22 @@ export async function PATCH(_request: Request, context: RouteContext) {
     if (auth.error) return auth.error
 
     // エントリーからevent_idを取得してイベントステータスを確認
-    const { data: entry } = await supabase
+    const { data: entry, error: entryFetchError } = await supabase
       .from("entries")
       .select("event_id, events!inner (status)")
       .eq("id", id)
       .single()
 
-    if (entry) {
+    if (entryFetchError) {
+      // エントリーが見つからない場合はここではスキップ（後続のupdate countで404を返す）
+      if (entryFetchError.code !== "PGRST116") {
+        console.error("Entry fetch error:", entryFetchError)
+        return NextResponse.json(
+          { success: false, error: "エントリーの確認に失敗しました" },
+          { status: 500 },
+        )
+      }
+    } else if (entry) {
       const event = Array.isArray(entry.events) ? entry.events[0] : entry.events
       if (event?.status !== "scheduled") {
         return NextResponse.json(
@@ -135,13 +144,21 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (auth.error) return auth.error
 
     // エントリーからevent_idを取得してイベントステータスを確認
-    const { data: entry } = await supabase
+    const { data: entry, error: entryFetchError } = await supabase
       .from("entries")
       .select("event_id, events!inner (status)")
       .eq("id", id)
       .single()
 
-    if (entry) {
+    if (entryFetchError) {
+      if (entryFetchError.code !== "PGRST116") {
+        console.error("Entry fetch error:", entryFetchError)
+        return NextResponse.json(
+          { success: false, error: "エントリーの確認に失敗しました" },
+          { status: 500 },
+        )
+      }
+    } else if (entry) {
       const event = Array.isArray(entry.events) ? entry.events[0] : entry.events
       if (event?.status !== "scheduled") {
         return NextResponse.json(

@@ -69,9 +69,11 @@ function buildSupabase(user: object | null, tables: TableMocks = {}) {
             }),
           }),
           update: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue(
-              tables.entries_update ?? { error: null },
-            ),
+            eq: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue(
+                tables.entries_update ?? { error: null },
+              ),
+            }),
           }),
         }
       }

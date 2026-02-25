@@ -182,6 +182,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const { error: excludeError } = await supabase
         .from("entries")
         .update({ checked_in_at: null })
+        .eq("event_id", id)
         .in("id", uniqueExcludedIds)
 
       if (excludeError) {
