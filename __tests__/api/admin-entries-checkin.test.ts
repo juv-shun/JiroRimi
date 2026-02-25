@@ -26,6 +26,7 @@ interface TableMocks {
 }
 
 function buildSupabase(user: object | null, tables: TableMocks = {}) {
+  let entriesCallCount = 0
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
     from: vi.fn().mockImplementation((table: string) => {
@@ -41,6 +42,21 @@ function buildSupabase(user: object | null, tables: TableMocks = {}) {
         }
       }
       if (table === "entries") {
+        entriesCallCount++
+        // 1回目: select (イベントステータス確認)
+        if (entriesCallCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { event_id: "event-uuid", events: { status: "scheduled" } },
+                  error: null,
+                }),
+              }),
+            }),
+          }
+        }
+        // 2回目: update (チェックイン操作)
         return {
           update: vi.fn().mockReturnValue({
             eq: vi.fn().mockResolvedValue(

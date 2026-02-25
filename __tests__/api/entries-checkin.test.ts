@@ -23,6 +23,18 @@ function buildSupabase(user: object | null, tables: TableMocks = {}) {
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
     from: vi.fn().mockImplementation((table: string) => {
+      if (table === "events") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { status: "scheduled" },
+                error: null,
+              }),
+            }),
+          }),
+        }
+      }
       if (table === "entries") {
         return {
           update: vi.fn().mockReturnValue({
