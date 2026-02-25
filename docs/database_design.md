@@ -342,8 +342,8 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | ステータス | トリガー |
 |-----------|---------|
 | `scheduled` | デフォルト（イベント作成時） |
-| `in_progress` | 運営者が試合開始操作 |
-| `completed` | 運営者が試合完了操作 |
+| `in_progress` | 運営者がイベント開始操作（参加メンバー確定。チェックイン締切前でも操作可能） |
+| `completed` | 運営者がイベント完了操作 |
 
 **時間ベースのフェーズ** — アプリ層で `entry_start` / `entry_end` / `checkin_start` / `checkin_end` から算出:
 
@@ -353,8 +353,8 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | `entry_start <= now() < entry_end` | エントリー受付中 |
 | `entry_end <= now() < checkin_start` | エントリー締切済 |
 | `checkin_start <= now() < checkin_end` | チェックイン受付中 |
-| `checkin_end <= now()` かつ `status = 'scheduled'` | チェックイン締切済（試合開始待ち） |
-| `status = 'in_progress'` | 試合進行中 |
+| `checkin_end <= now()` かつ `status = 'scheduled'` | チェックイン締切済（イベント開始待ち） |
+| `status = 'in_progress'` | イベント進行中 |
 | `status = 'completed'` | 終了 |
 
 > **設計判断**: 時間ベースで算出可能なフェーズをDBステータスとして持つと、バッチ処理によるステータス更新が必要になり、タイミングのズレや障害時の不整合リスクが発生する。時間カラムから都度算出することでこれらの問題を回避する。RLSポリシーでも `entry_start <= now()` のようにSQL内で直接判定可能。
