@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { ClipboardCheck, Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { CircleDot, CheckCircle2, ClipboardCheck, Loader2, Play, Plus, Trash2 } from "lucide-react"
 import type {
   FieldErrors,
   UseFieldArrayAppend,
@@ -10,10 +11,14 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form"
+import { Toast } from "@/app/components/toast"
+import { createClient } from "@/lib/supabase/client"
+import type { EntryWithProfile } from "@/lib/types/entry"
 import { GENDER_LABELS } from "@/lib/types/profile"
 import { ENTRY_TYPE_LABELS, MATCH_FORMAT_LABELS } from "@/lib/types/tournament"
-import type { EntryType, MatchFormat } from "@/lib/types/tournament"
+import type { EntryType, EventStatus, MatchFormat } from "@/lib/types/tournament"
 import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
+import { StartEventModal } from "@/app/components/start-event-modal"
 
 type EventFieldsProps = {
   fields: { id: string }[]
@@ -25,6 +30,7 @@ type EventFieldsProps = {
   setValue: UseFormSetValue<TournamentUpdateFormData>
   mode?: "create" | "edit"
   tournamentId?: string
+  eventStatuses?: Record<string, EventStatus>
 }
 
 const EMPTY_EVENT = {
@@ -52,7 +58,62 @@ export function EventFields({
   setValue,
   mode,
   tournamentId,
+  eventStatuses,
 }: EventFieldsProps) {
+  const [startModalState, setStartModalState] = useState<{
+    eventId: string
+    entries: EntryWithProfile[]
+  } | null>(null)
+  const [loadingEventId, setLoadingEventId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{
+    show: boolean
+    message: string
+    type: "success" | "error"
+    isExiting: boolean
+  }>({ show: false, message: "", type: "success", isExiting: false })
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type, isExiting: false })
+    setTimeout(() => setToast((prev) => ({ ...prev, isExiting: true })), 2500)
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "success", isExiting: false })
+    }, 3000)
+  }
+
+  const handleStartClick = async (eventId: string) => {
+    setLoadingEventId(eventId)
+    try {
+      const supabase = createClient()
+      const { data: entries, error } = await supabase
+        .from("entries")
+        .select(
+          "id, created_at, checked_in_at, profiles (player_name, avatar_url, first_role, second_role, third_role)",
+        )
+        .eq("event_id", eventId)
+        .not("checked_in_at", "is", null)
+
+      if (error) {
+        showToast("エントリーの取得に失敗しました", "error")
+        return
+      }
+
+      const entryList: EntryWithProfile[] = (entries ?? []).map((entry) => ({
+        id: entry.id,
+        created_at: entry.created_at,
+        checked_in_at: entry.checked_in_at,
+        profiles: Array.isArray(entry.profiles)
+          ? entry.profiles[0] ?? null
+          : entry.profiles,
+      }))
+
+      setStartModalState({ eventId, entries: entryList })
+    } catch {
+      showToast("通信エラーが発生しました", "error")
+    } finally {
+      setLoadingEventId(null)
+    }
+  }
+
   // match_format 変更時のハンドラ
   const handleMatchFormatChange = (index: number, value: MatchFormat) => {
     if (value === "double_elimination") {
@@ -75,11 +136,13 @@ export function EventFields({
               <span className="w-1.5 h-5 bg-success rounded-full" />
               イベント {index + 1}
             </h3>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {(() => {
                 const eventId = mode === "edit" ? watch(`events.${index}.id`) : undefined
-                if (mode === "edit" && tournamentId && eventId) {
-                  return (
+                if (mode !== "edit" || !tournamentId || !eventId) return null
+                const status = eventStatuses?.[eventId]
+                return (
+                  <>
                     <Link
                       href={`/admin/tournaments/${tournamentId}/events/${eventId}/checkin`}
                       className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
@@ -87,9 +150,36 @@ export function EventFields({
                     >
                       <ClipboardCheck className="w-4 h-4" />
                     </Link>
-                  )
-                }
-                return null
+                    {status === "scheduled" && (
+                      <button
+                        type="button"
+                        onClick={() => handleStartClick(eventId)}
+                        disabled={loadingEventId === eventId}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 disabled:opacity-50 transition-all"
+                        title="イベントを開始"
+                      >
+                        {loadingEventId === eventId ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Play className="w-3.5 h-3.5" />
+                        )}
+                        開始
+                      </button>
+                    )}
+                    {status === "in_progress" && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        <CircleDot className="w-3 h-3" />
+                        進行中
+                      </span>
+                    )}
+                    {status === "completed" && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        <CheckCircle2 className="w-3 h-3" />
+                        終了
+                      </span>
+                    )}
+                  </>
+                )
               })()}
               {fields.length > 1 && (
                 <button
@@ -426,6 +516,29 @@ export function EventFields({
       {/* 配列レベルのエラー */}
       {errors.events?.root && (
         <p className="text-xs text-error">{errors.events.root.message}</p>
+      )}
+
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        show={toast.show}
+        isExiting={toast.isExiting}
+      />
+
+      {startModalState && (
+        <StartEventModal
+          eventId={startModalState.eventId}
+          entries={startModalState.entries}
+          onClose={() => setStartModalState(null)}
+          onSuccess={() => {
+            setStartModalState(null)
+            showToast("イベントを開始しました", "success")
+            // ステータスをローカルで更新（ページリロードなしで反映）
+            if (eventStatuses && startModalState) {
+              eventStatuses[startModalState.eventId] = "in_progress"
+            }
+          }}
+        />
       )}
     </div>
   )

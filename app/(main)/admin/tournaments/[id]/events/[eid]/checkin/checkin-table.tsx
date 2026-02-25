@@ -9,7 +9,7 @@ import type { EntryWithProfile } from "@/lib/types/entry"
 import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
 import type { EventStatus } from "@/lib/types/tournament"
-import { StartEventModal } from "./start-event-modal"
+import { StartEventModal } from "@/app/components/start-event-modal"
 
 type CheckinTableProps = {
   entries: EntryWithProfile[]

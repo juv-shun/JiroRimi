@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation"
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { MatchFormat, TournamentStatus } from "@/lib/types/tournament"
+import type { EventStatus, MatchFormat, TournamentStatus } from "@/lib/types/tournament"
 import { timestamptzToDatetimeLocal } from "@/lib/utils/datetime"
 import type { TournamentUpdateFormData } from "@/lib/validations/tournament"
 import { TournamentForm } from "../../new/tournament-form"
@@ -49,7 +49,7 @@ export default async function EditTournamentPage({
   const { data: events, error: eventsError } = await supabase
     .from("events")
     .select(
-      "id, name, entry_type, match_format, matches_per_event, max_participants, scheduled_date, entry_start, entry_end, checkin_start, checkin_end, gender, rules",
+      "id, name, entry_type, match_format, matches_per_event, max_participants, scheduled_date, entry_start, entry_end, checkin_start, checkin_end, gender, rules, status",
     )
     .eq("tournament_id", id)
     .order("event_number", { ascending: true })
@@ -63,6 +63,12 @@ export default async function EditTournamentPage({
     if (format === "double_elimination") return "double_elimination"
     // swiss, single_elimination, round_robin などは qualifier に変換
     return "qualifier"
+  }
+
+  // イベントステータスマップを構築
+  const eventStatuses: Record<string, EventStatus> = {}
+  for (const ev of events) {
+    eventStatuses[ev.id] = ev.status as EventStatus
   }
 
   // フォーム用データに変換
@@ -99,6 +105,7 @@ export default async function EditTournamentPage({
           mode="edit"
           tournamentId={id}
           defaultValues={defaultValues}
+          eventStatuses={eventStatuses}
         />
       </div>
     </main>

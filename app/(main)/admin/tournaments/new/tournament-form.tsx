@@ -6,7 +6,7 @@ import { useEffect, useState, useTransition } from "react"
 
 import { useFieldArray, useForm } from "react-hook-form"
 import { Toast } from "@/app/components/toast"
-import type { ActionResult } from "@/lib/types/tournament"
+import type { ActionResult, EventStatus } from "@/lib/types/tournament"
 import type { TournamentStatus } from "@/lib/types/tournament"
 import {
   type TournamentUpdateFormData,
@@ -35,12 +35,14 @@ type TournamentFormProps = {
   mode: "create" | "edit"
   tournamentId?: string
   defaultValues?: TournamentUpdateFormData
+  eventStatuses?: Record<string, EventStatus>
 }
 
 export function TournamentForm({
   mode,
   tournamentId,
   defaultValues,
+  eventStatuses,
 }: TournamentFormProps) {
   const router = useRouter()
   const initialStatus: TournamentStatus = defaultValues?.status ?? "draft"
@@ -210,6 +212,7 @@ export function TournamentForm({
         setValue={setValue}
         mode={mode}
         tournamentId={tournamentId}
+        eventStatuses={eventStatuses}
       />
 
       {/* エラー表示 */}
