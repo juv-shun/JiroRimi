@@ -56,7 +56,7 @@ export default async function EntryListPage({
   const { data: entries, error: entriesError } = await supabase
     .from("entries")
     .select(
-      "id, created_at, profiles (player_name, avatar_url, first_role, second_role, third_role)",
+      "id, created_at, checked_in_at, profiles (player_name, avatar_url, first_role, second_role, third_role)",
     )
     .eq("event_id", eid)
     .order("created_at", { ascending: true })
@@ -71,6 +71,7 @@ export default async function EntryListPage({
   const entryList: EntryWithProfile[] = (entries ?? []).map((entry) => ({
     id: entry.id,
     created_at: entry.created_at,
+    checked_in_at: entry.checked_in_at,
     profiles: Array.isArray(entry.profiles)
       ? entry.profiles[0] ?? null
       : entry.profiles,

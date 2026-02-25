@@ -10,6 +10,7 @@ import type { Role } from "./profile"
 export type EntryWithProfile = {
   id: string
   created_at: string
+  checked_in_at: string | null
   profiles: {
     player_name: string | null
     avatar_url: string | null
