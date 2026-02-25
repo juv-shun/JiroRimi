@@ -7,6 +7,7 @@ import { formatDateTimeJST } from "@/lib/utils/datetime"
 
 type EntryTableProps = {
   entries: EntryWithProfile[]
+  showCheckin: boolean
 }
 
 function RoleCell({ role }: { role: Role | null }) {
@@ -39,7 +40,7 @@ function isAllowedAvatarUrl(url: string): boolean {
   }
 }
 
-export function EntryTable({ entries }: EntryTableProps) {
+export function EntryTable({ entries, showCheckin }: EntryTableProps) {
   if (entries.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center text-gray-500">
@@ -67,9 +68,11 @@ export function EntryTable({ entries }: EntryTableProps) {
               <th className="px-4 py-3 text-left font-medium text-gray-500">
                 第3希望
               </th>
-              <th className="px-4 py-3 text-center font-medium text-gray-500">
-                チェックイン
-              </th>
+              {showCheckin && (
+                <th className="px-4 py-3 text-center font-medium text-gray-500">
+                  チェックイン
+                </th>
+              )}
               <th className="px-4 py-3 text-left font-medium text-gray-500">
                 エントリー日時
               </th>
@@ -121,17 +124,19 @@ export function EntryTable({ entries }: EntryTableProps) {
                     </td>
                   </>
                 )}
-                <td className="px-4 py-3 text-center">
-                  {entry.checked_in_at ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
-                      <Check className="w-3 h-3" />済
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                      未
-                    </span>
-                  )}
-                </td>
+                {showCheckin && (
+                  <td className="px-4 py-3 text-center">
+                    {entry.checked_in_at ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                        <Check className="w-3 h-3" />済
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                        未
+                      </span>
+                    )}
+                  </td>
+                )}
                 <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                   {formatDateTimeJST(entry.created_at)}
                 </td>

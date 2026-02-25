@@ -42,7 +42,7 @@ export default async function EntryListPage({
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, event_number, name, scheduled_date, tournaments!inner (id, name)",
+      "id, event_number, name, scheduled_date, checkin_start, tournaments!inner (id, name)",
     )
     .eq("id", eid)
     .eq("tournament_id", id)
@@ -76,9 +76,11 @@ export default async function EntryListPage({
       ? (entry.profiles[0] ?? null)
       : entry.profiles,
   }))
-  const checkedInCount = entryList.filter(
-    (e) => e.checked_in_at !== null,
-  ).length
+  const showCheckin =
+    event.checkin_start !== null && new Date() >= new Date(event.checkin_start)
+  const checkedInCount = showCheckin
+    ? entryList.filter((e) => e.checked_in_at !== null).length
+    : 0
   const distribution = calculateRoleDistribution(entryList)
   // tournaments は !inner JOIN で単一オブジェクトだが、型推論では配列になるためキャスト
   const tournament = Array.isArray(event.tournaments)
@@ -103,7 +105,9 @@ export default async function EntryListPage({
 
         {/* サマリーカード */}
         <div className="bg-white rounded-2xl shadow-sm border border-border p-6 mb-6">
-          <div className="grid grid-cols-3 gap-4">
+          <div
+            className={`grid ${showCheckin ? "grid-cols-3" : "grid-cols-2"} gap-4`}
+          >
             <div className="flex items-center gap-3">
               <Calendar className="w-5 h-5 text-gray-400" />
               <div>
@@ -122,15 +126,17 @@ export default async function EntryListPage({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Check className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-xs text-gray-500">チェックイン</p>
-                <p className="text-sm font-medium text-gray-900">
-                  {checkedInCount}/{entryList.length}人
-                </p>
+            {showCheckin && (
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-xs text-gray-500">チェックイン</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {checkedInCount}/{entryList.length}人
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -140,7 +146,7 @@ export default async function EntryListPage({
         </div>
 
         {/* エントリー者テーブル */}
-        <EntryTable entries={entryList} />
+        <EntryTable entries={entryList} showCheckin={showCheckin} />
       </div>
     </main>
   )
