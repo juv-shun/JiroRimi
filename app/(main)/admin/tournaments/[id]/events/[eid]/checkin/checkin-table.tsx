@@ -2,15 +2,19 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
-import { Check, X, User, Loader2 } from "lucide-react"
+import { Check, X, User, Loader2, Play, CircleDot, CheckCircle2 } from "lucide-react"
 
 import { Toast } from "@/app/components/toast"
 import type { EntryWithProfile } from "@/lib/types/entry"
 import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
+import type { EventStatus } from "@/lib/types/tournament"
+import { StartEventModal } from "./start-event-modal"
 
 type CheckinTableProps = {
   entries: EntryWithProfile[]
+  eventId: string
+  eventStatus: EventStatus
 }
 
 function isAllowedAvatarUrl(url: string): boolean {
@@ -30,10 +34,11 @@ function isAllowedAvatarUrl(url: string): boolean {
   }
 }
 
-export function CheckinTable({ entries }: CheckinTableProps) {
+export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null)
+  const [showStartModal, setShowStartModal] = useState(false)
   const [toast, setToast] = useState<{
     show: boolean
     message: string
@@ -103,8 +108,38 @@ export function CheckinTable({ entries }: CheckinTableProps) {
     )
   }
 
+  const isScheduled = eventStatus === "scheduled"
+  const checkedInEntries = entries.filter((e) => e.checked_in_at !== null)
+
   return (
     <>
+      {/* イベントステータスセクション */}
+      <div className="mb-4 flex items-center gap-3">
+        {eventStatus === "scheduled" && (
+          <button
+            type="button"
+            onClick={() => setShowStartModal(true)}
+            disabled={checkedInEntries.length < 10}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          >
+            <Play className="w-4 h-4" />
+            イベントを開始する
+          </button>
+        )}
+        {eventStatus === "in_progress" && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            <CircleDot className="w-3.5 h-3.5" />
+            イベント進行中
+          </span>
+        )}
+        {eventStatus === "completed" && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            終了
+          </span>
+        )}
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -120,9 +155,11 @@ export function CheckinTable({ entries }: CheckinTableProps) {
                 <th className="px-4 py-3 text-center font-medium text-gray-500">
                   チェックイン
                 </th>
-                <th className="px-4 py-3 text-center font-medium text-gray-500">
-                  操作
-                </th>
+                {isScheduled && (
+                  <th className="px-4 py-3 text-center font-medium text-gray-500">
+                    操作
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -183,37 +220,39 @@ export function CheckinTable({ entries }: CheckinTableProps) {
                     </td>
 
                     {/* 操作ボタン */}
-                    <td className="px-4 py-3 text-center">
-                      {isCheckedIn ? (
-                        <button
-                          type="button"
-                          onClick={() => handleCancel(entry.id)}
-                          disabled={isLoading}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <X className="w-3 h-3" />
-                          )}
-                          取り消し
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleCheckin(entry.id)}
-                          disabled={isLoading}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Check className="w-3 h-3" />
-                          )}
-                          チェックイン
-                        </button>
-                      )}
-                    </td>
+                    {isScheduled && (
+                      <td className="px-4 py-3 text-center">
+                        {isCheckedIn ? (
+                          <button
+                            type="button"
+                            onClick={() => handleCancel(entry.id)}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <X className="w-3 h-3" />
+                            )}
+                            取り消し
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleCheckin(entry.id)}
+                            disabled={isLoading}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Check className="w-3 h-3" />
+                            )}
+                            チェックイン
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 )
               })}
@@ -228,6 +267,19 @@ export function CheckinTable({ entries }: CheckinTableProps) {
         show={toast.show}
         isExiting={toast.isExiting}
       />
+
+      {showStartModal && (
+        <StartEventModal
+          eventId={eventId}
+          entries={checkedInEntries}
+          onClose={() => setShowStartModal(false)}
+          onSuccess={() => {
+            setShowStartModal(false)
+            showToast("イベントを開始しました", "success")
+            router.refresh()
+          }}
+        />
+      )}
     </>
   )
 }
