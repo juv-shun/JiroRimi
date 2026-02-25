@@ -67,6 +67,23 @@ export async function PATCH(_request: Request, context: RouteContext) {
     const auth = await authorize(supabase)
     if (auth.error) return auth.error
 
+    // エントリーからevent_idを取得してイベントステータスを確認
+    const { data: entry } = await supabase
+      .from("entries")
+      .select("event_id, events!inner (status)")
+      .eq("id", id)
+      .single()
+
+    if (entry) {
+      const event = Array.isArray(entry.events) ? entry.events[0] : entry.events
+      if (event?.status !== "scheduled") {
+        return NextResponse.json(
+          { success: false, error: "イベント開始後はチェックイン操作できません" },
+          { status: 400 },
+        )
+      }
+    }
+
     const { count, error: updateError } = await supabase
       .from("entries")
       .update(
@@ -116,6 +133,23 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const auth = await authorize(supabase)
     if (auth.error) return auth.error
+
+    // エントリーからevent_idを取得してイベントステータスを確認
+    const { data: entry } = await supabase
+      .from("entries")
+      .select("event_id, events!inner (status)")
+      .eq("id", id)
+      .single()
+
+    if (entry) {
+      const event = Array.isArray(entry.events) ? entry.events[0] : entry.events
+      if (event?.status !== "scheduled") {
+        return NextResponse.json(
+          { success: false, error: "イベント開始後はチェックイン操作できません" },
+          { status: 400 },
+        )
+      }
+    }
 
     const { count, error: updateError } = await supabase
       .from("entries")

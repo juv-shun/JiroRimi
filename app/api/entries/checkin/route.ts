@@ -43,6 +43,20 @@ export async function PATCH(request: Request) {
       )
     }
 
+    // イベントステータス確認（開始後はチェックイン不可）
+    const { data: eventData } = await supabase
+      .from("events")
+      .select("status")
+      .eq("id", eventId)
+      .single()
+
+    if (eventData && eventData.status !== "scheduled") {
+      return NextResponse.json(
+        { success: false, error: "イベント開始後はチェックインできません" },
+        { status: 400 },
+      )
+    }
+
     // チェックイン実行
     // - RLS (entries_update_checkin_own) が本人確認・時間帯・未チェックイン済みを検証
     //   USING: profile_id = auth.uid() AND checked_in_at IS NULL
