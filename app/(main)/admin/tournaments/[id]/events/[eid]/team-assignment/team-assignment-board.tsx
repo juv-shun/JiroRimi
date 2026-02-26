@@ -15,7 +15,7 @@ import { useDroppable } from "@dnd-kit/core"
 import { useDraggable } from "@dnd-kit/core"
 import { User, Play, Check, GripVertical } from "lucide-react"
 
-import { ROLE_LABELS } from "@/lib/types/profile"
+import { ROLE_LABELS, ROLE_BADGE_COLORS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
 import type {
   ParticipantInfo,
@@ -105,13 +105,6 @@ function getParticipant(
 
 // --- サブコンポーネント ---
 
-const ROLE_BADGE_COLORS: Record<Role, string> = {
-  top_carry: "bg-purple-100 text-purple-700",
-  bot_carry: "bg-red-100 text-red-700",
-  mid: "bg-blue-100 text-blue-700",
-  tank: "bg-green-100 text-green-700",
-  support: "bg-yellow-100 text-yellow-700",
-}
 
 function RoleBadge({
   role,

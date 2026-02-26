@@ -101,6 +101,7 @@ export type TournamentEventForDisplay = {
   checkin_end: string
   rules: string | null
   gender: Gender | null
+  status?: EventStatus
   entries: { count: number }[]
 }
 
@@ -125,4 +126,5 @@ export type TournamentWithEvents = {
 export type UserEntryInfo = {
   event_id: string
   checked_in_at: string | null
+  hasMatch?: boolean
 }
