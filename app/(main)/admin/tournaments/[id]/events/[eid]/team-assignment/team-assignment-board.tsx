@@ -100,11 +100,11 @@ function getParticipant(
 // --- サブコンポーネント ---
 
 const ROLE_BADGE_COLORS: Record<Role, string> = {
-  top_carry: "bg-red-100 text-red-700",
-  bot_carry: "bg-blue-100 text-blue-700",
-  mid: "bg-purple-100 text-purple-700",
-  tank: "bg-amber-100 text-amber-700",
-  support: "bg-green-100 text-green-700",
+  top_carry: "bg-purple-100 text-purple-700",
+  bot_carry: "bg-red-100 text-red-700",
+  mid: "bg-blue-100 text-blue-700",
+  tank: "bg-green-100 text-green-700",
+  support: "bg-yellow-100 text-yellow-700",
 }
 
 function RoleBadge({
