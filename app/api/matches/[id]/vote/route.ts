@@ -3,6 +3,9 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { voteSchema } from "@/lib/validations/match"
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -40,6 +43,13 @@ export async function PATCH(
     }
 
     const { id: matchId } = await params
+
+    if (!UUID_REGEX.test(matchId)) {
+      return NextResponse.json(
+        { success: false, error: "リクエスト形式が不正です" },
+        { status: 400 },
+      )
+    }
 
     // RLS (match_participants_update_vote_own) が本人チェック & in_progress チェックを実施
     const { count, error: updateError } = await supabase

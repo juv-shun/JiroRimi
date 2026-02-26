@@ -267,7 +267,7 @@ export function MatchPage({ matches }: MatchPageProps) {
 function isAllowedAvatarUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    if (parsed.protocol !== "https:") {
       return false
     }
     const { hostname } = parsed
@@ -415,6 +415,13 @@ function ConfirmedResult({
   result: string | null
   myTeam: string
 }) {
+  if (!result) {
+    return (
+      <div className="text-center py-3 rounded-xl font-bold text-lg bg-gray-50 text-gray-500 border border-gray-200">
+        未確定
+      </div>
+    )
+  }
   const isWin = result === myTeam
   return (
     <div
