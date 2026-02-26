@@ -75,7 +75,8 @@
 - [プロダクトバックログ](../docs/product_backlog.md) - 開発計画・進捗管理
 - [データベース設計書](../docs/database_design.md) - テーブル定義・ER図
 - [RLS設計書](../docs/rls_design.md) - Row Level Security ポリシー
-- [画面設計書](../docs/screen_design.md) - 画面設計
+- [画面設計書](../docs/screen_design.md) - 画面設計（全体概要）
+- [画面詳細設計書](../docs/screen_design_detail.md) - 各画面の詳細設計
 
 ## テスト戦略（最小構成）
 
