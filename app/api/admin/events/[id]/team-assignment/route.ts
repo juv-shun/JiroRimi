@@ -14,8 +14,8 @@ const requestSchema = z.object({
   matches: z
     .array(
       z.object({
-        team_a_profile_ids: z.array(z.string().uuid()).length(5),
-        team_b_profile_ids: z.array(z.string().uuid()).length(5),
+        team_a_profile_ids: z.array(z.string().regex(UUID_REGEX)).length(5),
+        team_b_profile_ids: z.array(z.string().regex(UUID_REGEX)).length(5),
       }),
     )
     .min(1),
