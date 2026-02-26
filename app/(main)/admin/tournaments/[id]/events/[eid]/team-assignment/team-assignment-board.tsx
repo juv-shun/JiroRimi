@@ -99,6 +99,33 @@ function getParticipant(
 
 // --- サブコンポーネント ---
 
+const ROLE_BADGE_COLORS: Record<Role, string> = {
+  top_carry: "bg-red-100 text-red-700",
+  bot_carry: "bg-blue-100 text-blue-700",
+  mid: "bg-purple-100 text-purple-700",
+  tank: "bg-amber-100 text-amber-700",
+  support: "bg-green-100 text-green-700",
+}
+
+function RoleBadge({
+  role,
+  priority,
+}: {
+  role: Role
+  priority: 1 | 2 | 3
+}) {
+  const colorClass = ROLE_BADGE_COLORS[role]
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${colorClass} ${
+        priority === 1 ? "ring-1 ring-current/20" : "opacity-60"
+      }`}
+    >
+      {ROLE_LABELS[role]}
+    </span>
+  )
+}
+
 function PlayerCard({
   participant,
   isDragging,
@@ -106,6 +133,12 @@ function PlayerCard({
   participant: ParticipantInfo
   isDragging?: boolean
 }) {
+  const roles = [
+    { role: participant.firstRole, priority: 1 as const },
+    { role: participant.secondRole, priority: 2 as const },
+    { role: participant.thirdRole, priority: 3 as const },
+  ].filter((r): r is { role: Role; priority: 1 | 2 | 3 } => r.role !== null)
+
   return (
     <div
       className={`flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-border shadow-sm ${
@@ -129,10 +162,12 @@ function PlayerCard({
         <p className="text-sm font-medium text-gray-900 truncate">
           {participant.playerName ?? "（未設定）"}
         </p>
-        {participant.firstRole && (
-          <p className="text-xs text-gray-500">
-            {ROLE_LABELS[participant.firstRole as Role]}
-          </p>
+        {roles.length > 0 && (
+          <div className="flex flex-wrap gap-0.5 mt-0.5">
+            {roles.map((r) => (
+              <RoleBadge key={r.role} role={r.role} priority={r.priority} />
+            ))}
+          </div>
         )}
       </div>
     </div>
