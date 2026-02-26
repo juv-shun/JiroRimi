@@ -25,6 +25,8 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tournaments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.match_participants ENABLE ROW LEVEL SECURITY;
 ```
 
 ---
@@ -214,6 +216,127 @@ CREATE TRIGGER protect_entry_columns_trigger
 
 ---
 
+### matches
+
+| 操作 | ポリシー名 | 対象ロール | USING | WITH CHECK | 説明 |
+|------|-----------|-----------|-------|------------|------|
+| SELECT | `matches_select_public` | `public` | `status IN ('in_progress', 'confirmed')` | - | 開始済み/確定済みマッチは全員閲覧可能（waiting は非公開） |
+| SELECT | `matches_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全マッチ閲覧可能（waiting 含む） |
+| INSERT | `matches_insert_admin` | `authenticated` | - | `is_admin()` | 運営者のみ作成可能 |
+| UPDATE | `matches_update_lobby` | `authenticated` | マッチ参加者 AND `status = 'in_progress'`（後述） | 同左 | マッチ参加者がロビー番号を更新（in_progress の場合のみ） |
+| UPDATE | `matches_update_admin` | `authenticated` | `is_admin()` | `is_admin()` | 運営者は全マッチ更新可能 |
+| DELETE | `matches_delete_admin` | `authenticated` | `is_admin()` | - | 運営者のみ削除可能 |
+
+**matches_update_lobby の USING / WITH CHECK 条件**:
+
+```sql
+status = 'in_progress'
+AND EXISTS (
+  SELECT 1 FROM public.match_participants mp
+  WHERE mp.match_id = matches.id
+  AND mp.profile_id = auth.uid()
+)
+```
+
+**カラム保護トリガー**（`protect_match_columns`）:
+
+非管理者が `lobby_number` 以外のカラム（`id`, `event_id`, `round_number`, `status`, `result`, `created_at`, `updated_at`）を変更しようとした場合、変更を無効化するトリガー。`entries` テーブルの `protect_entry_columns` と同じパターン。
+
+```sql
+CREATE OR REPLACE FUNCTION public.protect_match_columns()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+    NEW.id := OLD.id;
+    NEW.event_id := OLD.event_id;
+    NEW.round_number := OLD.round_number;
+    NEW.status := OLD.status;
+    NEW.result := OLD.result;
+    NEW.created_at := OLD.created_at;
+    NEW.updated_at := OLD.updated_at;
+    -- lobby_number のみ変更を許可
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER protect_match_columns_trigger
+  BEFORE UPDATE ON public.matches
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_match_columns();
+```
+
+---
+
+### match_participants
+
+| 操作 | ポリシー名 | 対象ロール | USING | WITH CHECK | 説明 |
+|------|-----------|-----------|-------|------------|------|
+| SELECT | `match_participants_select_public` | `public` | 親マッチが `in_progress` or `confirmed`（後述） | - | 開始済みマッチの参加者は全員閲覧可能 |
+| SELECT | `match_participants_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全参加者閲覧可能 |
+| INSERT | `match_participants_insert_admin` | `authenticated` | - | `is_admin()` | 運営者のみ作成可能 |
+| UPDATE | `match_participants_update_vote_own` | `authenticated` | `profile_id = auth.uid()` | 本人 AND 親マッチが `in_progress`（後述） | 本人が勝敗投票を更新（マッチ進行中のみ） |
+| UPDATE | `match_participants_update_admin` | `authenticated` | `is_admin()` | `is_admin()` | 運営者は全更新可能 |
+| DELETE | `match_participants_delete_admin` | `authenticated` | `is_admin()` | - | 運営者のみ削除可能 |
+
+**match_participants_select_public の USING 条件**:
+
+```sql
+EXISTS (
+  SELECT 1 FROM public.matches m
+  WHERE m.id = match_participants.match_id
+  AND m.status IN ('in_progress', 'confirmed')
+)
+```
+
+**match_participants_update_vote_own の WITH CHECK 条件**:
+
+```sql
+profile_id = auth.uid()
+AND EXISTS (
+  SELECT 1 FROM public.matches m
+  WHERE m.id = match_participants.match_id
+  AND m.status = 'in_progress'
+)
+```
+
+**カラム保護トリガー**（`protect_match_participant_columns`）:
+
+非管理者が `vote` 以外のカラム（`id`, `match_id`, `profile_id`, `team`, `created_at`, `updated_at`）を変更しようとした場合、変更を無効化するトリガー。
+
+```sql
+CREATE OR REPLACE FUNCTION public.protect_match_participant_columns()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+    NEW.id := OLD.id;
+    NEW.match_id := OLD.match_id;
+    NEW.profile_id := OLD.profile_id;
+    NEW.team := OLD.team;
+    NEW.created_at := OLD.created_at;
+    NEW.updated_at := OLD.updated_at;
+    -- vote のみ変更を許可
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER protect_match_participant_columns_trigger
+  BEFORE UPDATE ON public.match_participants
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_match_participant_columns();
+```
+
+---
+
 ## ポリシー一覧サマリー
 
 | テーブル | SELECT | INSERT | UPDATE | DELETE |
@@ -222,6 +345,8 @@ CREATE TRIGGER protect_entry_columns_trigger
 | tournaments | 公開済み: 全員 / draft: 運営者 | 運営者 | 運営者 | 運営者 |
 | events | 公開大会のイベント: 全員 / それ以外: 運営者 | 運営者 | 運営者 | 運営者 |
 | entries | 全員 | 本人（期間内）or 運営者 | 本人（期間内・取り消し不可）or 運営者 | 本人 or 運営者 |
+| matches | in_progress/confirmed: 全員 / waiting: 運営者 | 運営者 | 参加者（lobby_number のみ・in_progress のみ）or 運営者 | 運営者 |
+| match_participants | 親マッチが in_progress/confirmed: 全員 / waiting: 運営者 | 運営者 | 本人（vote のみ・in_progress のみ）or 運営者 | 運営者 |
 
 ---
 
@@ -236,19 +361,6 @@ CREATE TRIGGER protect_entry_columns_trigger
 
 ---
 
-## Phase 2 以降の RLS 拡張予定
+## Phase 3 以降の RLS 拡張予定
 
-| テーブル | SELECT | INSERT | UPDATE | DELETE |
-|---------|--------|--------|--------|--------|
-| check_ins | 全員 | 本人（期間内）or 運営者 | 不可 | 運営者のみ |
-| matches | 全員 | 運営者 | 運営者 | 運営者 |
-| match_participants | 全員 | 運営者 | 運営者 | 運営者 |
-| match_results | 全員 | 本人 or 運営者 | 本人 or 運営者 | 運営者 |
-
----
-
-## 次のステップ
-
-1. 本設計書のレビュー・承認
-2. マイグレーションファイルで RLS ポリシーを実装
-3. Supabase ローカル環境で動作確認
+Phase 3（GF関連）で追加予定のテーブルの RLS ポリシーは、Phase 3 の詳細設計時に決定する。
