@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useId } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -239,6 +239,7 @@ export function TeamAssignmentBoard({
   roundNumber,
   eventId,
 }: TeamAssignmentBoardProps) {
+  const dndId = useId()
   const [unassigned, setUnassigned] = useState<ParticipantInfo[]>(participants)
   const [matches, setMatches] = useState<MatchSlot[]>(
     Array.from({ length: matchCount }, () => ({ teamA: [], teamB: [] })),
@@ -349,6 +350,7 @@ export function TeamAssignmentBoard({
   return (
     <>
       <DndContext
+        id={dndId}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
