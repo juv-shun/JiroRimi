@@ -1,5 +1,6 @@
 "use client"
 
+import { Swords } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -392,6 +393,17 @@ export function EventList({
                   className="flex-1"
                 />
               )}
+              {event.status === "in_progress" &&
+                entryInfo?.checked_in_at &&
+                entryInfo?.hasMatch && (
+                  <Link
+                    href={`/tournaments/${tournamentId}/events/${event.id}/matches`}
+                    className="glow-button flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl text-white flex items-center justify-center gap-2"
+                  >
+                    <Swords className="w-4 h-4" />
+                    試合画面を見る
+                  </Link>
+                )}
             </div>
           </div>
         )

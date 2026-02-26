@@ -14,7 +14,7 @@ export default async function TournamentsPage() {
         id, event_number, name, entry_type, match_format,
         matches_per_event, max_participants, scheduled_date,
         entry_start, entry_end, checkin_start, checkin_end,
-        rules, gender,
+        rules, gender, status,
         entries (count)
       )
     `)
@@ -51,7 +51,23 @@ export default async function TournamentsPage() {
       if (entriesError) {
         throw entriesError
       }
-      userEntries = entries ?? []
+      // ユーザーの match_participants を検索してマッチ有無を判定
+      // RLS により in_progress / confirmed マッチのみ参照可能
+      const { data: matchParts } = await supabase
+        .from("match_participants")
+        .select("match_id, matches!inner (event_id)")
+        .eq("profile_id", user.id)
+        .in("matches.event_id", allEventIds)
+      const matchEventIds = new Set(
+        (matchParts ?? []).map((mp) => {
+          const match = Array.isArray(mp.matches) ? mp.matches[0] : mp.matches
+          return match.event_id as string
+        }),
+      )
+      userEntries = (entries ?? []).map((e) => ({
+        ...e,
+        hasMatch: matchEventIds.has(e.event_id),
+      }))
     }
   }
 
