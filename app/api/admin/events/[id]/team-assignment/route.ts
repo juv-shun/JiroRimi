@@ -156,6 +156,29 @@ export async function POST(request: Request, context: RouteContext) {
         : 0
     const nextRound = currentMax + 1
 
+    // 7b. 同一ラウンドに既にマッチが存在しないか確認（二重送信防止）
+    const { count: existingMatchCount, error: existingMatchError } =
+      await supabase
+        .from("matches")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", id)
+        .eq("round_number", nextRound)
+
+    if (existingMatchError) {
+      console.error("Existing match check error:", existingMatchError)
+      return NextResponse.json(
+        { success: false, error: "ラウンド情報の確認に失敗しました" },
+        { status: 500 },
+      )
+    }
+
+    if (existingMatchCount && existingMatchCount > 0) {
+      return NextResponse.json(
+        { success: false, error: "このラウンドは既に編成済みです" },
+        { status: 409 },
+      )
+    }
+
     // 8. チェックイン済み参加者の profile_id セットとリクエストの一致確認
     const { data: checkedInEntries, error: entriesError } = await supabase
       .from("entries")
@@ -192,49 +215,71 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     // DB操作: matches + match_participants を作成
-    for (const match of parsed.data.matches) {
-      const { data: insertedMatch, error: matchError } = await supabase
-        .from("matches")
-        .insert({
-          event_id: id,
-          round_number: nextRound,
-          status: "waiting",
-        })
-        .select("id")
-        .single()
+    // 部分書き込み防止: エラー時は作成済みマッチをクリーンアップ
+    const createdMatchIds: string[] = []
 
-      if (matchError || !insertedMatch) {
-        console.error("Match insert error:", matchError)
-        return NextResponse.json(
-          { success: false, error: "マッチの作成に失敗しました" },
-          { status: 500 },
-        )
+    try {
+      for (const match of parsed.data.matches) {
+        const { data: insertedMatch, error: matchError } = await supabase
+          .from("matches")
+          .insert({
+            event_id: id,
+            round_number: nextRound,
+            status: "waiting",
+          })
+          .select("id")
+          .single()
+
+        if (matchError || !insertedMatch) {
+          console.error("Match insert error:", matchError)
+          throw new Error("マッチの作成に失敗しました")
+        }
+
+        createdMatchIds.push(insertedMatch.id)
+
+        const participants = [
+          ...match.team_a_profile_ids.map((profileId) => ({
+            match_id: insertedMatch.id,
+            profile_id: profileId,
+            team: "team_a" as const,
+          })),
+          ...match.team_b_profile_ids.map((profileId) => ({
+            match_id: insertedMatch.id,
+            profile_id: profileId,
+            team: "team_b" as const,
+          })),
+        ]
+
+        const { error: participantsError } = await supabase
+          .from("match_participants")
+          .insert(participants)
+
+        if (participantsError) {
+          console.error("Match participants insert error:", participantsError)
+          throw new Error("参加者の登録に失敗しました")
+        }
+      }
+    } catch (insertError) {
+      // クリーンアップ: 作成済みマッチを削除（CASCADE で match_participants も削除される）
+      if (createdMatchIds.length > 0) {
+        const { error: cleanupError } = await supabase
+          .from("matches")
+          .delete()
+          .in("id", createdMatchIds)
+
+        if (cleanupError) {
+          console.error("Cleanup error:", cleanupError)
+        }
       }
 
-      const participants = [
-        ...match.team_a_profile_ids.map((profileId) => ({
-          match_id: insertedMatch.id,
-          profile_id: profileId,
-          team: "team_a" as const,
-        })),
-        ...match.team_b_profile_ids.map((profileId) => ({
-          match_id: insertedMatch.id,
-          profile_id: profileId,
-          team: "team_b" as const,
-        })),
-      ]
-
-      const { error: participantsError } = await supabase
-        .from("match_participants")
-        .insert(participants)
-
-      if (participantsError) {
-        console.error("Match participants insert error:", participantsError)
-        return NextResponse.json(
-          { success: false, error: "参加者の登録に失敗しました" },
-          { status: 500 },
-        )
-      }
+      const message =
+        insertError instanceof Error
+          ? insertError.message
+          : "マッチの作成に失敗しました"
+      return NextResponse.json(
+        { success: false, error: message },
+        { status: 500 },
+      )
     }
 
     revalidatePath("/", "layout")

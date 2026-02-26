@@ -268,37 +268,30 @@ export function TeamAssignmentBoard({
       const participant = getParticipant(activeId, unassigned, matches)
       if (!participant) return
 
-      // ドラッグ元から削除
-      setUnassigned((prev) =>
-        prev.filter((p) => p.profileId !== activeId),
+      // 次状態を計算
+      const nextUnassigned = unassigned.filter(
+        (p) => p.profileId !== activeId,
       )
-      setMatches((prev) => {
-        const next = prev.map((m) => ({
-          teamA: m.teamA.filter((p) => p.profileId !== activeId),
-          teamB: m.teamB.filter((p) => p.profileId !== activeId),
-        }))
+      const nextMatches = matches.map((m) => ({
+        teamA: m.teamA.filter((p) => p.profileId !== activeId),
+        teamB: m.teamB.filter((p) => p.profileId !== activeId),
+      }))
 
-        // ドロップ先に追加
-        if (targetContainer.type === "unassigned") {
-          setUnassigned((u) => [...u, participant])
-        } else {
-          next[targetContainer.matchIdx] = {
-            ...next[targetContainer.matchIdx],
-            [targetContainer.team]: [
-              ...next[targetContainer.matchIdx][targetContainer.team],
-              participant,
-            ],
-          }
-        }
-
-        return next
-      })
-
-      // unassigned への追加は setMatches の中で行う場合との競合を避けるため
+      // ドロップ先に追加
       if (targetContainer.type === "unassigned") {
-        // setUnassigned は上で filter した後、ここで追加
-        // ただし setMatches 内で既に追加しているのでここでは不要
+        nextUnassigned.push(participant)
+      } else {
+        nextMatches[targetContainer.matchIdx] = {
+          ...nextMatches[targetContainer.matchIdx],
+          [targetContainer.team]: [
+            ...nextMatches[targetContainer.matchIdx][targetContainer.team],
+            participant,
+          ],
+        }
       }
+
+      setUnassigned(nextUnassigned)
+      setMatches(nextMatches)
     },
     [unassigned, matches],
   )
