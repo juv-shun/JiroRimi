@@ -103,7 +103,7 @@ export default async function TeamAssignmentPage({
   const roundNumber = currentMax + 1
 
   // 確定済みラウンドのマッチ情報取得
-  const { data: existingMatches } = await supabase
+  const { data: existingMatches, error: existingMatchesError } = await supabase
     .from("matches")
     .select(
       `
@@ -119,6 +119,10 @@ export default async function TeamAssignmentPage({
     .eq("event_id", eid)
     .order("round_number", { ascending: true })
     .order("created_at", { ascending: true })
+
+  if (existingMatchesError) {
+    notFound()
+  }
 
   // round_number でグループ化して ExistingRound[] に変換
   const existingRounds: ExistingRound[] = (() => {
