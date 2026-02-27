@@ -45,7 +45,7 @@ export default async function TeamAssignmentPage({
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, name, scheduled_date, status, tournaments!inner (id, name)",
+      "id, name, scheduled_date, status, matches_per_event, tournaments!inner (id, name)",
     )
     .eq("id", eid)
     .eq("tournament_id", id)
@@ -164,6 +164,7 @@ export default async function TeamAssignmentPage({
   })()
 
   const matchCount = participants.length / 10
+  const totalRounds = event.matches_per_event ?? roundNumber
   const tournament = Array.isArray(event.tournaments)
     ? event.tournaments[0]
     : event.tournaments
@@ -210,7 +211,7 @@ export default async function TeamAssignmentPage({
               <div>
                 <p className="text-xs text-gray-500">ラウンド</p>
                 <p className="text-sm font-medium text-gray-900">
-                  Round {roundNumber}
+                  Round {roundNumber} / {totalRounds}
                 </p>
               </div>
             </div>
@@ -222,6 +223,7 @@ export default async function TeamAssignmentPage({
           participants={participants}
           matchCount={matchCount}
           roundNumber={roundNumber}
+          totalRounds={totalRounds}
           eventId={eid}
           tournamentId={id}
           existingRounds={existingRounds}

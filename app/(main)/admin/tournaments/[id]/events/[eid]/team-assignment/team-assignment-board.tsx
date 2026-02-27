@@ -28,6 +28,7 @@ type TeamAssignmentBoardProps = {
   participants: ParticipantInfo[]
   matchCount: number
   roundNumber: number
+  totalRounds: number
   eventId: string
   tournamentId: string
   existingRounds: ExistingRound[]
@@ -242,6 +243,7 @@ export function TeamAssignmentBoard({
   participants,
   matchCount,
   roundNumber,
+  totalRounds,
   eventId,
   tournamentId,
   existingRounds,
@@ -356,40 +358,46 @@ export function TeamAssignmentBoard({
   }
 
   const isEditMode = activeRound === roundNumber
+  const existingRoundNumbers = new Set(existingRounds.map((r) => r.roundNumber))
   const activeExistingRound = existingRounds.find(
     (r) => r.roundNumber === activeRound,
   )
+
+  // タブの状態判定
+  const getTabState = (rn: number) => {
+    if (existingRoundNumbers.has(rn)) return "completed" as const
+    if (rn === roundNumber) return "current" as const
+    return "future" as const
+  }
 
   return (
     <>
       {/* ラウンドタブ */}
       <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
-        {existingRounds.map((r) => (
-          <button
-            key={r.roundNumber}
-            type="button"
-            onClick={() => setActiveRound(r.roundNumber)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-              activeRound === r.roundNumber
-                ? "border-primary text-primary"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <Check className="w-3.5 h-3.5" />
-            ラウンド {r.roundNumber}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setActiveRound(roundNumber)}
-          className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-            isEditMode
-              ? "border-primary text-primary"
-              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-          }`}
-        >
-          ラウンド {roundNumber}（新規）
-        </button>
+        {Array.from({ length: totalRounds }, (_, i) => i + 1).map((rn) => {
+          const state = getTabState(rn)
+          const isActive = activeRound === rn
+          const isClickable = state !== "future"
+          return (
+            <button
+              key={rn}
+              type="button"
+              onClick={() => isClickable && setActiveRound(rn)}
+              disabled={!isClickable}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                isActive
+                  ? "border-primary text-primary"
+                  : isClickable
+                    ? "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    : "border-transparent text-gray-300 cursor-not-allowed"
+              }`}
+            >
+              {state === "completed" && <Check className="w-3.5 h-3.5" />}
+              ラウンド {rn}
+              {state === "current" && "（新規）"}
+            </button>
+          )
+        })}
       </div>
 
       {isEditMode ? (
