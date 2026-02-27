@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core"
 import { useDroppable } from "@dnd-kit/core"
 import { useDraggable } from "@dnd-kit/core"
-import { User, Check } from "lucide-react"
+import { User, Play } from "lucide-react"
 
 import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
@@ -238,6 +238,7 @@ export function TeamAssignmentBoard({
   matchCount,
   roundNumber,
   eventId,
+  tournamentId,
 }: TeamAssignmentBoardProps) {
   const dndId = useId()
   const [unassigned, setUnassigned] = useState<ParticipantInfo[]>(participants)
@@ -344,7 +345,7 @@ export function TeamAssignmentBoard({
 
   const handleSuccess = () => {
     setShowConfirmModal(false)
-    window.location.reload()
+    window.location.href = `/admin/tournaments/${tournamentId}/edit`
   }
 
   return (
@@ -458,8 +459,8 @@ export function TeamAssignmentBoard({
             disabled={!allAssigned}
             className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
-            <Check className="w-4 h-4" />
-            編成を確定
+            <Play className="w-4 h-4" />
+            試合開始
           </button>
         </div>
       </div>

@@ -112,7 +112,7 @@ export function ConfirmModal({
               onClick={onSuccess}
               className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white"
             >
-              OK
+              大会管理に戻る
             </button>
           </div>
         ) : (
