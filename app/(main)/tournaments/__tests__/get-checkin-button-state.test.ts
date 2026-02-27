@@ -47,4 +47,14 @@ describe("getCheckinButtonState", () => {
     const now = new Date("2026-03-01T12:00:00Z")
     expect(getCheckinButtonState(event, "2026-03-01T10:15:00Z", now, true)).toBe("checked_in")
   })
+
+  it("checkin_start ちょうどは can_checkin を返す（境界値）", () => {
+    const exactStart = new Date("2026-03-01T10:00:00Z")
+    expect(getCheckinButtonState(baseEvent, null, exactStart, true)).toBe("can_checkin")
+  })
+
+  it("checkin_end ちょうどは can_checkin を返す（境界値）", () => {
+    const exactEnd = new Date("2026-03-01T11:00:00Z")
+    expect(getCheckinButtonState(baseEvent, null, exactEnd, true)).toBe("can_checkin")
+  })
 })
