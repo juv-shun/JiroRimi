@@ -370,10 +370,33 @@ export function TeamAssignmentBoard({
 }: TeamAssignmentBoardProps) {
   const dndId = useId()
   const [activeRound, setActiveRound] = useState(roundNumber)
-  const [unassigned, setUnassigned] = useState<ParticipantInfo[]>(participants)
-  const [matches, setMatches] = useState<MatchSlot[]>(
-    Array.from({ length: matchCount }, () => ({ teamA: [], teamB: [] })),
+
+  // 前ラウンドの配置がある場合はデフォルト値として使う
+  const prevRound = existingRounds.find((r) => r.roundNumber === roundNumber - 1)
+  const participantIds = new Set(participants.map((p) => p.profileId))
+
+  const initialMatches: MatchSlot[] = prevRound
+    ? Array.from({ length: matchCount }, (_, i) => {
+        const prev = prevRound.matches[i]
+        return prev
+          ? {
+              teamA: prev.teamA.filter((p) => participantIds.has(p.profileId)),
+              teamB: prev.teamB.filter((p) => participantIds.has(p.profileId)),
+            }
+          : { teamA: [], teamB: [] }
+      })
+    : Array.from({ length: matchCount }, () => ({ teamA: [], teamB: [] }))
+
+  const assignedIds = new Set(
+    initialMatches.flatMap((m) => [
+      ...m.teamA.map((p) => p.profileId),
+      ...m.teamB.map((p) => p.profileId),
+    ]),
   )
+  const initialUnassigned = participants.filter((p) => !assignedIds.has(p.profileId))
+
+  const [unassigned, setUnassigned] = useState<ParticipantInfo[]>(initialUnassigned)
+  const [matches, setMatches] = useState<MatchSlot[]>(initialMatches)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   type ActiveDrag =
     | { type: "player"; participant: ParticipantInfo }
