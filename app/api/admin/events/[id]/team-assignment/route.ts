@@ -225,7 +225,7 @@ export async function POST(request: Request, context: RouteContext) {
           .insert({
             event_id: id,
             round_number: nextRound,
-            status: "waiting",
+            status: "in_progress",
           })
           .select("id")
           .single()
