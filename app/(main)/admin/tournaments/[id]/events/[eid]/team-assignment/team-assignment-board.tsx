@@ -389,11 +389,17 @@ export function TeamAssignmentBoard({
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       const data = event.active.data.current
-      if (data?.type === "team") {
+      if (
+        data?.type === "team" &&
+        typeof data.matchIdx === "number" &&
+        data.matchIdx >= 0 &&
+        data.matchIdx < matches.length &&
+        (data.team === "teamA" || data.team === "teamB")
+      ) {
         setActiveDrag({
           type: "team",
-          matchIdx: data.matchIdx as number,
-          team: data.team as "teamA" | "teamB",
+          matchIdx: data.matchIdx,
+          team: data.team,
         })
       } else {
         const profileId = (event.active.id as string).replace("player-", "")
@@ -524,8 +530,14 @@ export function TeamAssignmentBoard({
           }
         }
 
-        // ターゲットが特定できない or unassigned → noop
-        if (targetMatchIdx === null || targetTeam === null) return
+        // ターゲットが特定できない or unassigned or 範囲外 → noop
+        if (
+          targetMatchIdx === null ||
+          targetTeam === null ||
+          targetMatchIdx < 0 ||
+          targetMatchIdx >= matches.length
+        )
+          return
 
         // 同一チーム → noop
         if (srcMatchIdx === targetMatchIdx && srcTeam === targetTeam) return
