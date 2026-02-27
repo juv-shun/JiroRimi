@@ -51,10 +51,9 @@ export function EventList({
 }: EventListProps) {
   const router = useRouter()
   const [now, setNow] = useState(() => new Date())
-  const [rulesModal, setRulesModal] = useState<{
-    eventName: string
-    rules: string
-  } | null>(null)
+  const [rulesPopoverEventId, setRulesPopoverEventId] = useState<string | null>(
+    null,
+  )
   const [confirmEvent, setConfirmEvent] =
     useState<TournamentEventForDisplay | null>(null)
   const [cancelConfirmEvent, setCancelConfirmEvent] =
@@ -259,16 +258,15 @@ export function EventList({
                 <button
                   type="button"
                   onClick={() =>
-                    setRulesModal({
-                      eventName: event.name,
-                      rules: event.rules ?? "",
-                    })
+                    setRulesPopoverEventId(
+                      rulesPopoverEventId === event.id ? null : event.id,
+                    )
                   }
-                  className="flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors text-xs"
                   aria-label="ルール詳細"
-                  title="ルール詳細"
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-3.5 h-3.5" />
+                  ルール
                 </button>
                 {event.gender && (
                   <span
@@ -300,6 +298,14 @@ export function EventList({
                 </span>
               )}
             </div>
+
+            {rulesPopoverEventId === event.id && (
+              <div className="mb-4 rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+                  {event.rules || "ルールが設定されていません。"}
+                </pre>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
               <InfoRow
@@ -398,14 +404,6 @@ export function EventList({
           </div>
         )
       })}
-
-      {rulesModal && (
-        <RulesModal
-          eventName={rulesModal.eventName}
-          rules={rulesModal.rules}
-          onClose={() => setRulesModal(null)}
-        />
-      )}
 
       {confirmEvent && (
         <EntryConfirmModal
@@ -975,95 +973,3 @@ function CancelConfirmModal({
   )
 }
 
-// Rules modal
-function RulesModal({
-  eventName,
-  rules,
-  onClose,
-}: {
-  eventName: string
-  rules: string
-  onClose: () => void
-}) {
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", handleEsc)
-    return () => document.removeEventListener("keydown", handleEsc)
-  }, [onClose])
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        onClick={onClose}
-        aria-label="モーダルを閉じる"
-      />
-      <div
-        className="relative modal-content rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden opacity-0"
-        style={{
-          animation: "card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-        }}
-      >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-orange-100 bg-gradient-to-r from-primary/5 to-amber-50">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            {eventName}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
-            aria-label="閉じる"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="px-6 py-5 overflow-y-auto max-h-[60vh]">
-          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-            {rules || "ルールが設定されていません。"}
-          </pre>
-        </div>
-        <div className="px-6 py-4 border-t border-orange-100 bg-gray-50/50">
-          <button
-            type="button"
-            onClick={onClose}
-            className="glass-button w-full px-4 py-2.5 text-sm font-medium rounded-xl text-gray-700"
-          >
-            閉じる
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
