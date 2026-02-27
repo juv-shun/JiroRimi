@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core"
 import { useDroppable } from "@dnd-kit/core"
 import { useDraggable } from "@dnd-kit/core"
-import { User, Play, Check } from "lucide-react"
+import { User, Play, Check, GripVertical } from "lucide-react"
 
 import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
@@ -187,6 +187,7 @@ function DraggablePlayer({
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `player-${participant.profileId}`,
+    data: { type: "player" },
   })
 
   return (
@@ -237,6 +238,125 @@ function DroppableContainer({
   )
 }
 
+function DraggableTeamContainer({
+  droppableId,
+  draggableId,
+  matchIdx,
+  team,
+  children,
+  label,
+  count,
+  maxCount,
+}: {
+  droppableId: string
+  draggableId: string
+  matchIdx: number
+  team: "teamA" | "teamB"
+  children: React.ReactNode
+  label: string
+  count: number
+  maxCount?: number
+}) {
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({
+    id: droppableId,
+  })
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    setActivatorNodeRef,
+    isDragging,
+  } = useDraggable({
+    id: draggableId,
+    data: { type: "team", matchIdx, team },
+  })
+
+  const combinedRef = useCallback(
+    (node: HTMLElement | null) => {
+      setDroppableRef(node)
+      setDraggableRef(node)
+    },
+    [setDroppableRef, setDraggableRef],
+  )
+
+  return (
+    <div
+      ref={combinedRef}
+      className={`rounded-xl border-2 border-dashed p-3 min-h-[60px] transition-colors ${
+        isDragging
+          ? "opacity-50 border-primary/30 bg-primary/5"
+          : isOver
+            ? "border-primary/50 bg-primary/5"
+            : "border-border bg-gray-50/50"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            ref={setActivatorNodeRef}
+            {...listeners}
+            {...attributes}
+            className="touch-none cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+          <p className="text-xs font-semibold text-gray-500">{label}</p>
+        </div>
+        {maxCount !== undefined && (
+          <span
+            className={`text-xs font-medium ${
+              count >= maxCount ? "text-green-600" : "text-gray-400"
+            }`}
+          >
+            {count}/{maxCount}
+          </span>
+        )}
+      </div>
+      <div className="space-y-1.5">{children}</div>
+    </div>
+  )
+}
+
+function TeamDragPreview({
+  team,
+  label,
+}: {
+  team: ParticipantInfo[]
+  label: string
+}) {
+  return (
+    <div className="w-56 rounded-xl border-2 border-primary/50 bg-white p-3 shadow-lg">
+      <p className="text-xs font-semibold text-gray-500 mb-2">{label}</p>
+      {team.length === 0 ? (
+        <p className="text-xs text-gray-400">（空）</p>
+      ) : (
+        <div className="space-y-1">
+          {team.map((p) => (
+            <div key={p.profileId} className="flex items-center gap-2">
+              {p.avatarUrl && isAllowedAvatarUrl(p.avatarUrl) ? (
+                <img
+                  src={p.avatarUrl}
+                  alt=""
+                  loading="lazy"
+                  className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                  <User className="w-3 h-3 text-gray-400" />
+                </div>
+              )}
+              <span className="text-xs text-gray-700 truncate">
+                {p.playerName ?? "（未設定）"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // --- メインコンポーネント ---
 
 export function TeamAssignmentBoard({
@@ -255,7 +375,10 @@ export function TeamAssignmentBoard({
     Array.from({ length: matchCount }, () => ({ teamA: [], teamB: [] })),
   )
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  type ActiveDrag =
+    | { type: "player"; participant: ParticipantInfo }
+    | { type: "team"; matchIdx: number; team: "teamA" | "teamB" }
+  const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -263,92 +386,165 @@ export function TeamAssignmentBoard({
     }),
   )
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string)
-  }, [])
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveDragId(null)
-      const { active, over } = event
-      if (!over) return
-
-      const activeId = (active.id as string).replace("player-", "")
-
-      // ドロップ先コンテナを特定
-      let overContainerId = over.id as string
-      // ドロップ先がプレイヤーの場合、そのプレイヤーが属するコンテナを探す
-      if (overContainerId.startsWith("player-")) {
-        const overProfileId = overContainerId.replace("player-", "")
-        const container = findContainer(overProfileId, unassigned, matches)
-        if (!container) return
-        overContainerId =
-          container.type === "unassigned"
-            ? "unassigned"
-            : `match-${container.matchIdx}-${container.team === "teamA" ? "team_a" : "team_b"}`
-      }
-
-      const sourceContainer = findContainer(activeId, unassigned, matches)
-      const targetContainer = parseContainerId(overContainerId)
-      if (!sourceContainer || !targetContainer) return
-
-      // 同一コンテナ → noop
-      if (
-        sourceContainer.type === targetContainer.type &&
-        (sourceContainer.type === "unassigned" ||
-          (sourceContainer.type === "team" &&
-            targetContainer.type === "team" &&
-            sourceContainer.matchIdx === targetContainer.matchIdx &&
-            sourceContainer.team === targetContainer.team))
-      ) {
-        return
-      }
-
-      // ドロップ先チームが5人 → noop
-      if (targetContainer.type === "team") {
-        const targetTeam =
-          matches[targetContainer.matchIdx][targetContainer.team]
-        if (targetTeam.length >= 5) return
-      }
-
-      const participant = getParticipant(activeId, unassigned, matches)
-      if (!participant) return
-
-      // 次状態を計算
-      const nextUnassigned = unassigned.filter(
-        (p) => p.profileId !== activeId,
-      )
-      const nextMatches = matches.map((m) => ({
-        teamA: m.teamA.filter((p) => p.profileId !== activeId),
-        teamB: m.teamB.filter((p) => p.profileId !== activeId),
-      }))
-
-      // ドロップ先に追加
-      if (targetContainer.type === "unassigned") {
-        nextUnassigned.push(participant)
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const data = event.active.data.current
+      if (data?.type === "team") {
+        setActiveDrag({
+          type: "team",
+          matchIdx: data.matchIdx as number,
+          team: data.team as "teamA" | "teamB",
+        })
       } else {
-        nextMatches[targetContainer.matchIdx] = {
-          ...nextMatches[targetContainer.matchIdx],
-          [targetContainer.team]: [
-            ...nextMatches[targetContainer.matchIdx][targetContainer.team],
-            participant,
-          ],
+        const profileId = (event.active.id as string).replace("player-", "")
+        const participant = getParticipant(profileId, unassigned, matches)
+        if (participant) {
+          setActiveDrag({ type: "player", participant })
         }
       }
-
-      setUnassigned(nextUnassigned)
-      setMatches(nextMatches)
     },
     [unassigned, matches],
   )
 
-  const activeParticipant = activeDragId
-    ? getParticipant(
-        activeDragId.replace("player-", ""),
-        unassigned,
-        matches,
-      )
-    : null
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const currentDrag = activeDrag
+      setActiveDrag(null)
+      const { over } = event
+      if (!over || !currentDrag) return
+
+      if (currentDrag.type === "player") {
+        // --- プレイヤーD&D（既存ロジック維持） ---
+        const activeId = currentDrag.participant.profileId
+
+        // ドロップ先コンテナを特定
+        let overContainerId = over.id as string
+        // ドロップ先がプレイヤーの場合、そのプレイヤーが属するコンテナを探す
+        if (overContainerId.startsWith("player-")) {
+          const overProfileId = overContainerId.replace("player-", "")
+          const container = findContainer(overProfileId, unassigned, matches)
+          if (!container) return
+          overContainerId =
+            container.type === "unassigned"
+              ? "unassigned"
+              : `match-${container.matchIdx}-${container.team === "teamA" ? "team_a" : "team_b"}`
+        }
+        // ドロップ先がチームdraggableの場合、対応するdroppable IDに変換
+        const teamDragMatch = overContainerId.match(
+          /^team-(\d+)-(teamA|teamB)$/,
+        )
+        if (teamDragMatch) {
+          const idx = teamDragMatch[1]
+          const side = teamDragMatch[2] === "teamA" ? "team_a" : "team_b"
+          overContainerId = `match-${idx}-${side}`
+        }
+
+        const sourceContainer = findContainer(activeId, unassigned, matches)
+        const targetContainer = parseContainerId(overContainerId)
+        if (!sourceContainer || !targetContainer) return
+
+        // 同一コンテナ → noop
+        if (
+          sourceContainer.type === targetContainer.type &&
+          (sourceContainer.type === "unassigned" ||
+            (sourceContainer.type === "team" &&
+              targetContainer.type === "team" &&
+              sourceContainer.matchIdx === targetContainer.matchIdx &&
+              sourceContainer.team === targetContainer.team))
+        ) {
+          return
+        }
+
+        // ドロップ先チームが5人 → noop
+        if (targetContainer.type === "team") {
+          const targetTeam =
+            matches[targetContainer.matchIdx][targetContainer.team]
+          if (targetTeam.length >= 5) return
+        }
+
+        const participant = getParticipant(activeId, unassigned, matches)
+        if (!participant) return
+
+        // 次状態を計算
+        const nextUnassigned = unassigned.filter(
+          (p) => p.profileId !== activeId,
+        )
+        const nextMatches = matches.map((m) => ({
+          teamA: m.teamA.filter((p) => p.profileId !== activeId),
+          teamB: m.teamB.filter((p) => p.profileId !== activeId),
+        }))
+
+        // ドロップ先に追加
+        if (targetContainer.type === "unassigned") {
+          nextUnassigned.push(participant)
+        } else {
+          nextMatches[targetContainer.matchIdx] = {
+            ...nextMatches[targetContainer.matchIdx],
+            [targetContainer.team]: [
+              ...nextMatches[targetContainer.matchIdx][targetContainer.team],
+              participant,
+            ],
+          }
+        }
+
+        setUnassigned(nextUnassigned)
+        setMatches(nextMatches)
+      } else {
+        // --- チームD&D（新規ロジック） ---
+        const { matchIdx: srcMatchIdx, team: srcTeam } = currentDrag
+
+        // ドロップ先からターゲットチームを特定
+        let targetMatchIdx: number | null = null
+        let targetTeam: "teamA" | "teamB" | null = null
+
+        const overId = over.id as string
+
+        // ドロップ先がチームdroppable（match-N-team_a/b）
+        const droppableMatch = overId.match(/^match-(\d+)-(team_a|team_b)$/)
+        if (droppableMatch) {
+          targetMatchIdx = Number(droppableMatch[1])
+          targetTeam =
+            droppableMatch[2] === "team_a" ? "teamA" : "teamB"
+        }
+
+        // ドロップ先がチームdraggable（team-N-teamA/B）
+        const draggableMatch = overId.match(/^team-(\d+)-(teamA|teamB)$/)
+        if (draggableMatch) {
+          targetMatchIdx = Number(draggableMatch[1])
+          targetTeam = draggableMatch[2] as "teamA" | "teamB"
+        }
+
+        // ドロップ先がプレイヤーの場合、そのプレイヤーの所属チームを特定
+        if (overId.startsWith("player-")) {
+          const overProfileId = overId.replace("player-", "")
+          const container = findContainer(overProfileId, unassigned, matches)
+          if (container?.type === "team") {
+            targetMatchIdx = container.matchIdx
+            targetTeam = container.team
+          }
+        }
+
+        // ターゲットが特定できない or unassigned → noop
+        if (targetMatchIdx === null || targetTeam === null) return
+
+        // 同一チーム → noop
+        if (srcMatchIdx === targetMatchIdx && srcTeam === targetTeam) return
+
+        // スワップ実行
+        const nextMatches = matches.map((m) => ({
+          teamA: [...m.teamA],
+          teamB: [...m.teamB],
+        }))
+        const srcMembers = nextMatches[srcMatchIdx][srcTeam]
+        const tgtMembers = nextMatches[targetMatchIdx][targetTeam]
+        nextMatches[srcMatchIdx][srcTeam] = tgtMembers
+        nextMatches[targetMatchIdx][targetTeam] = srcMembers
+
+        setMatches(nextMatches)
+      }
+    },
+    [activeDrag, unassigned, matches],
+  )
 
   const allAssigned = unassigned.length === 0
 
@@ -437,8 +633,11 @@ export function TeamAssignmentBoard({
                       マッチ {idx + 1}
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
-                      <DroppableContainer
-                        id={`match-${idx}-team_a`}
+                      <DraggableTeamContainer
+                        droppableId={`match-${idx}-team_a`}
+                        draggableId={`team-${idx}-teamA`}
+                        matchIdx={idx}
+                        team="teamA"
                         label="Team A"
                         count={match.teamA.length}
                         maxCount={5}
@@ -459,9 +658,12 @@ export function TeamAssignmentBoard({
                               </div>
                             ),
                           )}
-                      </DroppableContainer>
-                      <DroppableContainer
-                        id={`match-${idx}-team_b`}
+                      </DraggableTeamContainer>
+                      <DraggableTeamContainer
+                        droppableId={`match-${idx}-team_b`}
+                        draggableId={`team-${idx}-teamB`}
+                        matchIdx={idx}
+                        team="teamB"
                         label="Team B"
                         count={match.teamB.length}
                         maxCount={5}
@@ -482,7 +684,7 @@ export function TeamAssignmentBoard({
                               </div>
                             ),
                           )}
-                      </DroppableContainer>
+                      </DraggableTeamContainer>
                     </div>
                   </div>
                 ))}
@@ -490,8 +692,13 @@ export function TeamAssignmentBoard({
             </div>
 
             <DragOverlay>
-              {activeParticipant ? (
-                <PlayerCard participant={activeParticipant} />
+              {activeDrag?.type === "player" ? (
+                <PlayerCard participant={activeDrag.participant} />
+              ) : activeDrag?.type === "team" ? (
+                <TeamDragPreview
+                  team={matches[activeDrag.matchIdx][activeDrag.team]}
+                  label={activeDrag.team === "teamA" ? "Team A" : "Team B"}
+                />
               ) : null}
             </DragOverlay>
           </DndContext>
