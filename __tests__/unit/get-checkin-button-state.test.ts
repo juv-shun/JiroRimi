@@ -11,6 +11,7 @@ describe("getCheckinButtonState", () => {
       baseEvent,
       "2024-02-22T09:00:00Z",
       new Date("2024-02-22T09:30:00Z"),
+      true,
     )
 
     expect(result).toBe("checked_in")
@@ -21,6 +22,7 @@ describe("getCheckinButtonState", () => {
       baseEvent,
       null,
       new Date("2024-02-22T09:59:59Z"),
+      true,
     )
 
     expect(result).toBe("before_checkin")
@@ -31,6 +33,7 @@ describe("getCheckinButtonState", () => {
       baseEvent,
       null,
       new Date("2024-02-22T10:30:01Z"),
+      true,
     )
 
     expect(result).toBe("checkin_closed")
@@ -41,6 +44,7 @@ describe("getCheckinButtonState", () => {
       baseEvent,
       null,
       new Date("2024-02-22T10:15:00Z"),
+      true,
     )
 
     expect(result).toBe("can_checkin")

@@ -126,5 +126,5 @@ export type TournamentWithEvents = {
 export type UserEntryInfo = {
   event_id: string
   checked_in_at: string | null
-  hasMatch?: boolean
+  hasInProgressMatch?: boolean
 }

@@ -51,12 +51,12 @@ export default async function TournamentsPage() {
       if (entriesError) {
         throw entriesError
       }
-      // ユーザーの match_participants を検索してマッチ有無を判定
-      // RLS により in_progress / confirmed マッチのみ参照可能
+      // ユーザーの match_participants を検索して in_progress マッチ有無を判定
       const { data: matchParts } = await supabase
         .from("match_participants")
-        .select("match_id, matches!inner (event_id)")
+        .select("match_id, matches!inner (event_id, status)")
         .eq("profile_id", user.id)
+        .eq("matches.status", "in_progress")
         .in("matches.event_id", allEventIds)
       const matchEventIds = new Set(
         (matchParts ?? []).map((mp) => {
@@ -66,7 +66,7 @@ export default async function TournamentsPage() {
       )
       userEntries = (entries ?? []).map((e) => ({
         ...e,
-        hasMatch: matchEventIds.has(e.event_id),
+        hasInProgressMatch: matchEventIds.has(e.event_id),
       }))
     }
   }
