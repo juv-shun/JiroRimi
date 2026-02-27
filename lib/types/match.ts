@@ -20,6 +20,19 @@ export type MatchSlot = {
   teamB: ParticipantInfo[] // max 5
 }
 
+/** 確定済みラウンドのマッチ情報（読み取り専用表示用） */
+export type ExistingMatchInfo = {
+  matchId: string
+  teamA: ParticipantInfo[]
+  teamB: ParticipantInfo[]
+}
+
+/** 確定済みラウンドの情報 */
+export type ExistingRound = {
+  roundNumber: number
+  matches: ExistingMatchInfo[]
+}
+
 /** チーム編成 API リクエスト（round_number はサーバー側で算出） */
 export type TeamAssignmentRequest = {
   matches: {

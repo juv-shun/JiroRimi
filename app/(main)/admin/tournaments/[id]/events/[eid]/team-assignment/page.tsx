@@ -4,7 +4,11 @@ import { ChevronLeft, Calendar, Users, Hash } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { ParticipantInfo } from "@/lib/types/match"
+import type {
+  ParticipantInfo,
+  ExistingRound,
+  ExistingMatchInfo,
+} from "@/lib/types/match"
 import type { Role } from "@/lib/types/profile"
 import { formatDateJST } from "@/lib/utils/datetime"
 import { TeamAssignmentBoard } from "./team-assignment-board"
@@ -98,6 +102,63 @@ export default async function TeamAssignmentPage({
       : 0
   const roundNumber = currentMax + 1
 
+  // 確定済みラウンドのマッチ情報取得
+  const { data: existingMatches } = await supabase
+    .from("matches")
+    .select(
+      `
+      id,
+      round_number,
+      match_participants (
+        profile_id,
+        team,
+        profiles (id, player_name, avatar_url, first_role, second_role, third_role)
+      )
+    `,
+    )
+    .eq("event_id", eid)
+    .order("round_number", { ascending: true })
+    .order("created_at", { ascending: true })
+
+  // round_number でグループ化して ExistingRound[] に変換
+  const existingRounds: ExistingRound[] = (() => {
+    if (!existingMatches || existingMatches.length === 0) return []
+
+    const roundMap = new Map<number, ExistingMatchInfo[]>()
+    for (const m of existingMatches) {
+      const matchInfo: ExistingMatchInfo = {
+        matchId: m.id,
+        teamA: [],
+        teamB: [],
+      }
+      for (const mp of m.match_participants ?? []) {
+        const prof = Array.isArray(mp.profiles)
+          ? mp.profiles[0]
+          : mp.profiles
+        const participant: ParticipantInfo = {
+          profileId: mp.profile_id,
+          playerName: prof?.player_name ?? null,
+          avatarUrl: prof?.avatar_url ?? null,
+          firstRole: (prof?.first_role as Role) ?? null,
+          secondRole: (prof?.second_role as Role) ?? null,
+          thirdRole: (prof?.third_role as Role) ?? null,
+        }
+        if (mp.team === "team_a") {
+          matchInfo.teamA.push(participant)
+        } else {
+          matchInfo.teamB.push(participant)
+        }
+      }
+      const arr = roundMap.get(m.round_number) ?? []
+      arr.push(matchInfo)
+      roundMap.set(m.round_number, arr)
+    }
+
+    return Array.from(roundMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([roundNumber, matches]) => ({ roundNumber, matches }))
+  })()
+
   const matchCount = participants.length / 10
   const tournament = Array.isArray(event.tournaments)
     ? event.tournaments[0]
@@ -159,6 +220,7 @@ export default async function TeamAssignmentPage({
           roundNumber={roundNumber}
           eventId={eid}
           tournamentId={id}
+          existingRounds={existingRounds}
         />
       </div>
     </main>
