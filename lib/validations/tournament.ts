@@ -10,7 +10,7 @@ const datetimeLocalPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
 // イベント1件のスキーマ
 export const eventSchema = z
   .object({
-    eventId: z.string().uuid().optional(),
+    eventId: z.string().optional(),
     name: z
       .string()
       .min(1, "イベント名は必須です")
