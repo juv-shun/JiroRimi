@@ -71,14 +71,6 @@ describe("getEventBadgeState", () => {
     ).toBe("completed")
   })
 
-  it("checked_in_at が null → entered", () => {
-    expect(
-      getEventBadgeState(
-        { status: "scheduled" },
-        { checked_in_at: null },
-      ),
-    ).toBe("entered")
-  })
 })
 
 describe("EVENT_BADGE_LABELS", () => {

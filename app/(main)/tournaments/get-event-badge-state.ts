@@ -2,6 +2,8 @@
  * イベントカードのステータスバッジ状態を判定する純関数
  */
 
+import type { EventStatus } from "@/lib/types/tournament"
+
 export type EventBadgeState =
   | "none"
   | "entered"
@@ -10,7 +12,7 @@ export type EventBadgeState =
   | "completed"
 
 type EventForBadgeState = {
-  status?: string
+  status?: EventStatus
 }
 
 type EntryInfoForBadge = {
