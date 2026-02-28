@@ -278,19 +278,49 @@
   letter-spacing: 0.025em;
 }
 
-/* Entry badge */
-.entry-badge {
+/* Event badge base */
+.event-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.7rem;
   font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* entered: オレンジ系（旧 .entry-badge と同配色） */
+.event-badge-entered {
   background: linear-gradient(135deg, #fff3e6 0%, #ffe4cc 100%);
   color: #c2410c;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 122, 0, 0.2);
+  border-color: rgba(255, 122, 0, 0.2);
   box-shadow: 0 1px 2px rgba(255, 122, 0, 0.1);
+}
+
+/* checked_in: 青系 */
+.event-badge-checked_in {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.1);
+}
+
+/* in_progress: 緑系 */
+.event-badge-in_progress {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.2);
+  box-shadow: 0 1px 2px rgba(34, 197, 94, 0.1);
+}
+
+/* completed: グレー系 */
+.event-badge-completed {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  color: #6b7280;
+  border-color: rgba(107, 114, 128, 0.2);
+  box-shadow: 0 1px 2px rgba(107, 114, 128, 0.1);
 }
 
 /* Modal backdrop blur */
