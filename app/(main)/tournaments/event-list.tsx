@@ -27,6 +27,10 @@ import {
   getEntryButtonState,
 } from "./get-entry-button-state"
 import {
+  EVENT_BADGE_LABELS,
+  getEventBadgeState,
+} from "./get-event-badge-state"
+import {
   LOBBY_BUTTON_LABELS,
   type LobbyButtonState,
   getLobbyButtonState,
@@ -230,6 +234,7 @@ export function EventList({
       {events.map((event, index) => {
         const entryInfo = userEntries.find((e) => e.event_id === event.id)
         const isEntered = !!entryInfo
+        const badgeState = getEventBadgeState(event, entryInfo)
         const buttonState = getEntryButtonState(
           event,
           isLoggedIn,
@@ -282,8 +287,8 @@ export function EventList({
                   </span>
                 )}
               </div>
-              {isEntered && (
-                <span className="entry-badge">
+              {badgeState !== "none" && (
+                <span className={`event-badge event-badge-${badgeState}`}>
                   <svg
                     className="w-3 h-3"
                     fill="currentColor"
@@ -296,7 +301,7 @@ export function EventList({
                       clipRule="evenodd"
                     />
                   </svg>
-                  エントリー済
+                  {EVENT_BADGE_LABELS[badgeState]}
                 </span>
               )}
             </div>
