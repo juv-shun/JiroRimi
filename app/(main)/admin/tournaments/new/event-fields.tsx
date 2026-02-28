@@ -203,6 +203,7 @@ export function EventFields({
           </div>
 
           <div className="p-6 space-y-4">
+            <input type="hidden" {...register(`events.${index}.eventId`)} />
             {/* イベント名 */}
             <div>
               <label
