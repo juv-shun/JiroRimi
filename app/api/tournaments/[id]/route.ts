@@ -94,7 +94,7 @@ export async function PUT(
 
     const existingEventIds = new Set(existingEvents.map((e) => e.id))
     const requestEventIds = new Set(
-      data.events.filter((e) => e.id).map((e) => e.id as string),
+      data.events.filter((e) => e.eventId).map((e) => e.eventId as string),
     )
 
     // リクエスト内のイベントIDが当該大会に所属するか検証
@@ -160,12 +160,12 @@ export async function PUT(
         updated_at: new Date().toISOString(),
       }
 
-      if (ev.id) {
+      if (ev.eventId) {
         // 既存イベント → UPDATE（event_number は変更しない）
         const { error: updateError } = await supabase
           .from("events")
           .update(eventData)
-          .eq("id", ev.id)
+          .eq("id", ev.eventId)
 
         if (updateError) {
           console.error("イベントUPDATE失敗:", updateError.message)

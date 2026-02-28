@@ -138,7 +138,7 @@ export function EventFields({
             </h3>
             <div className="flex items-center gap-1.5">
               {(() => {
-                const eventId = mode === "edit" ? watch(`events.${index}.id`) : undefined
+                const eventId = mode === "edit" ? watch(`events.${index}.eventId`) : undefined
                 if (mode !== "edit" || !tournamentId || !eventId) return null
                 const status = eventStatuses?.[eventId]
                 return (

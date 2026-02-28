@@ -78,7 +78,7 @@ export default async function EditTournamentPage({
     events: events.map((ev) => {
       const matchFormat = normalizeMatchFormat(ev.match_format)
       return {
-        id: ev.id,
+        eventId: ev.id,
         name: ev.name,
         entry_type: ev.entry_type,
         match_format: matchFormat,

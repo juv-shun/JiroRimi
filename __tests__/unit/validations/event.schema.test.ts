@@ -36,6 +36,29 @@ describe("eventSchema", () => {
     }
   })
 
+  it("U27: eventIdに有効なUUIDを指定してparse成功する", () => {
+    expect(() =>
+      eventSchema.parse({
+        ...VALID_EVENT_INPUT,
+        eventId: "550e8400-e29b-41d4-a716-446655440000",
+      }),
+    ).not.toThrow()
+  })
+
+  it("U28: eventIdに不正な文字列を指定して失敗する", () => {
+    const result = eventSchema.safeParse({
+      ...VALID_EVENT_INPUT,
+      eventId: "not-a-uuid",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(
+        result.error.issues.some((issue) => issue.path[0] === "eventId"),
+      ).toBe(true)
+    }
+  })
+
   it("U26: double_eliminationでmatches_per_eventがnull以外なら失敗する", () => {
     const result = eventSchema.safeParse({
       ...VALID_EVENT_INPUT,
