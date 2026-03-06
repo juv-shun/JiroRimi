@@ -2,9 +2,10 @@
 
 import { CheckCircle, Star, Swords } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { Toast } from "@/app/components/toast"
+import { useMatchRealtime } from "@/lib/hooks/use-match-realtime"
 import type {
   MatchForDisplay,
   MatchParticipantForDisplay,
@@ -16,18 +17,25 @@ import {
 
 type MatchPageProps = {
   matches: MatchForDisplay[]
+  eventId: string
 }
 
-export function MatchPage({ matches }: MatchPageProps) {
+export function MatchPage({ matches, eventId }: MatchPageProps) {
   const router = useRouter()
+  const [matchData, setMatchData] = useState<MatchForDisplay[]>(matches)
+
+  // props 変更時にリセット
+  useEffect(() => {
+    setMatchData(matches)
+  }, [matches])
 
   // デフォルト選択: 最新の in_progress ラウンド、なければ最大 round_number
   const defaultRound = (() => {
-    const inProgress = matches.filter((m) => m.status === "in_progress")
+    const inProgress = matchData.filter((m) => m.status === "in_progress")
     if (inProgress.length > 0) {
       return Math.max(...inProgress.map((m) => m.roundNumber))
     }
-    return Math.max(...matches.map((m) => m.roundNumber))
+    return Math.max(...matchData.map((m) => m.roundNumber))
   })()
 
   const [selectedRound, setSelectedRound] = useState(defaultRound)
@@ -43,7 +51,44 @@ export function MatchPage({ matches }: MatchPageProps) {
   const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const currentMatch = matches.find((m) => m.roundNumber === selectedRound)
+  // Realtime 購読
+  const matchIds = useMemo(() => matchData.map((m) => m.matchId), [matchData])
+
+  useMatchRealtime({
+    eventId,
+    matchIds,
+    onMatchUpdate: (matchId, changes) => {
+      setMatchData((prev) =>
+        prev.map((m) =>
+          m.matchId === matchId
+            ? {
+                ...m,
+                lobbyNumber: changes.lobbyNumber,
+                status: changes.status,
+                result: changes.result,
+              }
+            : m,
+        ),
+      )
+    },
+    onParticipantUpdate: (matchId, profileId, vote) => {
+      setMatchData((prev) =>
+        prev.map((m) => {
+          if (m.matchId !== matchId) return m
+          const updateVote = (members: MatchParticipantForDisplay[]) =>
+            members.map((p) =>
+              p.profileId === profileId ? { ...p, vote } : p,
+            )
+          return { ...m, teamA: updateVote(m.teamA), teamB: updateVote(m.teamB) }
+        }),
+      )
+    },
+    onUnknownMatch: () => {
+      router.refresh()
+    },
+  })
+
+  const currentMatch = matchData.find((m) => m.roundNumber === selectedRound)
 
   // ラウンド切り替え時にロビー番号を同期
   useEffect(() => {
@@ -131,9 +176,9 @@ export function MatchPage({ matches }: MatchPageProps) {
   return (
     <div className="space-y-6">
       {/* ラウンドタブ */}
-      {matches.length > 1 && (
+      {matchData.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {matches.map((m) => (
+          {matchData.map((m) => (
             <button
               key={m.roundNumber}
               type="button"

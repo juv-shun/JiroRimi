@@ -160,7 +160,7 @@ export default async function MatchesPage({
           subtitle={`${event.name} - 試合情報`}
         />
 
-        <MatchPage matches={matches} />
+        <MatchPage matches={matches} eventId={eid} />
       </div>
     </main>
   )
