@@ -8,9 +8,16 @@ import type {
   ParticipantInfo,
   ExistingRound,
   ExistingMatchInfo,
+  AdminMatchForDisplay,
+  AdminMatchParticipant,
+  MatchStatus,
+  MatchResult,
+  Team,
+  Vote,
 } from "@/lib/types/match"
 import type { Role } from "@/lib/types/profile"
 import { formatDateJST } from "@/lib/utils/datetime"
+import { computeStandings } from "@/lib/utils/match-result"
 import { TeamAssignmentBoard } from "./team-assignment-board"
 
 export default async function TeamAssignmentPage({
@@ -109,9 +116,12 @@ export default async function TeamAssignmentPage({
       `
       id,
       round_number,
+      status,
+      result,
       match_participants (
         profile_id,
         team,
+        vote,
         profiles (id, player_name, avatar_url, first_role, second_role, third_role)
       )
     `,
@@ -162,6 +172,37 @@ export default async function TeamAssignmentPage({
       .sort(([a], [b]) => a - b)
       .map(([roundNumber, matches]) => ({ roundNumber, matches }))
   })()
+
+  // AdminMatchForDisplay[] に変換して成績を算出
+  const matchList: AdminMatchForDisplay[] = (existingMatches ?? []).map((m) => {
+    const participants = (m.match_participants ?? []).map((mp) => {
+      const prof = Array.isArray(mp.profiles) ? mp.profiles[0] : mp.profiles
+      return {
+        profileId: mp.profile_id,
+        playerName: prof?.player_name ?? null,
+        avatarUrl: prof?.avatar_url ?? null,
+        firstRole: (prof?.first_role as Role) ?? null,
+        team: mp.team as Team,
+        vote: mp.vote as Vote | null,
+      } satisfies AdminMatchParticipant
+    })
+
+    return {
+      matchId: m.id,
+      roundNumber: m.round_number,
+      lobbyNumber: null,
+      status: m.status as MatchStatus,
+      result: m.result as MatchResult,
+      teamA: participants.filter((p) => p.team === "team_a"),
+      teamB: participants.filter((p) => p.team === "team_b"),
+    }
+  })
+
+  const standings = computeStandings(matchList)
+  const standingsMap: Record<string, { wins: number; losses: number }> = {}
+  for (const s of standings) {
+    standingsMap[s.profileId] = { wins: s.wins, losses: s.losses }
+  }
 
   const matchCount = participants.length / 10
   const totalRounds = event.matches_per_event ?? roundNumber
@@ -227,6 +268,7 @@ export default async function TeamAssignmentPage({
           eventId={eid}
           tournamentId={id}
           existingRounds={existingRounds}
+          standingsMap={standingsMap}
         />
       </div>
     </main>

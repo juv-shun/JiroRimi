@@ -32,6 +32,7 @@ type TeamAssignmentBoardProps = {
   eventId: string
   tournamentId: string
   existingRounds: ExistingRound[]
+  standingsMap: Record<string, { wins: number; losses: number }>
 }
 
 // --- ユーティリティ ---
@@ -128,9 +129,13 @@ function RoleBadge({
 function PlayerCard({
   participant,
   isDragging,
+  wins,
+  losses,
 }: {
   participant: ParticipantInfo
   isDragging?: boolean
+  wins?: number
+  losses?: number
 }) {
   const roles = [
     { role: participant.firstRole, priority: 1 as const },
@@ -168,6 +173,9 @@ function PlayerCard({
             ))}
           </div>
         )}
+        {(wins ?? 0) + (losses ?? 0) > 0 && (
+          <p className="text-[10px] text-gray-400 mt-0.5">{wins}W {losses}L</p>
+        )}
       </div>
     </div>
   )
@@ -175,8 +183,12 @@ function PlayerCard({
 
 function DraggablePlayer({
   participant,
+  wins,
+  losses,
 }: {
   participant: ParticipantInfo
+  wins?: number
+  losses?: number
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `player-${participant.profileId}`,
@@ -185,7 +197,7 @@ function DraggablePlayer({
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
-      <PlayerCard participant={participant} isDragging={isDragging} />
+      <PlayerCard participant={participant} isDragging={isDragging} wins={wins} losses={losses} />
     </div>
   )
 }
@@ -360,6 +372,7 @@ export function TeamAssignmentBoard({
   eventId,
   tournamentId,
   existingRounds,
+  standingsMap,
 }: TeamAssignmentBoardProps) {
   const dndId = useId()
   const [activeRound, setActiveRound] = useState(roundNumber)
@@ -645,7 +658,7 @@ export function TeamAssignmentBoard({
                   count={unassigned.length}
                 >
                   {unassigned.map((p) => (
-                    <DraggablePlayer key={p.profileId} participant={p} />
+                    <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                   ))}
                 </DroppableContainer>
               </div>
@@ -671,7 +684,7 @@ export function TeamAssignmentBoard({
                         maxCount={5}
                       >
                         {match.teamA.map((p) => (
-                          <DraggablePlayer key={p.profileId} participant={p} />
+                          <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                         ))}
                         {match.teamA.length < 5 &&
                           Array.from({ length: 5 - match.teamA.length }).map(
@@ -697,7 +710,7 @@ export function TeamAssignmentBoard({
                         maxCount={5}
                       >
                         {match.teamB.map((p) => (
-                          <DraggablePlayer key={p.profileId} participant={p} />
+                          <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                         ))}
                         {match.teamB.length < 5 &&
                           Array.from({ length: 5 - match.teamB.length }).map(
@@ -721,7 +734,7 @@ export function TeamAssignmentBoard({
 
             <DragOverlay>
               {activeDrag?.type === "player" ? (
-                <PlayerCard participant={activeDrag.participant} />
+                <PlayerCard participant={activeDrag.participant} wins={standingsMap[activeDrag.participant.profileId]?.wins} losses={standingsMap[activeDrag.participant.profileId]?.losses} />
               ) : activeDrag?.type === "team" ? (
                 <TeamDragPreview
                   team={matches[activeDrag.matchIdx][activeDrag.team]}
@@ -789,7 +802,7 @@ export function TeamAssignmentBoard({
                   </div>
                   <div className="space-y-1.5">
                     {match.teamA.map((p) => (
-                      <PlayerCard key={p.profileId} participant={p} />
+                      <PlayerCard key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                     ))}
                   </div>
                 </div>
@@ -804,7 +817,7 @@ export function TeamAssignmentBoard({
                   </div>
                   <div className="space-y-1.5">
                     {match.teamB.map((p) => (
-                      <PlayerCard key={p.profileId} participant={p} />
+                      <PlayerCard key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                     ))}
                   </div>
                 </div>
