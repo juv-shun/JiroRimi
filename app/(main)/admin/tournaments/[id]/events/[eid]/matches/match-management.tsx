@@ -1,12 +1,17 @@
 "use client"
 
-import { useEffect, useRef, useState, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Check, Clock, Play, Trophy, ArrowRight } from "lucide-react"
 
 import { Toast } from "@/app/components/toast"
-import type { AdminMatchForDisplay, MatchResult } from "@/lib/types/match"
+import { useMatchRealtime } from "@/lib/hooks/use-match-realtime"
+import type {
+  AdminMatchForDisplay,
+  AdminMatchParticipant,
+  MatchResult,
+} from "@/lib/types/match"
 import { computeTentativeResult } from "@/lib/utils/match-result"
 import { MatchCard } from "./match-card"
 import { StandingsTable } from "./standings-table"
@@ -29,14 +34,20 @@ export function MatchManagement({
 }: MatchManagementProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [matchData, setMatchData] = useState<AdminMatchForDisplay[]>(matches)
+
+  // props 変更時にリセット
+  useEffect(() => {
+    setMatchData(matches)
+  }, [matches])
 
   // ラウンドごとのマッチ整理
-  const roundNumbers = [...new Set(matches.map((m) => m.roundNumber))].sort()
+  const roundNumbers = [...new Set(matchData.map((m) => m.roundNumber))].sort()
 
   // デフォルト選択: 最新の未完了ラウンド、なければ最終ラウンド
   const defaultRound = (() => {
     const incomplete = roundNumbers.filter((rn) =>
-      matches
+      matchData
         .filter((m) => m.roundNumber === rn)
         .some((m) => m.status !== "confirmed"),
     )
@@ -56,14 +67,56 @@ export function MatchManagement({
   const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const currentMatches = matches.filter(
+  const currentMatches = matchData.filter(
     (m) => m.roundNumber === selectedRound,
   )
 
-  // ラウンド切替時に results を初期化
+  // Realtime 購読
+  const matchIds = useMemo(() => matchData.map((m) => m.matchId), [matchData])
+
+  useMatchRealtime({
+    eventId,
+    matchIds,
+    onMatchUpdate: (matchId, changes) => {
+      setMatchData((prev) =>
+        prev.map((m) =>
+          m.matchId === matchId
+            ? {
+                ...m,
+                lobbyNumber: changes.lobbyNumber,
+                status: changes.status,
+                result: changes.result,
+              }
+            : m,
+        ),
+      )
+    },
+    onParticipantUpdate: (matchId, profileId, vote) => {
+      setMatchData((prev) =>
+        prev.map((m) => {
+          if (m.matchId !== matchId) return m
+          const updateVote = (members: AdminMatchParticipant[]) =>
+            members.map((p) =>
+              p.profileId === profileId ? { ...p, vote } : p,
+            )
+          return {
+            ...m,
+            teamA: updateVote(m.teamA),
+            teamB: updateVote(m.teamB),
+          }
+        }),
+      )
+    },
+    onUnknownMatch: () => {
+      router.refresh()
+    },
+  })
+
+  // ラウンド切替時 or matchData 更新時に results を再計算
   useEffect(() => {
+    const current = matchData.filter((m) => m.roundNumber === selectedRound)
     const initial: Record<string, MatchResult> = {}
-    for (const m of currentMatches) {
+    for (const m of current) {
       if (m.result) {
         initial[m.matchId] = m.result
       } else {
@@ -74,8 +127,7 @@ export function MatchManagement({
       }
     }
     setResults(initial)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRound])
+  }, [selectedRound, matchData])
 
   useEffect(() => {
     return () => {
@@ -187,7 +239,7 @@ export function MatchManagement({
 
   // ラウンド状態判定
   const getRoundStatus = (rn: number) => {
-    const roundMatches = matches.filter((m) => m.roundNumber === rn)
+    const roundMatches = matchData.filter((m) => m.roundNumber === rn)
     if (roundMatches.length === 0) return "no_matches" as const
     if (roundMatches.every((m) => m.status === "confirmed"))
       return "confirmed" as const
@@ -217,7 +269,7 @@ export function MatchManagement({
   // 全ラウンド完了判定
   const allRoundsConfirmed = (() => {
     const confirmedRoundCount = new Set(
-      matches
+      matchData
         .filter((m) => m.status === "confirmed")
         .map((m) => m.roundNumber),
     ).size
@@ -349,10 +401,10 @@ export function MatchManagement({
       </div>
 
       {/* 累計成績 */}
-      {matches.some((m) => m.status === "confirmed") && (
+      {matchData.some((m) => m.status === "confirmed") && (
         <div className="mt-8">
           <h3 className="text-lg font-bold text-gray-900 mb-4">累計成績</h3>
-          <StandingsTable matches={matches} />
+          <StandingsTable matches={matchData} />
         </div>
       )}
 
