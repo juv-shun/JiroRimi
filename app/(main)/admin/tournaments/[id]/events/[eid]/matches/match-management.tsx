@@ -112,21 +112,47 @@ export function MatchManagement({
     },
   })
 
-  // ラウンド切替時 or matchData 更新時に results を再計算
+  // ラウンド切替時: 全リセット
+  const prevRoundRef = useRef(selectedRound)
   useEffect(() => {
     const current = matchData.filter((m) => m.roundNumber === selectedRound)
-    const initial: Record<string, MatchResult> = {}
-    for (const m of current) {
-      if (m.result) {
-        initial[m.matchId] = m.result
-      } else {
-        const tentative = computeTentativeResult(m.teamA, m.teamB)
-        if (tentative === "team_a" || tentative === "team_b") {
-          initial[m.matchId] = tentative
+    const isRoundChange = prevRoundRef.current !== selectedRound
+    prevRoundRef.current = selectedRound
+
+    if (isRoundChange) {
+      // ラウンド変更: 全リセット
+      const initial: Record<string, MatchResult> = {}
+      for (const m of current) {
+        if (m.result) {
+          initial[m.matchId] = m.result
+        } else {
+          const tentative = computeTentativeResult(m.teamA, m.teamB)
+          if (tentative === "team_a" || tentative === "team_b") {
+            initial[m.matchId] = tentative
+          }
         }
       }
+      setResults(initial)
+    } else {
+      // Realtime更新: ユーザー手動設定済みキーは保持、未設定キーのみ自動更新
+      setResults((prev) => {
+        const next = { ...prev }
+        for (const m of current) {
+          if (m.result) {
+            // DB確定済みは常に上書き
+            next[m.matchId] = m.result
+          } else if (!(m.matchId in prev)) {
+            // 新規matchのみ自動設定
+            const tentative = computeTentativeResult(m.teamA, m.teamB)
+            if (tentative === "team_a" || tentative === "team_b") {
+              next[m.matchId] = tentative
+            }
+          }
+          // 既にユーザーが手動選択済みのキーはそのまま保持
+        }
+        return next
+      })
     }
-    setResults(initial)
   }, [selectedRound, matchData])
 
   useEffect(() => {

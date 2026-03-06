@@ -52,8 +52,18 @@ export function useMatchRealtime({
     matchIdsRef.current = new Set(matchIds)
   }, [matchIds])
 
+  // onUnknownMatch のデバウンス（短時間に複数の未知match更新が来ても1回だけ発火）
+  const unknownMatchTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+
   useEffect(() => {
     const supabase = createClient()
+
+    const debouncedOnUnknownMatch = () => {
+      clearTimeout(unknownMatchTimerRef.current)
+      unknownMatchTimerRef.current = setTimeout(() => {
+        onUnknownMatchRef.current()
+      }, 2000)
+    }
 
     const channel = supabase
       .channel(`matches:event:${eventId}`)
@@ -80,7 +90,7 @@ export function useMatchRealtime({
               result: (row.result as MatchResult) ?? null,
             })
           } else {
-            onUnknownMatchRef.current()
+            debouncedOnUnknownMatch()
           }
         },
       )
@@ -111,6 +121,7 @@ export function useMatchRealtime({
       .subscribe()
 
     return () => {
+      clearTimeout(unknownMatchTimerRef.current)
       supabase.removeChannel(channel)
     }
   }, [eventId])
