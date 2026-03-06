@@ -113,17 +113,19 @@ export async function PATCH(_request: Request, context: RouteContext) {
       )
     }
 
-    // 全ラウンド消化済みか
+    // 全ラウンド(1〜matches_per_event)が confirmed で埋まっているか
     const confirmedRounds = new Set(
       (allMatches ?? [])
         .filter((m) => m.status === "confirmed")
         .map((m) => m.round_number),
     )
-    if (confirmedRounds.size < event.matches_per_event) {
-      return NextResponse.json(
-        { success: false, error: "全ラウンドが完了していません" },
-        { status: 400 },
-      )
+    for (let rn = 1; rn <= event.matches_per_event; rn++) {
+      if (!confirmedRounds.has(rn)) {
+        return NextResponse.json(
+          { success: false, error: "全ラウンドが完了していません" },
+          { status: 400 },
+        )
+      }
     }
 
     // 原子的ステータス更新

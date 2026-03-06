@@ -8,6 +8,10 @@ import type {
 /**
  * チーム投票から仮結果を算出する。
  *
+ * 投票は自チーム視点: win = 自チーム勝利, lose = 自チーム敗北。
+ * team_a_score = teamA の win 数 + teamB の lose 数
+ * team_b_score = teamB の win 数 + teamA の lose 数
+ *
  * Args:
  *   teamA: Team A の参加者リスト
  *   teamB: Team B の参加者リスト
@@ -19,12 +23,16 @@ export function computeTentativeResult(
   teamA: AdminMatchParticipant[],
   teamB: AdminMatchParticipant[],
 ): TentativeResult {
-  const teamAWins = teamA.filter((p) => p.vote === "win").length
-  const teamBWins = teamB.filter((p) => p.vote === "win").length
+  const teamAScore =
+    teamA.filter((p) => p.vote === "win").length +
+    teamB.filter((p) => p.vote === "lose").length
+  const teamBScore =
+    teamB.filter((p) => p.vote === "win").length +
+    teamA.filter((p) => p.vote === "lose").length
 
-  if (teamAWins === 0 && teamBWins === 0) return "no_votes"
-  if (teamAWins > teamBWins) return "team_a"
-  if (teamBWins > teamAWins) return "team_b"
+  if (teamAScore === 0 && teamBScore === 0) return "no_votes"
+  if (teamAScore > teamBScore) return "team_a"
+  if (teamBScore > teamAScore) return "team_b"
   return "conflict"
 }
 

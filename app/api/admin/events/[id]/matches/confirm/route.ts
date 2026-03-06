@@ -101,6 +101,15 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const { round_number, results } = parsed.data
 
+    // match_id の重複チェック
+    const matchIds = results.map((r) => r.match_id)
+    if (new Set(matchIds).size !== matchIds.length) {
+      return NextResponse.json(
+        { success: false, error: "マッチIDに重複があります" },
+        { status: 400 },
+      )
+    }
+
     // イベント存在 & status 確認
     const { data: event, error: eventError } = await supabase
       .from("events")

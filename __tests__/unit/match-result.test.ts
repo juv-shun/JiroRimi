@@ -80,6 +80,32 @@ describe("computeTentativeResult", () => {
     ]
     expect(computeTentativeResult(teamA, teamB)).toBe("team_a")
   })
+
+  it("lose のみ投票: Team B全員lose → team_a", () => {
+    const teamA = Array.from({ length: 5 }, () =>
+      makeParticipant({ team: "team_a", vote: null }),
+    )
+    const teamB = Array.from({ length: 5 }, () =>
+      makeParticipant({ team: "team_b", vote: "lose" }),
+    )
+    // teamB の lose = Team A 勝利のシグナル → team_a_score=5, team_b_score=0
+    expect(computeTentativeResult(teamA, teamB)).toBe("team_a")
+  })
+
+  it("win と lose の混合: Team A 2win + Team B 1lose vs Team B 1win → team_a", () => {
+    const teamA = [
+      makeParticipant({ team: "team_a", vote: "win" }),
+      makeParticipant({ team: "team_a", vote: "win" }),
+      makeParticipant({ team: "team_a", vote: null }),
+    ]
+    const teamB = [
+      makeParticipant({ team: "team_b", vote: "win" }),
+      makeParticipant({ team: "team_b", vote: "lose" }),
+      makeParticipant({ team: "team_b", vote: null }),
+    ]
+    // team_a_score = 2(win) + 1(B lose) = 3, team_b_score = 1(win) + 0(A lose) = 1
+    expect(computeTentativeResult(teamA, teamB)).toBe("team_a")
+  })
 })
 
 describe("computeStandings", () => {
