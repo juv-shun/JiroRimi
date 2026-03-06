@@ -74,6 +74,40 @@ export type ExistingRound = {
   matches: ExistingMatchInfo[]
 }
 
+/** 運営者向け参加者情報（投票状況含む） */
+export type AdminMatchParticipant = {
+  profileId: string
+  playerName: string | null
+  avatarUrl: string | null
+  firstRole: Role | null
+  team: Team
+  vote: Vote | null
+}
+
+/** 運営者向けマッチ表示情報 */
+export type AdminMatchForDisplay = {
+  matchId: string
+  roundNumber: number
+  lobbyNumber: string | null
+  status: MatchStatus
+  result: MatchResult
+  teamA: AdminMatchParticipant[]
+  teamB: AdminMatchParticipant[]
+}
+
+/** 仮結果 */
+export type TentativeResult = "team_a" | "team_b" | "conflict" | "no_votes"
+
+/** 累計成績 */
+export type PlayerStanding = {
+  profileId: string
+  playerName: string | null
+  avatarUrl: string | null
+  wins: number
+  losses: number
+  winRate: number
+}
+
 /** チーム編成 API リクエスト（round_number はサーバー側で算出） */
 export type TeamAssignmentRequest = {
   matches: {
