@@ -174,7 +174,7 @@ function PlayerCard({
           </div>
         )}
         {(wins ?? 0) + (losses ?? 0) > 0 && (
-          <p className="text-[10px] text-gray-400 mt-0.5">{wins}W {losses}L</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">{wins ?? 0}W {losses ?? 0}L</p>
         )}
       </div>
     </div>
