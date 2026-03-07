@@ -114,7 +114,7 @@ export function RoundManager({
   const [selectedRound, setSelectedRound] = useState(defaultRound)
   const [results, setResults] = useState<Record<string, MatchResult>>({})
   const [showModal, setShowModal] = useState(false)
-  const [modalType, setModalType] = useState<"confirm" | "complete">("confirm")
+  const [modalType, setModalType] = useState<"confirm" | "complete" | "start">("confirm")
   const [toast, setToast] = useState<{
     message: string
     type: "success" | "error"
@@ -245,12 +245,15 @@ export function RoundManager({
         const data = await res.json()
         if (data.success) {
           showToast("試合を開始しました", "success")
+          setShowModal(false)
           router.refresh()
         } else {
           showToast(data.error || "試合開始に失敗しました", "error")
+          setShowModal(false)
         }
       } catch {
         showToast("通信エラーが発生しました", "error")
+        setShowModal(false)
       }
     })
   }
@@ -434,7 +437,10 @@ export function RoundManager({
               {allWaiting && (
                 <button
                   type="button"
-                  onClick={handleStartRound}
+                  onClick={() => {
+                    setModalType("start")
+                    setShowModal(true)
+                  }}
                   disabled={isPending}
                   className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
@@ -493,7 +499,9 @@ export function RoundManager({
           onConfirm={
             modalType === "confirm"
               ? handleConfirmResults
-              : handleCompleteEvent
+              : modalType === "start"
+                ? handleStartRound
+                : handleCompleteEvent
           }
           onCancel={() => setShowModal(false)}
           isLoading={isPending}

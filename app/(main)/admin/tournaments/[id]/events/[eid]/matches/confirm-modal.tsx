@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import { AlertTriangle, Check, Loader2, Trophy } from "lucide-react"
+import { AlertTriangle, Check, Loader2, Play, Trophy } from "lucide-react"
 
 type ConfirmModalProps = {
-  type: "confirm" | "complete"
+  type: "confirm" | "complete" | "start"
   roundNumber: number
   onConfirm: () => void
   onCancel: () => void
@@ -26,7 +26,38 @@ export function ConfirmModal({
     return () => document.removeEventListener("keydown", handleEsc)
   }, [onCancel, isLoading])
 
-  const isConfirm = type === "confirm"
+  const iconConfig = {
+    confirm: {
+      bgClass: "bg-gradient-to-br from-primary to-amber-500",
+      icon: <AlertTriangle className="w-4 h-4 text-white" />,
+      title: "結果確定の確認",
+      body: `ラウンド${roundNumber}の結果を確定しますか？確定後は変更できません。`,
+      buttonIcon: <Check className="w-4 h-4" />,
+      buttonText: "確定する",
+      buttonClass: "glow-button",
+    },
+    start: {
+      bgClass: "bg-gradient-to-br from-blue-500 to-indigo-600",
+      icon: <Play className="w-4 h-4 text-white" />,
+      title: "試合開始の確認",
+      body: `ラウンド${roundNumber}の試合を開始しますか？`,
+      buttonIcon: <Play className="w-4 h-4" />,
+      buttonText: "開始する",
+      buttonClass: "glow-button",
+    },
+    complete: {
+      bgClass: "bg-gradient-to-br from-green-500 to-emerald-600",
+      icon: <Trophy className="w-4 h-4 text-white" />,
+      title: "イベント完了の確認",
+      body: "イベントを完了しますか？全ラウンドの結果が確定済みです。",
+      buttonIcon: <Trophy className="w-4 h-4" />,
+      buttonText: "完了する",
+      buttonClass:
+        "bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/25",
+    },
+  }
+
+  const config = iconConfig[type]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
@@ -46,28 +77,18 @@ export function ConfirmModal({
         <div className="px-6 py-5 border-b border-orange-100 bg-gradient-to-r from-primary/5 to-amber-50">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                isConfirm
-                  ? "bg-gradient-to-br from-primary to-amber-500"
-                  : "bg-gradient-to-br from-green-500 to-emerald-600"
-              }`}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center ${config.bgClass}`}
             >
-              {isConfirm ? (
-                <AlertTriangle className="w-4 h-4 text-white" />
-              ) : (
-                <Trophy className="w-4 h-4 text-white" />
-              )}
+              {config.icon}
             </div>
-            {isConfirm ? "結果確定の確認" : "イベント完了の確認"}
+            {config.title}
           </h2>
         </div>
 
         {/* 本文 */}
         <div className="px-6 py-6">
           <p className="text-sm text-gray-700 leading-relaxed">
-            {isConfirm
-              ? `ラウンド${roundNumber}の結果を確定しますか？確定後は変更できません。`
-              : "イベントを完了しますか？全ラウンドの結果が確定済みです。"}
+            {config.body}
           </p>
         </div>
 
@@ -85,24 +106,14 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 ${
-              isConfirm
-                ? "glow-button"
-                : "bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/25"
-            }`}
+            className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 ${config.buttonClass}`}
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isConfirm ? (
-              <Check className="w-4 h-4" />
             ) : (
-              <Trophy className="w-4 h-4" />
+              config.buttonIcon
             )}
-            {isLoading
-              ? "処理中..."
-              : isConfirm
-                ? "確定する"
-                : "完了する"}
+            {isLoading ? "処理中..." : config.buttonText}
           </button>
         </div>
       </div>
