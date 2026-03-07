@@ -125,9 +125,9 @@
 | 5 | SCR-006 | 大会管理一覧画面（運営者向け） | `/admin/tournaments` | 運営者のみ | 1.4 |
 | 6 | SCR-007 | 大会作成・編集画面 | `/admin/tournaments/new`, `/admin/tournaments/[id]/edit` | 運営者のみ | 1.4 |
 | 7 | SCR-008 | チェックイン管理画面（運営者向け） | `/admin/tournaments/[id]/events/[eid]/checkin` | 運営者のみ | 2.2 |
-| 8 | SCR-009 | チーム編成画面（運営者向け） | `/admin/tournaments/[id]/events/[eid]/team-assignment` | 運営者のみ | 2.3 |
+| 8 | SCR-009 | （SCR-011に統合） | - | - | - |
 | 9 | SCR-010 | 参加者試合画面 | `/tournaments/[id]/events/[eid]/matches` | 認証済みユーザー（マッチ参加者） | 2.4 |
-| 10 | SCR-011 | 試合進行管理画面（運営者向け） | `/admin/tournaments/[id]/events/[eid]/matches` | 運営者のみ | 2.4 |
+| 10 | SCR-011 | チーム編成・試合進行管理画面（運営者向け） | `/admin/tournaments/[id]/events/[eid]/matches` | 運営者のみ | 2.3, 2.4 |
 | 11 | SCR-012 | ランキング・成績画面 | `/tournaments/[id]/ranking` | 全員 | 2.5 |
 
 ---
@@ -152,8 +152,7 @@ flowchart TD
         ADMIN_TOURNAMENTS[SCR-006<br/>大会管理一覧]
         ADMIN_TOURNAMENT_EDIT[SCR-007<br/>大会作成・編集]
         ADMIN_CHECKIN[SCR-008<br/>チェックイン管理]
-        ADMIN_TEAM[SCR-009<br/>チーム編成]
-        ADMIN_MATCHES[SCR-011<br/>試合進行管理]
+        ADMIN_MATCHES[SCR-011<br/>チーム編成・試合管理]
     end
 
     LOGIN -->|ログイン成功| MYPAGE
@@ -177,12 +176,8 @@ flowchart TD
     ADMIN_TOURNAMENTS -->|チェックイン管理| ADMIN_CHECKIN
     ADMIN_TOURNAMENT_EDIT -->|保存/キャンセル| ADMIN_TOURNAMENTS
     ADMIN_CHECKIN -->|戻る| ADMIN_TOURNAMENTS
-    ADMIN_TOURNAMENT_EDIT -->|チーム編成| ADMIN_TEAM
-    ADMIN_TOURNAMENT_EDIT -->|試合進行管理| ADMIN_MATCHES
-    ADMIN_TEAM -->|戻る| ADMIN_TOURNAMENT_EDIT
-    ADMIN_TEAM -->|確定後| ADMIN_MATCHES
+    ADMIN_TOURNAMENT_EDIT -->|試合管理| ADMIN_MATCHES
     ADMIN_MATCHES -->|戻る| ADMIN_TOURNAMENT_EDIT
-    ADMIN_MATCHES -->|次ラウンド<br/>チーム編成| ADMIN_TEAM
 ```
 
 ---
