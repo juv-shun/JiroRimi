@@ -32,11 +32,11 @@ export function TeamAssignmentConfirmModal({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isSubmitting) onClose()
+      if (e.key === "Escape" && !isSubmitting && !isCompleted) onClose()
     }
     document.addEventListener("keydown", handleEsc)
     return () => document.removeEventListener("keydown", handleEsc)
-  }, [onClose, isSubmitting])
+  }, [onClose, isSubmitting, isCompleted])
 
   const handleConfirm = async () => {
     setIsSubmitting(true)
