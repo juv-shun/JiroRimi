@@ -5,7 +5,7 @@ import { Check, Loader2 } from "lucide-react"
 
 import type { MatchSlot, TeamAssignmentRequest } from "@/lib/types/match"
 
-type ConfirmModalProps = {
+type TeamAssignmentConfirmModalProps = {
   matches: MatchSlot[]
   roundNumber: number
   eventId: string
@@ -13,13 +13,13 @@ type ConfirmModalProps = {
   onSuccess: () => void
 }
 
-export function ConfirmModal({
+export function TeamAssignmentConfirmModal({
   matches,
   roundNumber,
   eventId,
   onClose,
   onSuccess,
-}: ConfirmModalProps) {
+}: TeamAssignmentConfirmModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isCompleted, setIsCompleted] = useState(false)
@@ -112,7 +112,7 @@ export function ConfirmModal({
               onClick={onSuccess}
               className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white"
             >
-              大会管理に戻る
+              続行する
             </button>
           </div>
         ) : (

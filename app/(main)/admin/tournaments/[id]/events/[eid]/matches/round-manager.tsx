@@ -2,36 +2,55 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Check, Clock, Play, Trophy, ArrowRight } from "lucide-react"
+import { Check, Clock, Play, Trophy, Shuffle } from "lucide-react"
 
 import { Toast } from "@/app/components/toast"
 import { useMatchRealtime } from "@/lib/hooks/use-match-realtime"
 import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
+  ExistingRound,
   MatchResult,
+  ParticipantInfo,
 } from "@/lib/types/match"
 import { computeTentativeResult } from "@/lib/utils/match-result"
 import { MatchCard } from "./match-card"
 import { StandingsTable } from "./standings-table"
 import { ConfirmModal } from "./confirm-modal"
+import { TeamAssignmentBoard } from "./team-assignment-board"
 
-type MatchManagementProps = {
+type RoundState =
+  | "team_assignment"
+  | "waiting"
+  | "in_progress"
+  | "confirmed"
+  | "future"
+
+type RoundManagerProps = {
   matches: AdminMatchForDisplay[]
   totalRounds: number
   eventId: string
   tournamentId: string
   eventStatus: string
+  participants: ParticipantInfo[]
+  matchCount: number
+  nextRoundNumber: number
+  existingRounds: ExistingRound[]
+  standingsMap: Record<string, { wins: number; losses: number }>
 }
 
-export function MatchManagement({
+export function RoundManager({
   matches,
   totalRounds,
   eventId,
   tournamentId,
   eventStatus,
-}: MatchManagementProps) {
+  participants,
+  matchCount,
+  nextRoundNumber,
+  existingRounds,
+  standingsMap,
+}: RoundManagerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [matchData, setMatchData] = useState<AdminMatchForDisplay[]>(matches)
@@ -44,15 +63,49 @@ export function MatchManagement({
   // ラウンドごとのマッチ整理
   const roundNumbers = [...new Set(matchData.map((m) => m.roundNumber))].sort()
 
-  // デフォルト選択: 最新の未完了ラウンド、なければ最終ラウンド
+  // ラウンド状態判定（5状態）
+  const getRoundState = (rn: number): RoundState => {
+    const roundMatches = matchData.filter((m) => m.roundNumber === rn)
+
+    if (roundMatches.length > 0) {
+      if (roundMatches.every((m) => m.status === "confirmed"))
+        return "confirmed"
+      if (roundMatches.some((m) => m.status === "in_progress"))
+        return "in_progress"
+      return "waiting"
+    }
+
+    // マッチ未作成
+    if (rn === 1) return "team_assignment"
+
+    // 前ラウンドが confirmed かどうか
+    const prevRoundMatches = matchData.filter((m) => m.roundNumber === rn - 1)
+    if (
+      prevRoundMatches.length > 0 &&
+      prevRoundMatches.every((m) => m.status === "confirmed")
+    ) {
+      return "team_assignment"
+    }
+
+    return "future"
+  }
+
+  // デフォルト選択: in_progress → team_assignment → 最後のconfirmed → 1
   const defaultRound = (() => {
-    const incomplete = roundNumbers.filter((rn) =>
-      matchData
-        .filter((m) => m.roundNumber === rn)
-        .some((m) => m.status !== "confirmed"),
-    )
-    if (incomplete.length > 0) return incomplete[0]
-    return roundNumbers[roundNumbers.length - 1] ?? 1
+    for (let rn = 1; rn <= totalRounds; rn++) {
+      if (getRoundState(rn) === "in_progress") return rn
+    }
+    for (let rn = 1; rn <= totalRounds; rn++) {
+      if (getRoundState(rn) === "team_assignment") return rn
+    }
+    // 最後のconfirmed
+    const confirmedRounds = []
+    for (let rn = 1; rn <= totalRounds; rn++) {
+      if (getRoundState(rn) === "confirmed") confirmedRounds.push(rn)
+    }
+    if (confirmedRounds.length > 0)
+      return confirmedRounds[confirmedRounds.length - 1]
+    return 1
   })()
 
   const [selectedRound, setSelectedRound] = useState(defaultRound)
@@ -67,6 +120,7 @@ export function MatchManagement({
   const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
+  const currentRoundState = getRoundState(selectedRound)
   const currentMatches = matchData.filter(
     (m) => m.roundNumber === selectedRound,
   )
@@ -120,7 +174,6 @@ export function MatchManagement({
     prevRoundRef.current = selectedRound
 
     if (isRoundChange) {
-      // ラウンド変更: 全リセット
       const initial: Record<string, MatchResult> = {}
       for (const m of current) {
         if (m.result) {
@@ -134,21 +187,17 @@ export function MatchManagement({
       }
       setResults(initial)
     } else {
-      // Realtime更新: ユーザー手動設定済みキーは保持、未設定キーのみ自動更新
       setResults((prev) => {
         const next = { ...prev }
         for (const m of current) {
           if (m.result) {
-            // DB確定済みは常に上書き
             next[m.matchId] = m.result
           } else if (!(m.matchId in prev)) {
-            // 新規matchのみ自動設定
             const tentative = computeTentativeResult(m.teamA, m.teamB)
             if (tentative === "team_a" || tentative === "team_b") {
               next[m.matchId] = tentative
             }
           }
-          // 既にユーザーが手動選択済みのキーはそのまま保持
         }
         return next
       })
@@ -263,18 +312,10 @@ export function MatchManagement({
     })
   }
 
-  // ラウンド状態判定
-  const getRoundStatus = (rn: number) => {
-    const roundMatches = matchData.filter((m) => m.roundNumber === rn)
-    if (roundMatches.length === 0) return "no_matches" as const
-    if (roundMatches.every((m) => m.status === "confirmed"))
-      return "confirmed" as const
-    if (roundMatches.some((m) => m.status === "in_progress"))
-      return "in_progress" as const
-    return "waiting" as const
+  // チーム編成確定後
+  const handleTeamAssignmentSuccess = () => {
+    router.refresh()
   }
-
-  const currentRoundStatus = getRoundStatus(selectedRound)
 
   // ボタン表示条件
   const allWaiting =
@@ -283,9 +324,6 @@ export function MatchManagement({
   const allInProgress =
     currentMatches.length > 0 &&
     currentMatches.every((m) => m.status === "in_progress")
-  const allConfirmed =
-    currentMatches.length > 0 &&
-    currentMatches.every((m) => m.status === "confirmed")
   const allResultsSet =
     allInProgress &&
     currentMatches.every(
@@ -302,20 +340,30 @@ export function MatchManagement({
     return confirmedRoundCount >= totalRounds
   })()
 
-  // 次ラウンドのチーム編成リンク表示条件
-  const showNextTeamAssignment =
-    allConfirmed &&
-    selectedRound < totalRounds &&
-    !roundNumbers.includes(selectedRound + 1)
+  // タブアイコン
+  const getRoundIcon = (state: RoundState) => {
+    switch (state) {
+      case "confirmed":
+        return <Check className="w-3.5 h-3.5 text-green-500" />
+      case "in_progress":
+        return <Play className="w-3.5 h-3.5 text-blue-500" />
+      case "waiting":
+        return <Clock className="w-3.5 h-3.5 text-gray-400" />
+      case "team_assignment":
+        return <Shuffle className="w-3.5 h-3.5 text-amber-500" />
+      default:
+        return null
+    }
+  }
 
   return (
     <>
       {/* ラウンドタブ */}
       <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
         {Array.from({ length: totalRounds }, (_, i) => i + 1).map((rn) => {
-          const status = getRoundStatus(rn)
+          const state = getRoundState(rn)
           const isActive = selectedRound === rn
-          const isClickable = status !== "no_matches"
+          const isClickable = state !== "future"
 
           return (
             <button
@@ -331,100 +379,100 @@ export function MatchManagement({
                     : "border-transparent text-gray-300 cursor-not-allowed"
               }`}
             >
-              {status === "confirmed" && (
-                <Check className="w-3.5 h-3.5 text-green-500" />
-              )}
-              {status === "in_progress" && (
-                <Play className="w-3.5 h-3.5 text-blue-500" />
-              )}
-              {status === "waiting" && (
-                <Clock className="w-3.5 h-3.5 text-gray-400" />
-              )}
+              {getRoundIcon(state)}
               ラウンド {rn}
             </button>
           )
         })}
       </div>
 
-      {/* マッチカード一覧 */}
-      {currentMatches.length > 0 ? (
-        <div className="space-y-4 mb-6">
-          {currentMatches.map((match) => {
-            const tentative = computeTentativeResult(match.teamA, match.teamB)
-            return (
-              <MatchCard
-                key={match.matchId}
-                match={match}
-                tentativeResult={tentative}
-                selectedResult={results[match.matchId] ?? null}
-                onResultChange={handleResultChange}
-                isRoundInProgress={currentRoundStatus === "in_progress"}
-              />
-            )
-          })}
-        </div>
+      {/* コンテンツ切替 */}
+      {currentRoundState === "team_assignment" ? (
+        <TeamAssignmentBoard
+          participants={participants}
+          matchCount={matchCount}
+          roundNumber={selectedRound}
+          eventId={eventId}
+          existingRounds={existingRounds}
+          standingsMap={standingsMap}
+          onSuccess={handleTeamAssignmentSuccess}
+        />
       ) : (
-        <div className="text-center py-12 text-gray-400">
-          このラウンドにはマッチがありません
-        </div>
+        <>
+          {/* マッチカード一覧 */}
+          {currentMatches.length > 0 ? (
+            <div className="space-y-4 mb-6">
+              {currentMatches.map((match) => {
+                const tentative = computeTentativeResult(
+                  match.teamA,
+                  match.teamB,
+                )
+                return (
+                  <MatchCard
+                    key={match.matchId}
+                    match={match}
+                    tentativeResult={tentative}
+                    selectedResult={results[match.matchId] ?? null}
+                    onResultChange={handleResultChange}
+                    isRoundInProgress={currentRoundState === "in_progress"}
+                  />
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-400">
+              このラウンドにはマッチがありません
+            </div>
+          )}
+
+          {/* 操作ボタンエリア */}
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-sm border-t border-border">
+            <div className="max-w-5xl mx-auto flex items-center justify-end gap-3">
+              {allWaiting && (
+                <button
+                  type="button"
+                  onClick={handleStartRound}
+                  disabled={isPending}
+                  className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  <Play className="w-4 h-4" />
+                  {isPending ? "処理中..." : "試合開始"}
+                </button>
+              )}
+
+              {allInProgress && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalType("confirm")
+                    setShowModal(true)
+                  }}
+                  disabled={!allResultsSet || isPending}
+                  className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  {isPending ? "処理中..." : "結果確定"}
+                </button>
+              )}
+
+              {allRoundsConfirmed && eventStatus === "in_progress" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalType("complete")
+                    setShowModal(true)
+                  }}
+                  disabled={isPending}
+                  className="px-6 py-2.5 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                >
+                  <Trophy className="w-4 h-4" />
+                  {isPending ? "処理中..." : "イベント完了"}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       )}
-
-      {/* 操作ボタンエリア */}
-      <div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-sm border-t border-border">
-        <div className="max-w-5xl mx-auto flex items-center justify-end gap-3">
-          {allWaiting && (
-            <button
-              type="button"
-              onClick={handleStartRound}
-              disabled={isPending}
-              className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              <Play className="w-4 h-4" />
-              {isPending ? "処理中..." : "試合開始"}
-            </button>
-          )}
-
-          {allInProgress && (
-            <button
-              type="button"
-              onClick={() => {
-                setModalType("confirm")
-                setShowModal(true)
-              }}
-              disabled={!allResultsSet || isPending}
-              className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              <Check className="w-4 h-4" />
-              {isPending ? "処理中..." : "結果確定"}
-            </button>
-          )}
-
-          {showNextTeamAssignment && (
-            <Link
-              href={`/admin/tournaments/${tournamentId}/events/${eventId}/team-assignment`}
-              className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white inline-flex items-center gap-2"
-            >
-              <ArrowRight className="w-4 h-4" />
-              次ラウンドのチーム編成
-            </Link>
-          )}
-
-          {allRoundsConfirmed && eventStatus === "in_progress" && (
-            <button
-              type="button"
-              onClick={() => {
-                setModalType("complete")
-                setShowModal(true)
-              }}
-              disabled={isPending}
-              className="px-6 py-2.5 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              <Trophy className="w-4 h-4" />
-              {isPending ? "処理中..." : "イベント完了"}
-            </button>
-          )}
-        </div>
-      </div>
 
       {/* 累計成績 */}
       {matchData.some((m) => m.status === "confirmed") && (

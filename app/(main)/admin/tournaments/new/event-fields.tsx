@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { CircleDot, CheckCircle2, ClipboardCheck, Loader2, Play, Plus, Trash2, Users } from "lucide-react"
+import { CircleDot, CheckCircle2, ClipboardCheck, Loader2, Play, Plus, Swords, Trash2 } from "lucide-react"
 import type {
   FieldErrors,
   UseFieldArrayAppend,
@@ -169,11 +169,11 @@ export function EventFields({
                     {status === "in_progress" && (
                       <>
                         <Link
-                          href={`/admin/tournaments/${tournamentId}/events/${eventId}/team-assignment`}
+                          href={`/admin/tournaments/${tournamentId}/events/${eventId}/matches`}
                           className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
-                          title="チーム編成"
+                          title="試合管理"
                         >
-                          <Users className="w-4 h-4" />
+                          <Swords className="w-4 h-4" />
                         </Link>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           <CircleDot className="w-3 h-3" />

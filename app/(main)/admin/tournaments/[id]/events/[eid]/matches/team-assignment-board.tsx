@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core"
 import { useDroppable } from "@dnd-kit/core"
 import { useDraggable } from "@dnd-kit/core"
-import { User, Play, Check, GripVertical } from "lucide-react"
+import { User, Play, GripVertical } from "lucide-react"
 
 import { ROLE_LABELS, ROLE_BADGE_COLORS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
@@ -22,17 +22,16 @@ import type {
   MatchSlot,
   ExistingRound,
 } from "@/lib/types/match"
-import { ConfirmModal } from "./confirm-modal"
+import { TeamAssignmentConfirmModal } from "./team-assignment-confirm-modal"
 
 type TeamAssignmentBoardProps = {
   participants: ParticipantInfo[]
   matchCount: number
   roundNumber: number
-  totalRounds: number
   eventId: string
-  tournamentId: string
   existingRounds: ExistingRound[]
   standingsMap: Record<string, { wins: number; losses: number }>
+  onSuccess: () => void
 }
 
 // --- ユーティリティ ---
@@ -105,7 +104,6 @@ function getParticipant(
 }
 
 // --- サブコンポーネント ---
-
 
 function RoleBadge({
   role,
@@ -368,14 +366,12 @@ export function TeamAssignmentBoard({
   participants,
   matchCount,
   roundNumber,
-  totalRounds,
   eventId,
-  tournamentId,
   existingRounds,
   standingsMap,
+  onSuccess,
 }: TeamAssignmentBoardProps) {
   const dndId = useId()
-  const [activeRound, setActiveRound] = useState(roundNumber)
 
   // 前ラウンドの配置がある場合はデフォルト値として使う
   const prevRound = existingRounds.find((r) => r.roundNumber === roundNumber - 1)
@@ -449,12 +445,9 @@ export function TeamAssignmentBoard({
       if (!over || !currentDrag) return
 
       if (currentDrag.type === "player") {
-        // --- プレイヤーD&D（既存ロジック維持） ---
         const activeId = currentDrag.participant.profileId
 
-        // ドロップ先コンテナを特定
         let overContainerId = over.id as string
-        // ドロップ先がプレイヤーの場合、そのプレイヤーが属するコンテナを探す
         if (overContainerId.startsWith("player-")) {
           const overProfileId = overContainerId.replace("player-", "")
           const container = findContainer(overProfileId, unassigned, matches)
@@ -464,7 +457,6 @@ export function TeamAssignmentBoard({
               ? "unassigned"
               : `match-${container.matchIdx}-${container.team === "teamA" ? "team_a" : "team_b"}`
         }
-        // ドロップ先がチームdraggableの場合、対応するdroppable IDに変換
         const teamDragMatch = overContainerId.match(
           /^team-(\d+)-(teamA|teamB)$/,
         )
@@ -478,7 +470,6 @@ export function TeamAssignmentBoard({
         const targetContainer = parseContainerId(overContainerId)
         if (!sourceContainer || !targetContainer) return
 
-        // 同一コンテナ → noop
         if (
           sourceContainer.type === targetContainer.type &&
           (sourceContainer.type === "unassigned" ||
@@ -490,7 +481,6 @@ export function TeamAssignmentBoard({
           return
         }
 
-        // ドロップ先チームが5人 → noop
         if (targetContainer.type === "team") {
           const targetTeam =
             matches[targetContainer.matchIdx][targetContainer.team]
@@ -500,7 +490,6 @@ export function TeamAssignmentBoard({
         const participant = getParticipant(activeId, unassigned, matches)
         if (!participant) return
 
-        // 次状態を計算
         const nextUnassigned = unassigned.filter(
           (p) => p.profileId !== activeId,
         )
@@ -509,7 +498,6 @@ export function TeamAssignmentBoard({
           teamB: m.teamB.filter((p) => p.profileId !== activeId),
         }))
 
-        // ドロップ先に追加
         if (targetContainer.type === "unassigned") {
           nextUnassigned.push(participant)
         } else {
@@ -525,16 +513,13 @@ export function TeamAssignmentBoard({
         setUnassigned(nextUnassigned)
         setMatches(nextMatches)
       } else {
-        // --- チームD&D（新規ロジック） ---
         const { matchIdx: srcMatchIdx, team: srcTeam } = currentDrag
 
-        // ドロップ先からターゲットチームを特定
         let targetMatchIdx: number | null = null
         let targetTeam: "teamA" | "teamB" | null = null
 
         const overId = over.id as string
 
-        // ドロップ先がチームdroppable（match-N-team_a/b）
         const droppableMatch = overId.match(/^match-(\d+)-(team_a|team_b)$/)
         if (droppableMatch) {
           targetMatchIdx = Number(droppableMatch[1])
@@ -542,14 +527,12 @@ export function TeamAssignmentBoard({
             droppableMatch[2] === "team_a" ? "teamA" : "teamB"
         }
 
-        // ドロップ先がチームdraggable（team-N-teamA/B）
         const draggableMatch = overId.match(/^team-(\d+)-(teamA|teamB)$/)
         if (draggableMatch) {
           targetMatchIdx = Number(draggableMatch[1])
           targetTeam = draggableMatch[2] as "teamA" | "teamB"
         }
 
-        // ドロップ先がプレイヤーの場合、そのプレイヤーの所属チームを特定
         if (overId.startsWith("player-")) {
           const overProfileId = overId.replace("player-", "")
           const container = findContainer(overProfileId, unassigned, matches)
@@ -559,7 +542,6 @@ export function TeamAssignmentBoard({
           }
         }
 
-        // ターゲットが特定できない or unassigned or 範囲外 → noop
         if (
           targetMatchIdx === null ||
           targetTeam === null ||
@@ -568,10 +550,8 @@ export function TeamAssignmentBoard({
         )
           return
 
-        // 同一チーム → noop
         if (srcMatchIdx === targetMatchIdx && srcTeam === targetTeam) return
 
-        // スワップ実行
         const nextMatches = matches.map((m) => ({
           teamA: [...m.teamA],
           teamB: [...m.teamB],
@@ -589,242 +569,146 @@ export function TeamAssignmentBoard({
 
   const allAssigned = unassigned.length === 0
 
-  const handleSuccess = () => {
-    setShowConfirmModal(false)
-    window.location.href = `/admin/tournaments/${tournamentId}/edit`
-  }
-
-  const isEditMode = activeRound === roundNumber
-  const existingRoundNumbers = new Set(existingRounds.map((r) => r.roundNumber))
-  const activeExistingRound = existingRounds.find(
-    (r) => r.roundNumber === activeRound,
-  )
-
-  // タブの状態判定
-  const getTabState = (rn: number) => {
-    if (existingRoundNumbers.has(rn)) return "completed" as const
-    if (rn === roundNumber) return "current" as const
-    return "future" as const
-  }
-
   return (
     <>
-      {/* ラウンドタブ */}
-      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
-        {Array.from({ length: totalRounds }, (_, i) => i + 1).map((rn) => {
-          const state = getTabState(rn)
-          const isActive = activeRound === rn
-          const isClickable = state !== "future"
-          return (
-            <button
-              key={rn}
-              type="button"
-              onClick={() => isClickable && setActiveRound(rn)}
-              disabled={!isClickable}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                isActive
-                  ? "border-primary text-primary"
-                  : isClickable
-                    ? "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    : "border-transparent text-gray-300 cursor-not-allowed"
-              }`}
+      <DndContext
+        id={dndId}
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
+          {/* 未配置エリア */}
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              未配置（{unassigned.length}人）
+            </h3>
+            <DroppableContainer
+              id="unassigned"
+              label="ここにドロップで未配置に戻す"
+              count={unassigned.length}
             >
-              {state === "completed" && <Check className="w-3.5 h-3.5" />}
-              ラウンド {rn}
-              {state === "current" && "（新規）"}
-            </button>
-          )
-        })}
-      </div>
-
-      {isEditMode ? (
-        <>
-          <DndContext
-            id={dndId}
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
-              {/* 未配置エリア */}
-              <div className="bg-white rounded-2xl shadow-sm border border-border p-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  未配置（{unassigned.length}人）
-                </h3>
-                <DroppableContainer
-                  id="unassigned"
-                  label="ここにドロップで未配置に戻す"
-                  count={unassigned.length}
-                >
-                  {unassigned.map((p) => (
-                    <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
-                  ))}
-                </DroppableContainer>
-              </div>
-
-              {/* マッチ枠エリア */}
-              <div className="space-y-4">
-                {matches.map((match, idx) => (
-                  <div
-                    key={`match-${idx}`}
-                    className="bg-white rounded-2xl shadow-sm border border-border p-4"
-                  >
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                      マッチ {idx + 1}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <DraggableTeamContainer
-                        droppableId={`match-${idx}-team_a`}
-                        draggableId={`team-${idx}-teamA`}
-                        matchIdx={idx}
-                        team="teamA"
-                        label="Team A"
-                        count={match.teamA.length}
-                        maxCount={5}
-                      >
-                        {match.teamA.map((p) => (
-                          <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
-                        ))}
-                        {match.teamA.length < 5 &&
-                          Array.from({ length: 5 - match.teamA.length }).map(
-                            (_, i) => (
-                              <div
-                                key={`placeholder-a-${idx}-${i}`}
-                                className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
-                              >
-                                <span className="text-xs text-gray-300">
-                                  空き
-                                </span>
-                              </div>
-                            ),
-                          )}
-                      </DraggableTeamContainer>
-                      <DraggableTeamContainer
-                        droppableId={`match-${idx}-team_b`}
-                        draggableId={`team-${idx}-teamB`}
-                        matchIdx={idx}
-                        team="teamB"
-                        label="Team B"
-                        count={match.teamB.length}
-                        maxCount={5}
-                      >
-                        {match.teamB.map((p) => (
-                          <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
-                        ))}
-                        {match.teamB.length < 5 &&
-                          Array.from({ length: 5 - match.teamB.length }).map(
-                            (_, i) => (
-                              <div
-                                key={`placeholder-b-${idx}-${i}`}
-                                className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
-                              >
-                                <span className="text-xs text-gray-300">
-                                  空き
-                                </span>
-                              </div>
-                            ),
-                          )}
-                      </DraggableTeamContainer>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <DragOverlay>
-              {activeDrag?.type === "player" ? (
-                <PlayerCard participant={activeDrag.participant} wins={standingsMap[activeDrag.participant.profileId]?.wins} losses={standingsMap[activeDrag.participant.profileId]?.losses} />
-              ) : activeDrag?.type === "team" ? (
-                <TeamDragPreview
-                  team={matches[activeDrag.matchIdx][activeDrag.team]}
-                  label={activeDrag.team === "teamA" ? "Team A" : "Team B"}
-                />
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-
-          {/* フッター（sticky bottom） */}
-          <div className="sticky bottom-0 mt-6 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-sm border-t border-border">
-            <div className="max-w-5xl mx-auto flex items-center justify-between">
-              <p className="text-sm text-gray-500">
-                未配置:{" "}
-                <span
-                  className={`font-semibold ${
-                    unassigned.length === 0 ? "text-green-600" : "text-primary"
-                  }`}
-                >
-                  {unassigned.length}人
-                </span>
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(true)}
-                disabled={!allAssigned}
-                className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-              >
-                <Play className="w-4 h-4" />
-                試合開始
-              </button>
-            </div>
+              {unassigned.map((p) => (
+                <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+              ))}
+            </DroppableContainer>
           </div>
 
-          {showConfirmModal && (
-            <ConfirmModal
-              matches={matches}
-              roundNumber={roundNumber}
-              eventId={eventId}
-              onClose={() => setShowConfirmModal(false)}
-              onSuccess={handleSuccess}
-            />
-          )}
-        </>
-      ) : (
-        /* 読み取り専用ビュー（過去ラウンド） */
-        <div className="space-y-4">
-          {activeExistingRound?.matches.map((match, idx) => (
-            <div
-              key={match.matchId}
-              className="bg-white rounded-2xl shadow-sm border border-border p-4"
-            >
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                マッチ {idx + 1}
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border-2 border-border bg-gray-50/50 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-gray-500">
-                      Team A
-                    </p>
-                    <span className="text-xs font-medium text-gray-400">
-                      {match.teamA.length}/5
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
+          {/* マッチ枠エリア */}
+          <div className="space-y-4">
+            {matches.map((match, idx) => (
+              <div
+                key={`match-${idx}`}
+                className="bg-white rounded-2xl shadow-sm border border-border p-4"
+              >
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  マッチ {idx + 1}
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <DraggableTeamContainer
+                    droppableId={`match-${idx}-team_a`}
+                    draggableId={`team-${idx}-teamA`}
+                    matchIdx={idx}
+                    team="teamA"
+                    label="Team A"
+                    count={match.teamA.length}
+                    maxCount={5}
+                  >
                     {match.teamA.map((p) => (
-                      <PlayerCard key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+                      <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                     ))}
-                  </div>
-                </div>
-                <div className="rounded-xl border-2 border-border bg-gray-50/50 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-gray-500">
-                      Team B
-                    </p>
-                    <span className="text-xs font-medium text-gray-400">
-                      {match.teamB.length}/5
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
+                    {match.teamA.length < 5 &&
+                      Array.from({ length: 5 - match.teamA.length }).map(
+                        (_, i) => (
+                          <div
+                            key={`placeholder-a-${idx}-${i}`}
+                            className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
+                          >
+                            <span className="text-xs text-gray-300">
+                              空き
+                            </span>
+                          </div>
+                        ),
+                      )}
+                  </DraggableTeamContainer>
+                  <DraggableTeamContainer
+                    droppableId={`match-${idx}-team_b`}
+                    draggableId={`team-${idx}-teamB`}
+                    matchIdx={idx}
+                    team="teamB"
+                    label="Team B"
+                    count={match.teamB.length}
+                    maxCount={5}
+                  >
                     {match.teamB.map((p) => (
-                      <PlayerCard key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+                      <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
                     ))}
-                  </div>
+                    {match.teamB.length < 5 &&
+                      Array.from({ length: 5 - match.teamB.length }).map(
+                        (_, i) => (
+                          <div
+                            key={`placeholder-b-${idx}-${i}`}
+                            className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
+                          >
+                            <span className="text-xs text-gray-300">
+                              空き
+                            </span>
+                          </div>
+                        ),
+                      )}
+                  </DraggableTeamContainer>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+
+        <DragOverlay>
+          {activeDrag?.type === "player" ? (
+            <PlayerCard participant={activeDrag.participant} wins={standingsMap[activeDrag.participant.profileId]?.wins} losses={standingsMap[activeDrag.participant.profileId]?.losses} />
+          ) : activeDrag?.type === "team" ? (
+            <TeamDragPreview
+              team={matches[activeDrag.matchIdx][activeDrag.team]}
+              label={activeDrag.team === "teamA" ? "Team A" : "Team B"}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {/* フッター（sticky bottom） */}
+      <div className="sticky bottom-0 mt-6 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-sm border-t border-border">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            未配置:{" "}
+            <span
+              className={`font-semibold ${
+                unassigned.length === 0 ? "text-green-600" : "text-primary"
+              }`}
+            >
+              {unassigned.length}人
+            </span>
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowConfirmModal(true)}
+            disabled={!allAssigned}
+            className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <Play className="w-4 h-4" />
+            チーム編成を確定
+          </button>
+        </div>
+      </div>
+
+      {showConfirmModal && (
+        <TeamAssignmentConfirmModal
+          matches={matches}
+          roundNumber={roundNumber}
+          eventId={eventId}
+          onClose={() => setShowConfirmModal(false)}
+          onSuccess={onSuccess}
+        />
       )}
     </>
   )
