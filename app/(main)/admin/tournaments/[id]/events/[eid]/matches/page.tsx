@@ -193,7 +193,7 @@ export default async function AdminMatchesPage({
   }
 
   // 次ラウンド番号算出
-  const roundNumbers = [...new Set(matchList.map((m) => m.roundNumber))].sort()
+  const roundNumbers = [...new Set(matchList.map((m) => m.roundNumber))].sort((a, b) => a - b)
   const currentMax = roundNumbers.length > 0 ? roundNumbers[roundNumbers.length - 1] : 0
   const nextRoundNumber = currentMax + 1
   const matchCount = participants.length / 10

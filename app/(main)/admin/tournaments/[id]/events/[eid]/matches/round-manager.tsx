@@ -61,7 +61,7 @@ export function RoundManager({
   }, [matches])
 
   // ラウンドごとのマッチ整理
-  const roundNumbers = [...new Set(matchData.map((m) => m.roundNumber))].sort()
+  const roundNumbers = [...new Set(matchData.map((m) => m.roundNumber))].sort((a, b) => a - b)
 
   // ラウンド状態判定（5状態）
   const getRoundState = (rn: number): RoundState => {
@@ -90,10 +90,13 @@ export function RoundManager({
     return "future"
   }
 
-  // デフォルト選択: in_progress → team_assignment → 最後のconfirmed → 1
+  // デフォルト選択: in_progress → waiting → team_assignment → 最後のconfirmed → 1
   const defaultRound = (() => {
     for (let rn = 1; rn <= totalRounds; rn++) {
       if (getRoundState(rn) === "in_progress") return rn
+    }
+    for (let rn = 1; rn <= totalRounds; rn++) {
+      if (getRoundState(rn) === "waiting") return rn
     }
     for (let rn = 1; rn <= totalRounds; rn++) {
       if (getRoundState(rn) === "team_assignment") return rn
