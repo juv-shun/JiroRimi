@@ -696,7 +696,7 @@ export function TeamAssignmentBoard({
             className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             <Play className="w-4 h-4" />
-            チーム編成を確定
+            試合開始
           </button>
         </div>
       </div>

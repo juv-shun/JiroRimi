@@ -114,7 +114,7 @@ export function TeamAssignmentConfirmModal({
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center">
               <Check className="w-4 h-4 text-white" />
             </div>
-            チーム編成の確認
+            試合開始の確認
           </h2>
         </div>
 
@@ -233,7 +233,7 @@ export function TeamAssignmentConfirmModal({
                 ) : (
                   <Check className="w-4 h-4" />
                 )}
-                確定して試合開始
+                試合開始
               </button>
             </div>
           </>
