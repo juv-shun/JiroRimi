@@ -7,10 +7,10 @@ import { createClient } from "@/lib/supabase/server"
 import type {
   MatchForDisplay,
   MatchParticipantForDisplay,
+  MatchResult,
+  MatchStatus,
   Team,
   Vote,
-  MatchStatus,
-  MatchResult,
 } from "@/lib/types/match"
 import type { Role } from "@/lib/types/profile"
 import { MatchPage } from "./match-page"
@@ -46,7 +46,7 @@ export default async function MatchesPage({
     notFound()
   }
 
-  // ユーザーの match_participants を取得（RLS で waiting は自動フィルタ）
+  // ユーザーの match_participants を取得（RLS で未開始マッチは公開されない）
   const { data: myParticipations, error: myError } = await supabase
     .from("match_participants")
     .select(
@@ -97,9 +97,7 @@ export default async function MatchesPage({
     const teamB: MatchParticipantForDisplay[] = []
 
     for (const p of participants) {
-      const profile = Array.isArray(p.profiles)
-        ? p.profiles[0]
-        : p.profiles
+      const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles
 
       const participant: MatchParticipantForDisplay = {
         profileId: p.profile_id,
@@ -118,8 +116,10 @@ export default async function MatchesPage({
     }
 
     // チーム内をプレイヤー名でソート
-    const sortByName = (a: MatchParticipantForDisplay, b: MatchParticipantForDisplay) =>
-      (a.playerName ?? "").localeCompare(b.playerName ?? "")
+    const sortByName = (
+      a: MatchParticipantForDisplay,
+      b: MatchParticipantForDisplay,
+    ) => (a.playerName ?? "").localeCompare(b.playerName ?? "")
     teamA.sort(sortByName)
     teamB.sort(sortByName)
 

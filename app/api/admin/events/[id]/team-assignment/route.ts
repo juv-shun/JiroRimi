@@ -112,7 +112,7 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
-    // 6a. イベントの存在確認
+    // 6. イベントの存在確認
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select("id, status")
@@ -126,7 +126,6 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
-    // 6b. イベントの status が in_progress か
     if (event.status !== "in_progress") {
       return NextResponse.json(
         { success: false, error: "イベントが進行中ではありません" },
@@ -134,151 +133,33 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
-    // 7. round_number 算出 & 同一ラウンド重複チェック
-    const { data: maxRoundData, error: maxRoundError } = await supabase
-      .from("matches")
-      .select("round_number")
-      .eq("event_id", id)
-      .order("round_number", { ascending: false })
-      .limit(1)
-
-    if (maxRoundError) {
-      console.error("Max round fetch error:", maxRoundError)
-      return NextResponse.json(
-        { success: false, error: "ラウンド情報の取得に失敗しました" },
-        { status: 500 },
-      )
-    }
-
-    const currentMax =
-      maxRoundData && maxRoundData.length > 0
-        ? maxRoundData[0].round_number
-        : 0
-    const nextRound = currentMax + 1
-
-    // 7b. 同一ラウンドに既にマッチが存在しないか確認（二重送信防止）
-    const { count: existingMatchCount, error: existingMatchError } =
-      await supabase
-        .from("matches")
-        .select("id", { count: "exact", head: true })
-        .eq("event_id", id)
-        .eq("round_number", nextRound)
-
-    if (existingMatchError) {
-      console.error("Existing match check error:", existingMatchError)
-      return NextResponse.json(
-        { success: false, error: "ラウンド情報の確認に失敗しました" },
-        { status: 500 },
-      )
-    }
-
-    if (existingMatchCount && existingMatchCount > 0) {
-      return NextResponse.json(
-        { success: false, error: "このラウンドは既に編成済みです" },
-        { status: 409 },
-      )
-    }
-
-    // 8. チェックイン済み参加者の profile_id セットとリクエストの一致確認
-    const { data: checkedInEntries, error: entriesError } = await supabase
-      .from("entries")
-      .select("profile_id")
-      .eq("event_id", id)
-      .not("checked_in_at", "is", null)
-
-    if (entriesError) {
-      console.error("Entries fetch error:", entriesError)
-      return NextResponse.json(
-        { success: false, error: "エントリーの取得に失敗しました" },
-        { status: 500 },
-      )
-    }
-
-    const checkedInProfileIds = new Set(
-      (checkedInEntries ?? []).map((e) => e.profile_id),
+    const { error: rpcError } = await supabase.rpc(
+      "create_round_matches_and_start",
+      {
+        p_event_id: id,
+        p_matches: parsed.data.matches,
+      },
     )
-    const requestProfileIds = new Set(allProfileIds)
 
-    if (checkedInProfileIds.size !== requestProfileIds.size) {
+    if (rpcError) {
+      console.error("Team assignment transaction error:", rpcError)
+
+      const message = rpcError.message
+      const status =
+        message === "このラウンドは既に編成済みです" ||
+        message === "イベントが進行中ではありません"
+          ? 409
+          : message === "参加者の重複があります" ||
+              message === "参加者リストが一致しません" ||
+              message === "リクエスト形式が不正です"
+            ? 400
+            : message === "イベントが見つかりません"
+              ? 404
+              : 500
+
       return NextResponse.json(
-        { success: false, error: "参加者リストが一致しません" },
-        { status: 400 },
-      )
-    }
-    for (const pid of requestProfileIds) {
-      if (!checkedInProfileIds.has(pid)) {
-        return NextResponse.json(
-          { success: false, error: "参加者リストが一致しません" },
-          { status: 400 },
-        )
-      }
-    }
-
-    // DB操作: matches + match_participants を作成
-    // 部分書き込み防止: エラー時は作成済みマッチをクリーンアップ
-    const createdMatchIds: string[] = []
-
-    try {
-      for (const match of parsed.data.matches) {
-        const { data: insertedMatch, error: matchError } = await supabase
-          .from("matches")
-          .insert({
-            event_id: id,
-            round_number: nextRound,
-            status: "waiting",
-          })
-          .select("id")
-          .single()
-
-        if (matchError || !insertedMatch) {
-          console.error("Match insert error:", matchError)
-          throw new Error("マッチの作成に失敗しました")
-        }
-
-        createdMatchIds.push(insertedMatch.id)
-
-        const participants = [
-          ...match.team_a_profile_ids.map((profileId) => ({
-            match_id: insertedMatch.id,
-            profile_id: profileId,
-            team: "team_a" as const,
-          })),
-          ...match.team_b_profile_ids.map((profileId) => ({
-            match_id: insertedMatch.id,
-            profile_id: profileId,
-            team: "team_b" as const,
-          })),
-        ]
-
-        const { error: participantsError } = await supabase
-          .from("match_participants")
-          .insert(participants)
-
-        if (participantsError) {
-          console.error("Match participants insert error:", participantsError)
-          throw new Error("参加者の登録に失敗しました")
-        }
-      }
-    } catch (insertError) {
-      // クリーンアップ: 作成済みマッチを削除（CASCADE で match_participants も削除される）
-      if (createdMatchIds.length > 0) {
-        const { error: cleanupError } = await supabase
-          .from("matches")
-          .delete()
-          .in("id", createdMatchIds)
-
-        if (cleanupError) {
-          console.error("Cleanup error:", cleanupError)
-        }
-      }
-
-      const message =
-        insertError instanceof Error
-          ? insertError.message
-          : "マッチの作成に失敗しました"
-      return NextResponse.json(
-        { success: false, error: message },
-        { status: 500 },
+        { success: false, error: message || "チーム編成の確定に失敗しました" },
+        { status },
       )
     }
 

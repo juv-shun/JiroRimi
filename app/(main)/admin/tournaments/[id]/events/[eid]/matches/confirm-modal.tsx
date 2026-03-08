@@ -1,10 +1,10 @@
 "use client"
 
+import { AlertTriangle, Check, Loader2, Trophy } from "lucide-react"
 import { useEffect } from "react"
-import { AlertTriangle, Check, Loader2, Play, Trophy } from "lucide-react"
 
 type ConfirmModalProps = {
-  type: "confirm" | "complete" | "start"
+  type: "confirm" | "complete"
   roundNumber: number
   onConfirm: () => void
   onCancel: () => void
@@ -34,15 +34,6 @@ export function ConfirmModal({
       body: `ラウンド${roundNumber}の結果を確定しますか？確定後は変更できません。`,
       buttonIcon: <Check className="w-4 h-4" />,
       buttonText: "確定する",
-      buttonClass: "glow-button",
-    },
-    start: {
-      bgClass: "bg-gradient-to-br from-blue-500 to-indigo-600",
-      icon: <Play className="w-4 h-4 text-white" />,
-      title: "試合開始の確認",
-      body: `ラウンド${roundNumber}の試合を開始しますか？`,
-      buttonIcon: <Play className="w-4 h-4" />,
-      buttonText: "開始する",
       buttonClass: "glow-button",
     },
     complete: {
@@ -87,9 +78,7 @@ export function ConfirmModal({
 
         {/* 本文 */}
         <div className="px-6 py-6">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {config.body}
-          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">{config.body}</p>
         </div>
 
         {/* フッター */}

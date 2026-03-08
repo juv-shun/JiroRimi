@@ -102,9 +102,9 @@ export async function PATCH(_request: Request, context: RouteContext) {
       )
     }
 
-    // waiting/in_progress のマッチが残っていないか
+    // in_progress のマッチが残っていないか
     const incompleteMatches = (allMatches ?? []).filter(
-      (m) => m.status === "waiting" || m.status === "in_progress",
+      (m) => m.status === "in_progress",
     )
     if (incompleteMatches.length > 0) {
       return NextResponse.json(
@@ -131,10 +131,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
     // 原子的ステータス更新
     const { count, error: updateError } = await supabase
       .from("events")
-      .update(
-        { status: "completed" },
-        { count: "exact" },
-      )
+      .update({ status: "completed" }, { count: "exact" })
       .eq("id", id)
       .eq("status", "in_progress")
 

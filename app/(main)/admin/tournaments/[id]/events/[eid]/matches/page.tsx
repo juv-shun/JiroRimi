@@ -192,10 +192,7 @@ export default async function AdminMatchesPage({
     standingsMap[s.profileId] = { wins: s.wins, losses: s.losses }
   }
 
-  // 次ラウンド番号算出
   const roundNumbers = [...new Set(matchList.map((m) => m.roundNumber))].sort((a, b) => a - b)
-  const currentMax = roundNumbers.length > 0 ? roundNumbers[roundNumbers.length - 1] : 0
-  const nextRoundNumber = currentMax + 1
   const matchCount = participants.length / 10
 
   const tournament = Array.isArray(event.tournaments)
@@ -262,11 +259,9 @@ export default async function AdminMatchesPage({
           matches={matchList}
           totalRounds={event.matches_per_event}
           eventId={eid}
-          tournamentId={id}
           eventStatus={event.status}
           participants={participants}
           matchCount={matchCount}
-          nextRoundNumber={nextRoundNumber}
           existingRounds={existingRounds}
           standingsMap={standingsMap}
         />

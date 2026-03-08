@@ -1,27 +1,26 @@
 "use client"
 
-import { useState, useCallback, useId } from "react"
 import {
-  DndContext,
-  DragOverlay,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
   PointerSensor,
+  useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
 } from "@dnd-kit/core"
-import { useDroppable } from "@dnd-kit/core"
-import { useDraggable } from "@dnd-kit/core"
-import { User, Play, GripVertical } from "lucide-react"
-
-import { ROLE_LABELS, ROLE_BADGE_COLORS } from "@/lib/types/profile"
-import type { Role } from "@/lib/types/profile"
+import { GripVertical, Play, User } from "lucide-react"
+import { useCallback, useId, useState } from "react"
 import type {
-  ParticipantInfo,
-  MatchSlot,
   ExistingRound,
+  MatchSlot,
+  ParticipantInfo,
 } from "@/lib/types/match"
+import type { Role } from "@/lib/types/profile"
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/lib/types/profile"
 import { TeamAssignmentConfirmModal } from "./team-assignment-confirm-modal"
 
 type TeamAssignmentBoardProps = {
@@ -105,13 +104,7 @@ function getParticipant(
 
 // --- サブコンポーネント ---
 
-function RoleBadge({
-  role,
-  priority,
-}: {
-  role: Role
-  priority: 1 | 2 | 3
-}) {
+function RoleBadge({ role, priority }: { role: Role; priority: 1 | 2 | 3 }) {
   const colorClass = ROLE_BADGE_COLORS[role]
   return (
     <span
@@ -147,8 +140,7 @@ function PlayerCard({
         isDragging ? "opacity-50" : ""
       }`}
     >
-      {participant.avatarUrl &&
-      isAllowedAvatarUrl(participant.avatarUrl) ? (
+      {participant.avatarUrl && isAllowedAvatarUrl(participant.avatarUrl) ? (
         <img
           src={participant.avatarUrl}
           alt=""
@@ -172,7 +164,9 @@ function PlayerCard({
           </div>
         )}
         {(wins ?? 0) + (losses ?? 0) > 0 && (
-          <p className="text-[10px] text-gray-400 mt-0.5">{wins ?? 0}W {losses ?? 0}L</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {wins ?? 0}W {losses ?? 0}L
+          </p>
         )}
       </div>
     </div>
@@ -195,7 +189,12 @@ function DraggablePlayer({
 
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} className="touch-none">
-      <PlayerCard participant={participant} isDragging={isDragging} wins={wins} losses={losses} />
+      <PlayerCard
+        participant={participant}
+        isDragging={isDragging}
+        wins={wins}
+        losses={losses}
+      />
     </div>
   )
 }
@@ -374,7 +373,9 @@ export function TeamAssignmentBoard({
   const dndId = useId()
 
   // 前ラウンドの配置がある場合はデフォルト値として使う
-  const prevRound = existingRounds.find((r) => r.roundNumber === roundNumber - 1)
+  const prevRound = existingRounds.find(
+    (r) => r.roundNumber === roundNumber - 1,
+  )
   const participantIds = new Set(participants.map((p) => p.profileId))
 
   const initialMatches: MatchSlot[] = prevRound
@@ -395,9 +396,12 @@ export function TeamAssignmentBoard({
       ...m.teamB.map((p) => p.profileId),
     ]),
   )
-  const initialUnassigned = participants.filter((p) => !assignedIds.has(p.profileId))
+  const initialUnassigned = participants.filter(
+    (p) => !assignedIds.has(p.profileId),
+  )
 
-  const [unassigned, setUnassigned] = useState<ParticipantInfo[]>(initialUnassigned)
+  const [unassigned, setUnassigned] =
+    useState<ParticipantInfo[]>(initialUnassigned)
   const [matches, setMatches] = useState<MatchSlot[]>(initialMatches)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   type ActiveDrag =
@@ -523,8 +527,7 @@ export function TeamAssignmentBoard({
         const droppableMatch = overId.match(/^match-(\d+)-(team_a|team_b)$/)
         if (droppableMatch) {
           targetMatchIdx = Number(droppableMatch[1])
-          targetTeam =
-            droppableMatch[2] === "team_a" ? "teamA" : "teamB"
+          targetTeam = droppableMatch[2] === "team_a" ? "teamA" : "teamB"
         }
 
         const draggableMatch = overId.match(/^team-(\d+)-(teamA|teamB)$/)
@@ -590,7 +593,12 @@ export function TeamAssignmentBoard({
               count={unassigned.length}
             >
               {unassigned.map((p) => (
-                <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+                <DraggablePlayer
+                  key={p.profileId}
+                  participant={p}
+                  wins={standingsMap[p.profileId]?.wins}
+                  losses={standingsMap[p.profileId]?.losses}
+                />
               ))}
             </DroppableContainer>
           </div>
@@ -599,7 +607,7 @@ export function TeamAssignmentBoard({
           <div className="space-y-4">
             {matches.map((match, idx) => (
               <div
-                key={`match-${idx}`}
+                key={`${match.teamA.map((p) => p.profileId).join("-")}:${match.teamB.map((p) => p.profileId).join("-")}`}
                 className="bg-white rounded-2xl shadow-sm border border-border p-4"
               >
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">
@@ -616,18 +624,21 @@ export function TeamAssignmentBoard({
                     maxCount={5}
                   >
                     {match.teamA.map((p) => (
-                      <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+                      <DraggablePlayer
+                        key={p.profileId}
+                        participant={p}
+                        wins={standingsMap[p.profileId]?.wins}
+                        losses={standingsMap[p.profileId]?.losses}
+                      />
                     ))}
                     {match.teamA.length < 5 &&
                       Array.from({ length: 5 - match.teamA.length }).map(
                         (_, i) => (
                           <div
-                            key={`placeholder-a-${idx}-${i}`}
+                            key={`placeholder-a-${match.teamA.map((p) => p.profileId).join("-")}-${i}`}
                             className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
                           >
-                            <span className="text-xs text-gray-300">
-                              空き
-                            </span>
+                            <span className="text-xs text-gray-300">空き</span>
                           </div>
                         ),
                       )}
@@ -642,18 +653,21 @@ export function TeamAssignmentBoard({
                     maxCount={5}
                   >
                     {match.teamB.map((p) => (
-                      <DraggablePlayer key={p.profileId} participant={p} wins={standingsMap[p.profileId]?.wins} losses={standingsMap[p.profileId]?.losses} />
+                      <DraggablePlayer
+                        key={p.profileId}
+                        participant={p}
+                        wins={standingsMap[p.profileId]?.wins}
+                        losses={standingsMap[p.profileId]?.losses}
+                      />
                     ))}
                     {match.teamB.length < 5 &&
                       Array.from({ length: 5 - match.teamB.length }).map(
                         (_, i) => (
                           <div
-                            key={`placeholder-b-${idx}-${i}`}
+                            key={`placeholder-b-${match.teamB.map((p) => p.profileId).join("-")}-${i}`}
                             className="h-12 rounded-lg border border-dashed border-gray-200 flex items-center justify-center"
                           >
-                            <span className="text-xs text-gray-300">
-                              空き
-                            </span>
+                            <span className="text-xs text-gray-300">空き</span>
                           </div>
                         ),
                       )}
@@ -666,7 +680,11 @@ export function TeamAssignmentBoard({
 
         <DragOverlay>
           {activeDrag?.type === "player" ? (
-            <PlayerCard participant={activeDrag.participant} wins={standingsMap[activeDrag.participant.profileId]?.wins} losses={standingsMap[activeDrag.participant.profileId]?.losses} />
+            <PlayerCard
+              participant={activeDrag.participant}
+              wins={standingsMap[activeDrag.participant.profileId]?.wins}
+              losses={standingsMap[activeDrag.participant.profileId]?.losses}
+            />
           ) : activeDrag?.type === "team" ? (
             <TeamDragPreview
               team={matches[activeDrag.matchIdx][activeDrag.team]}
@@ -696,7 +714,7 @@ export function TeamAssignmentBoard({
             className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
             <Play className="w-4 h-4" />
-            試合開始
+            確定して試合開始
           </button>
         </div>
       </div>

@@ -220,8 +220,8 @@ CREATE TRIGGER protect_entry_columns_trigger
 
 | 操作 | ポリシー名 | 対象ロール | USING | WITH CHECK | 説明 |
 |------|-----------|-----------|-------|------------|------|
-| SELECT | `matches_select_public` | `public` | `status IN ('in_progress', 'confirmed')` | - | 開始済み/確定済みマッチは全員閲覧可能（waiting は非公開） |
-| SELECT | `matches_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全マッチ閲覧可能（waiting 含む） |
+| SELECT | `matches_select_public` | `public` | `status IN ('in_progress', 'confirmed')` | - | 進行中/確定済みマッチは全員閲覧可能 |
+| SELECT | `matches_select_admin` | `authenticated` | `is_admin()` | - | 運営者は全マッチ閲覧可能 |
 | INSERT | `matches_insert_admin` | `authenticated` | - | `is_admin()` | 運営者のみ作成可能 |
 | UPDATE | `matches_update_lobby` | `authenticated` | マッチ参加者 AND `status = 'in_progress'`（後述） | 同左 | マッチ参加者がロビー番号を更新（in_progress の場合のみ） |
 | UPDATE | `matches_update_admin` | `authenticated` | `is_admin()` | `is_admin()` | 運営者は全マッチ更新可能 |
@@ -345,8 +345,8 @@ CREATE TRIGGER protect_match_participant_columns_trigger
 | tournaments | 公開済み: 全員 / draft: 運営者 | 運営者 | 運営者 | 運営者 |
 | events | 公開大会のイベント: 全員 / それ以外: 運営者 | 運営者 | 運営者 | 運営者 |
 | entries | 全員 | 本人（期間内）or 運営者 | 本人（期間内・取り消し不可）or 運営者 | 本人 or 運営者 |
-| matches | in_progress/confirmed: 全員 / waiting: 運営者 | 運営者 | 参加者（lobby_number のみ・in_progress のみ）or 運営者 | 運営者 |
-| match_participants | 親マッチが in_progress/confirmed: 全員 / waiting: 運営者 | 運営者 | 本人（vote のみ・in_progress のみ）or 運営者 | 運営者 |
+| matches | in_progress/confirmed: 全員 | 運営者 | 参加者（lobby_number のみ・in_progress のみ）or 運営者 | 運営者 |
+| match_participants | 親マッチが in_progress/confirmed: 全員 | 運営者 | 本人（vote のみ・in_progress のみ）or 運営者 | 運営者 |
 
 ---
 

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react"
+import { Check, Play, Shuffle, Trophy } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Check, Clock, Play, Trophy, Shuffle } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 
 import { Toast } from "@/app/components/toast"
 import { useMatchRealtime } from "@/lib/hooks/use-match-realtime"
@@ -14,27 +14,20 @@ import type {
   ParticipantInfo,
 } from "@/lib/types/match"
 import { computeTentativeResult } from "@/lib/utils/match-result"
+import { ConfirmModal } from "./confirm-modal"
 import { MatchCard } from "./match-card"
 import { StandingsTable } from "./standings-table"
-import { ConfirmModal } from "./confirm-modal"
 import { TeamAssignmentBoard } from "./team-assignment-board"
 
-type RoundState =
-  | "team_assignment"
-  | "waiting"
-  | "in_progress"
-  | "confirmed"
-  | "future"
+type RoundState = "team_assignment" | "in_progress" | "confirmed" | "future"
 
 type RoundManagerProps = {
   matches: AdminMatchForDisplay[]
   totalRounds: number
   eventId: string
-  tournamentId: string
   eventStatus: string
   participants: ParticipantInfo[]
   matchCount: number
-  nextRoundNumber: number
   existingRounds: ExistingRound[]
   standingsMap: Record<string, { wins: number; losses: number }>
 }
@@ -43,11 +36,9 @@ export function RoundManager({
   matches,
   totalRounds,
   eventId,
-  tournamentId,
   eventStatus,
   participants,
   matchCount,
-  nextRoundNumber,
   existingRounds,
   standingsMap,
 }: RoundManagerProps) {
@@ -61,18 +52,14 @@ export function RoundManager({
   }, [matches])
 
   // ラウンドごとのマッチ整理
-  const roundNumbers = [...new Set(matchData.map((m) => m.roundNumber))].sort((a, b) => a - b)
-
-  // ラウンド状態判定（5状態）
+  // ラウンド状態判定（4状態）
   const getRoundState = (rn: number): RoundState => {
     const roundMatches = matchData.filter((m) => m.roundNumber === rn)
 
     if (roundMatches.length > 0) {
       if (roundMatches.every((m) => m.status === "confirmed"))
         return "confirmed"
-      if (roundMatches.some((m) => m.status === "in_progress"))
-        return "in_progress"
-      return "waiting"
+      return "in_progress"
     }
 
     // マッチ未作成
@@ -90,13 +77,10 @@ export function RoundManager({
     return "future"
   }
 
-  // デフォルト選択: in_progress → waiting → team_assignment → 最後のconfirmed → 1
+  // デフォルト選択: in_progress → team_assignment → 最後のconfirmed → 1
   const defaultRound = (() => {
     for (let rn = 1; rn <= totalRounds; rn++) {
       if (getRoundState(rn) === "in_progress") return rn
-    }
-    for (let rn = 1; rn <= totalRounds; rn++) {
-      if (getRoundState(rn) === "waiting") return rn
     }
     for (let rn = 1; rn <= totalRounds; rn++) {
       if (getRoundState(rn) === "team_assignment") return rn
@@ -114,7 +98,7 @@ export function RoundManager({
   const [selectedRound, setSelectedRound] = useState(defaultRound)
   const [results, setResults] = useState<Record<string, MatchResult>>({})
   const [showModal, setShowModal] = useState(false)
-  const [modalType, setModalType] = useState<"confirm" | "complete" | "start">("confirm")
+  const [modalType, setModalType] = useState<"confirm" | "complete">("confirm")
   const [toast, setToast] = useState<{
     message: string
     type: "success" | "error"
@@ -153,9 +137,7 @@ export function RoundManager({
         prev.map((m) => {
           if (m.matchId !== matchId) return m
           const updateVote = (members: AdminMatchParticipant[]) =>
-            members.map((p) =>
-              p.profileId === profileId ? { ...p, vote } : p,
-            )
+            members.map((p) => (p.profileId === profileId ? { ...p, vote } : p))
           return {
             ...m,
             teamA: updateVote(m.teamA),
@@ -230,34 +212,6 @@ export function RoundManager({
     setResults((prev) => ({ ...prev, [matchId]: result }))
   }
 
-  // 試合開始
-  const handleStartRound = async () => {
-    startTransition(async () => {
-      try {
-        const res = await fetch(
-          `/api/admin/events/${eventId}/matches/start`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ round_number: selectedRound }),
-          },
-        )
-        const data = await res.json()
-        if (data.success) {
-          showToast("試合を開始しました", "success")
-          setShowModal(false)
-          router.refresh()
-        } else {
-          showToast(data.error || "試合開始に失敗しました", "error")
-          setShowModal(false)
-        }
-      } catch {
-        showToast("通信エラーが発生しました", "error")
-        setShowModal(false)
-      }
-    })
-  }
-
   // 結果確定
   const handleConfirmResults = async () => {
     startTransition(async () => {
@@ -296,12 +250,9 @@ export function RoundManager({
   const handleCompleteEvent = async () => {
     startTransition(async () => {
       try {
-        const res = await fetch(
-          `/api/admin/events/${eventId}/complete`,
-          {
-            method: "PATCH",
-          },
-        )
+        const res = await fetch(`/api/admin/events/${eventId}/complete`, {
+          method: "PATCH",
+        })
         const data = await res.json()
         if (data.success) {
           showToast("イベントを完了しました", "success")
@@ -324,9 +275,6 @@ export function RoundManager({
   }
 
   // ボタン表示条件
-  const allWaiting =
-    currentMatches.length > 0 &&
-    currentMatches.every((m) => m.status === "waiting")
   const allInProgress =
     currentMatches.length > 0 &&
     currentMatches.every((m) => m.status === "in_progress")
@@ -353,8 +301,6 @@ export function RoundManager({
         return <Check className="w-3.5 h-3.5 text-green-500" />
       case "in_progress":
         return <Play className="w-3.5 h-3.5 text-blue-500" />
-      case "waiting":
-        return <Clock className="w-3.5 h-3.5 text-gray-400" />
       case "team_assignment":
         return <Shuffle className="w-3.5 h-3.5 text-amber-500" />
       default:
@@ -434,21 +380,6 @@ export function RoundManager({
           {/* 操作ボタンエリア */}
           <div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 bg-white/90 backdrop-blur-sm border-t border-border">
             <div className="max-w-5xl mx-auto flex items-center justify-end gap-3">
-              {allWaiting && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalType("start")
-                    setShowModal(true)
-                  }}
-                  disabled={isPending}
-                  className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  {isPending ? "処理中..." : "試合開始"}
-                </button>
-              )}
-
               {allInProgress && (
                 <button
                   type="button"
@@ -497,11 +428,7 @@ export function RoundManager({
           type={modalType}
           roundNumber={selectedRound}
           onConfirm={
-            modalType === "confirm"
-              ? handleConfirmResults
-              : modalType === "start"
-                ? handleStartRound
-                : handleCompleteEvent
+            modalType === "confirm" ? handleConfirmResults : handleCompleteEvent
           }
           onCancel={() => setShowModal(false)}
           isLoading={isPending}

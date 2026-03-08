@@ -255,14 +255,13 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | event_id | uuid | NO | - | FK → events.id |
 | round_number | int | NO | - | ラウンド番号（第何ラウンド目か。1〜matches_per_event） |
 | lobby_number | text | YES | NULL | ロビー番号（後勝ち方式） |
-| status | text | NO | 'waiting' | マッチステータス（後述） |
+| status | text | NO | 'in_progress' | マッチステータス（後述） |
 | result | text | YES | NULL | 運営者確定結果（後述） |
 | created_at | timestamptz | NO | now() | 作成日時 |
 | updated_at | timestamptz | NO | now() | 更新日時 |
 
 **マッチステータス (status)**:
-- `waiting`: 待機中（チーム編成済み、試合開始前）
-- `in_progress`: 進行中（試合開始〜運営者確定前）
+- `in_progress`: 進行中（チーム編成確定直後〜運営者確定前）
 - `confirmed`: 確定済（運営者が結果を確定）
 
 **確定結果 (result)**:
@@ -271,7 +270,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - NULL: 未確定
 
 **CHECK制約**:
-- `status IN ('waiting', 'in_progress', 'confirmed')`
+- `status IN ('in_progress', 'confirmed')`
 - `result IN ('team_a', 'team_b')`
 - `round_number >= 1`
 
@@ -281,11 +280,11 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 **設計判断**:
 - 同一ラウンド内の複数マッチは UUID で識別。表示順が必要な場合は `created_at` でソート
 - ラウンドテーブルを設けない理由: ラウンド単位の操作（一斉開始、一括確定）は WHERE 句で十分。テーブルを増やす複雑さに対してメリットが小さい
-- 「試合開始」操作 = 同一ラウンドの全マッチを `waiting` → `in_progress` に一括更新
+- 「チーム編成確定」操作 = 同一ラウンドの全マッチを `in_progress` として作成
 - 「結果確定」操作 = 同一ラウンドの全マッチを `in_progress` → `confirmed` に一括更新
 - ロビー番号: マッチ単位で1つ。後勝ち方式のため、マッチ参加者なら誰でも上書き可能
 - 仮結果（多数決）はDBに保存せず、`match_participants.vote` から都度算出（アプリ層）。保存すると vote との整合性管理が必要になり、参加者50人規模では算出コストも無視できる
-- 試合開始前の対戦情報は RLS で非公開（運営者のみ閲覧可）
+- チーム編成確定と試合開始は同時に行い、中間状態は保持しない
 
 ---
 
@@ -327,7 +326,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - 多数決による仮結果は `vote` から算出（team_a の win 数 vs team_b の win 数）。アプリ層で計算
 - ロール情報はDBに保存しない。AIがチーム分け時にロール希望を考慮するが、選手に特定ロールを強要するものではないため
 - 運営者は任意の参加者の `vote` を入力・変更可能
-- 試合開始前の参加者情報は RLS で非公開（運営者のみ閲覧可）
+- マッチ参加者情報はチーム編成確定と同時に公開される
 
 ---
 
@@ -365,8 +364,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 | マッチ進行フェーズ | matches.status |
 |------------------|----------------|
-| 待機中（チーム編成済み、試合開始前） | `waiting` |
-| 進行中（試合開始〜運営者確定前） | `in_progress` |
+| 進行中（チーム編成確定直後〜運営者確定前） | `in_progress` |
 | 確定済（運営者が結果を確定） | `confirmed` |
 
 ---
@@ -496,6 +494,6 @@ entries テーブルの `checked_in_at` カラムで管理。RLS で以下を強
 ### 8. 試合開始前の情報非公開
 
 Supabase はクライアントから直接クエリ可能なため、アプリ層での非表示制御だけでは不十分。RLS で制御:
-- **matches**: `status IN ('in_progress', 'confirmed')` の場合のみ一般公開。`waiting` は運営者のみ閲覧可
+- **matches**: `status IN ('in_progress', 'confirmed')` の場合のみ一般公開
 - **match_participants**: 親マッチが `in_progress` or `confirmed` の場合のみ一般公開
 - **勝敗入力・ロビー番号の更新**: マッチが `in_progress` の場合のみ許可

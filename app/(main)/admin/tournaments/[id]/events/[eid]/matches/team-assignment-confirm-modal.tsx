@@ -1,7 +1,7 @@
 "use client"
 
+import { Check, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { AlertTriangle, Check, Loader2 } from "lucide-react"
 
 import type { MatchSlot, TeamAssignmentRequest } from "@/lib/types/match"
 
@@ -23,7 +23,6 @@ export function TeamAssignmentConfirmModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isCompleted, setIsCompleted] = useState(false)
-  const [startFailed, setStartFailed] = useState(false)
 
   const totalParticipants = matches.reduce(
     (sum, m) => sum + m.teamA.length + m.teamB.length,
@@ -65,28 +64,7 @@ export function TeamAssignmentConfirmModal({
         return
       }
 
-      // チーム編成成功 → 試合開始
-      try {
-        const startRes = await fetch(
-          `/api/admin/events/${eventId}/matches/start`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ round_number: roundNumber }),
-          },
-        )
-        const startResult = await startRes.json()
-
-        if (startResult.success) {
-          setIsCompleted(true)
-        } else {
-          setStartFailed(true)
-          setIsCompleted(true)
-        }
-      } catch {
-        setStartFailed(true)
-        setIsCompleted(true)
-      }
+      setIsCompleted(true)
     } catch {
       setError("通信エラーが発生しました")
     } finally {
@@ -114,7 +92,7 @@ export function TeamAssignmentConfirmModal({
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center">
               <Check className="w-4 h-4 text-white" />
             </div>
-            試合開始の確認
+            チーム編成確定の確認
           </h2>
         </div>
 
@@ -125,18 +103,11 @@ export function TeamAssignmentConfirmModal({
               <Check className="w-6 h-6 text-green-600" />
             </div>
             <p className="text-lg font-semibold text-gray-900 mb-2">
-              {startFailed
-                ? "チーム編成を確定しました"
-                : "チーム編成を確定し、試合を開始しました"}
+              チーム編成を確定し、試合を開始しました
             </p>
-            {startFailed && (
-              <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-4 text-left">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>チーム編成は確定しましたが、試合開始に失敗しました。画面から試合開始を実行してください。</span>
-              </div>
-            )}
             <p className="text-sm text-gray-500 mb-6">
-              {totalParticipants}人を{matches.length}マッチに編成しました（ラウンド{roundNumber}）
+              {totalParticipants}人を{matches.length}
+              マッチに編成しました（ラウンド{roundNumber}）
             </p>
             <button
               type="button"
@@ -151,7 +122,8 @@ export function TeamAssignmentConfirmModal({
             {/* サマリー */}
             <div className="px-6 pt-5 pb-3">
               <div className="text-sm font-medium rounded-lg px-3 py-2 bg-blue-50 text-blue-700">
-                {totalParticipants}人を{matches.length}マッチに編成します（ラウンド{roundNumber}）
+                {totalParticipants}人を{matches.length}
+                マッチに編成します（ラウンド{roundNumber}）
               </div>
             </div>
 
@@ -160,7 +132,7 @@ export function TeamAssignmentConfirmModal({
               <div className="space-y-3">
                 {matches.map((match, idx) => (
                   <div
-                    key={`match-${idx}`}
+                    key={`${match.teamA.map((p) => p.profileId).join("-")}:${match.teamB.map((p) => p.profileId).join("-")}`}
                     className="bg-gray-50 rounded-lg p-3"
                   >
                     <p className="text-xs font-semibold text-gray-500 mb-2">
@@ -233,7 +205,7 @@ export function TeamAssignmentConfirmModal({
                 ) : (
                   <Check className="w-4 h-4" />
                 )}
-                試合開始
+                確定して試合開始
               </button>
             </div>
           </>

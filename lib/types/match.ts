@@ -5,7 +5,7 @@
 import type { Role } from "./profile"
 
 // マッチステータス
-export type MatchStatus = "waiting" | "in_progress" | "confirmed"
+export type MatchStatus = "in_progress" | "confirmed"
 
 // マッチ結果
 export type MatchResult = "team_a" | "team_b" | null
