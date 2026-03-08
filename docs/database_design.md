@@ -109,7 +109,7 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | discord_id | text | NO | - | Discord ユーザーID（認証から自動取得）, UK |
 | discord_username | text | YES | NULL | Discord ユーザー名（表示用） |
 | player_name | text | YES | NULL | ゲーム内プレイヤー名 |
-| x_id | text | NO | - | X (Twitter) ID（必須） |
+| x_id | text | YES | NULL | X (Twitter) ID（初回登録時は未確定を許容。プロフィール完了判定はアプリ層で実施） |
 | gender | text | YES | NULL | 性別（後述） |
 | first_role | text | YES | NULL | 第1希望ロール（後述） |
 | second_role | text | YES | NULL | 第2希望ロール（後述） |
@@ -373,15 +373,22 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 
 ### 多数決による仮結果の算出ロジック
 
-DBには保存せず、アプリ層で算出:
+DBには保存せず、アプリ層で算出。投票は自チーム視点で解釈する（`win` = 自チームが勝った、`lose` = 自チームが負けた）。仮結果は参考情報であり、最終結果は管理者が確定する。
 
 ```
-team_a_win_votes = team_a の参加者のうち vote = 'win' の人数
-team_b_win_votes = team_b の参加者のうち vote = 'win' の人数
+# Team A が勝ったと主張する票数:
+#   - team_a メンバーの win 投票（自チームが勝った）
+#   - team_b メンバーの lose 投票（自チームが負けた = Team A が勝った）
+team_a_win_count = (team_a の vote='win' の人数) + (team_b の vote='lose' の人数)
 
-if team_a_win_votes > team_b_win_votes → 仮結果: team_a
-if team_b_win_votes > team_a_win_votes → 仮結果: team_b
-if team_a_win_votes == team_b_win_votes → 不一致（運営者通知）
+# Team B が勝ったと主張する票数:
+#   - team_b メンバーの win 投票（自チームが勝った）
+#   - team_a メンバーの lose 投票（自チームが負けた = Team B が勝った）
+team_b_win_count = (team_b の vote='win' の人数) + (team_a の vote='lose' の人数)
+
+if team_a_win_count > team_b_win_count → 仮結果: team_a
+if team_b_win_count > team_a_win_count → 仮結果: team_b
+if team_a_win_count == team_b_win_count → 不一致（運営者通知）
 ```
 
 ---
