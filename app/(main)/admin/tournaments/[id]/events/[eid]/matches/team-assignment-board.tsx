@@ -12,8 +12,9 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { GripVertical, Play, User } from "lucide-react"
+import { GripVertical, Loader2, Play, Sparkles, User } from "lucide-react"
 import { useCallback, useId, useState } from "react"
+import { Toast } from "@/app/components/toast"
 import type {
   ExistingRound,
   MatchSlot,
@@ -404,6 +405,13 @@ export function TeamAssignmentBoard({
     useState<ParticipantInfo[]>(initialUnassigned)
   const [matches, setMatches] = useState<MatchSlot[]>(initialMatches)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [isAiAssigning, setIsAiAssigning] = useState(false)
+  const [toastState, setToastState] = useState<{
+    show: boolean
+    message: string
+    type: "success" | "error"
+    isExiting: boolean
+  }>({ show: false, message: "", type: "success", isExiting: false })
   type ActiveDrag =
     | { type: "player"; participant: ParticipantInfo }
     | { type: "team"; matchIdx: number; team: "teamA" | "teamB" }
@@ -570,6 +578,84 @@ export function TeamAssignmentBoard({
     [activeDrag, unassigned, matches],
   )
 
+  const showToast = useCallback(
+    (message: string, type: "success" | "error") => {
+      setToastState({ show: true, message, type, isExiting: false })
+      setTimeout(() => setToastState((s) => ({ ...s, isExiting: true })), 2500)
+      setTimeout(
+        () =>
+          setToastState({
+            show: false,
+            message: "",
+            type: "success",
+            isExiting: false,
+          }),
+        3000,
+      )
+    },
+    [],
+  )
+
+  const handleAiAssignment = useCallback(async () => {
+    setIsAiAssigning(true)
+    try {
+      const allParticipants = [
+        ...unassigned,
+        ...matches.flatMap((m) => [...m.teamA, ...m.teamB]),
+      ]
+      const participantMap = new Map(
+        allParticipants.map((p) => [p.profileId, p]),
+      )
+
+      const res = await fetch(
+        `/api/admin/events/${eventId}/ai-team-assignment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            participants: allParticipants.map((p) => ({
+              profileId: p.profileId,
+              firstRole: p.firstRole,
+              secondRole: p.secondRole,
+              thirdRole: p.thirdRole,
+            })),
+            matchCount,
+            standingsMap,
+          }),
+        },
+      )
+
+      const json = await res.json()
+
+      if (!res.ok || !json.success) {
+        showToast(json.error ?? "AI編成に失敗しました", "error")
+        return
+      }
+
+      const newMatches: typeof matches = json.data.matches.map(
+        (m: { teamA: string[]; teamB: string[] }) => ({
+          teamA: m.teamA
+            .map((id: string) => participantMap.get(id))
+            .filter(Boolean),
+          teamB: m.teamB
+            .map((id: string) => participantMap.get(id))
+            .filter(Boolean),
+        }),
+      )
+
+      setMatches(newMatches)
+      setUnassigned([])
+      showToast("AI編成を適用しました", "success")
+    } catch {
+      showToast("AI編成に失敗しました", "error")
+    } finally {
+      setIsAiAssigning(false)
+    }
+  }, [unassigned, matches, eventId, matchCount, standingsMap, showToast])
+
+  const canAiAssign =
+    participants.length >= 10 && participants.length % 10 === 0
+
   const allAssigned = unassigned.length === 0
 
   return (
@@ -707,15 +793,30 @@ export function TeamAssignmentBoard({
               {unassigned.length}人
             </span>
           </p>
-          <button
-            type="button"
-            onClick={() => setShowConfirmModal(true)}
-            disabled={!allAssigned}
-            className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-          >
-            <Play className="w-4 h-4" />
-            確定して試合開始
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleAiAssignment}
+              disabled={!canAiAssign || isAiAssigning}
+              className="px-5 py-2.5 text-sm font-semibold rounded-xl border border-primary text-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 transition-colors"
+            >
+              {isAiAssigning ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              AI編成
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConfirmModal(true)}
+              disabled={!allAssigned}
+              className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              確定して試合開始
+            </button>
+          </div>
         </div>
       </div>
 
@@ -728,6 +829,13 @@ export function TeamAssignmentBoard({
           onSuccess={onSuccess}
         />
       )}
+
+      <Toast
+        message={toastState.message}
+        type={toastState.type}
+        show={toastState.show}
+        isExiting={toastState.isExiting}
+      />
     </>
   )
 }
