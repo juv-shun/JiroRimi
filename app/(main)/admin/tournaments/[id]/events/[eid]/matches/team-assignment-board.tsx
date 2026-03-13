@@ -417,15 +417,15 @@ export function TeamAssignmentBoard({
     | { type: "team"; matchIdx: number; team: "teamA" | "teamB" }
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
 
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { distance: 5 },
-  })
-  const activeSensors = useSensors(pointerSensor)
-  const emptySensors = useSensors()
-  const sensors = isAiAssigning ? emptySensors : activeSensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+  )
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
+      if (isAiAssigning) return
       const data = event.active.data.current
       if (
         data?.type === "team" &&
@@ -447,7 +447,7 @@ export function TeamAssignmentBoard({
         }
       }
     },
-    [unassigned, matches],
+    [isAiAssigning, unassigned, matches],
   )
 
   const handleDragEnd = useCallback(
