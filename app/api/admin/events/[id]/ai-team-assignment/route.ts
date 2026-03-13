@@ -214,7 +214,7 @@ export async function POST(request: Request, context: RouteContext) {
     let result: unknown
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
