@@ -417,11 +417,12 @@ export function TeamAssignmentBoard({
     | { type: "team"; matchIdx: number; team: "teamA" | "teamB" }
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    }),
-  )
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 5 },
+  })
+  const activeSensors = useSensors(pointerSensor)
+  const emptySensors = useSensors()
+  const sensors = isAiAssigning ? emptySensors : activeSensors
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -810,7 +811,7 @@ export function TeamAssignmentBoard({
             <button
               type="button"
               onClick={() => setShowConfirmModal(true)}
-              disabled={!allAssigned}
+              disabled={!allAssigned || isAiAssigning}
               className="glow-button px-6 py-2.5 text-sm font-semibold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
               <Play className="w-4 h-4" />

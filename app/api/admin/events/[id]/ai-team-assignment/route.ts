@@ -171,6 +171,27 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
+    // イベントの存在・ステータス確認
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("id, status")
+      .eq("id", id)
+      .single()
+
+    if (eventError || !event) {
+      return NextResponse.json(
+        { success: false, error: "イベントが見つかりません" },
+        { status: 404 },
+      )
+    }
+
+    if (event.status !== "in_progress") {
+      return NextResponse.json(
+        { success: false, error: "イベントが進行中ではありません" },
+        { status: 409 },
+      )
+    }
+
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
       console.error("GEMINI_API_KEY is not set")

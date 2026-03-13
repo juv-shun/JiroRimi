@@ -40,6 +40,10 @@ function buildSupabase(
       data: { role: string } | null
       error: { message: string } | null
     }
+    events_select?: {
+      data: { id: string; status: string } | null
+      error: { message: string } | null
+    }
   } = {},
 ) {
   return {
@@ -52,6 +56,20 @@ function buildSupabase(
               single: vi.fn().mockResolvedValue(
                 tables.profiles_select ?? {
                   data: { role: "admin" },
+                  error: null,
+                },
+              ),
+            }),
+          }),
+        }
+      }
+      if (table === "events") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue(
+                tables.events_select ?? {
+                  data: { id: VALID_EVENT_ID, status: "in_progress" },
                   error: null,
                 },
               ),
@@ -152,7 +170,41 @@ describe("admin AI team assignment API contract test", () => {
     expect(json.error).toBe("リクエスト形式が不正です")
   })
 
-  it("C04: GEMINI_API_KEY 未設定は500", async () => {
+  it("C04a: イベント未存在は404", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      buildSupabase(ADMIN_USER, {
+        events_select: {
+          data: null,
+          error: { message: "not found" },
+        },
+      }) as never,
+    )
+
+    const res = await POST(makeRequest(makeBody()), makeContext())
+    const json = await res.json()
+
+    expect(res.status).toBe(404)
+    expect(json.error).toBe("イベントが見つかりません")
+  })
+
+  it("C04b: イベントが進行中でない場合は409", async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      buildSupabase(ADMIN_USER, {
+        events_select: {
+          data: { id: VALID_EVENT_ID, status: "scheduled" },
+          error: null,
+        },
+      }) as never,
+    )
+
+    const res = await POST(makeRequest(makeBody()), makeContext())
+    const json = await res.json()
+
+    expect(res.status).toBe(409)
+    expect(json.error).toBe("イベントが進行中ではありません")
+  })
+
+  it("C04c: GEMINI_API_KEY 未設定は500", async () => {
     delete process.env.GEMINI_API_KEY
 
     const res = await POST(makeRequest(makeBody()), makeContext())
