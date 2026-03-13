@@ -654,6 +654,8 @@ export function TeamAssignmentBoard({
     }
   }, [unassigned, matches, eventId, matchCount, standingsMap, showToast])
 
+  const [showAiConfirm, setShowAiConfirm] = useState(false)
+
   const canAiAssign =
     participants.length >= 10 && participants.length % 10 === 0
 
@@ -797,7 +799,7 @@ export function TeamAssignmentBoard({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleAiAssignment}
+              onClick={() => setShowAiConfirm(true)}
               disabled={!canAiAssign || isAiAssigning}
               className="px-5 py-2.5 text-sm font-semibold rounded-xl border border-primary text-primary hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 transition-colors"
             >
@@ -829,6 +831,39 @@ export function TeamAssignmentBoard({
           onClose={() => setShowConfirmModal(false)}
           onSuccess={onSuccess}
         />
+      )}
+
+      {showAiConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              AI編成を実行
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              AIが参加者のロール希望や成績を考慮してチーム編成を行います。現在の配置は上書きされます。
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAiConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAiConfirm(false)
+                  handleAiAssignment()
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                実行する
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Toast
