@@ -98,6 +98,9 @@ export type AdminMatchForDisplay = {
 /** 仮結果 */
 export type TentativeResult = "team_a" | "team_b" | "conflict" | "no_votes"
 
+/** 順位付き累計成績 */
+export type RankedPlayerStanding = PlayerStanding & { rank: number }
+
 /** 累計成績 */
 export type PlayerStanding = {
   profileId: string

@@ -2,6 +2,7 @@ import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
   PlayerStanding,
+  RankedPlayerStanding,
   TentativeResult,
 } from "@/lib/types/match"
 
@@ -99,4 +100,29 @@ export function computeStandings(
   })
 
   return standings
+}
+
+/**
+ * 成績に順位を付与する。
+ *
+ * 同勝利数は同順位扱いとし、次の順位はスキップする（1,2,2,4）。
+ *
+ * Args:
+ *   standings: computeStandings() の結果（勝数降順ソート済み）
+ *
+ * Returns:
+ *   RankedPlayerStanding[]: 順位付き成績
+ */
+export function computeRankings(
+  standings: PlayerStanding[],
+): RankedPlayerStanding[] {
+  const result: RankedPlayerStanding[] = []
+  for (let i = 0; i < standings.length; i++) {
+    const rank =
+      i > 0 && standings[i].wins === standings[i - 1].wins
+        ? result[i - 1].rank
+        : i + 1
+    result.push({ ...standings[i], rank })
+  }
+  return result
 }
