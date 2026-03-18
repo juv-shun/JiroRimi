@@ -349,7 +349,12 @@ export function EventList({
                   <span className="text-xs font-medium">エントリー人数</span>
                 </div>
                 <Link
-                  href={`/tournaments/${tournamentId}/events/${event.id}/entries`}
+                  href={
+                    event.status === "in_progress" ||
+                    event.status === "completed"
+                      ? `/tournaments/${tournamentId}/events/${event.id}/ranking`
+                      : `/tournaments/${tournamentId}/events/${event.id}/entries`
+                  }
                   className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
                 >
                   {entryCount}人
