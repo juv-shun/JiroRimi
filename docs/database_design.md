@@ -11,10 +11,16 @@ erDiagram
     auth_users ||--o| profiles : "1:1"
     profiles ||--o{ entries : "1:N"
     profiles ||--o{ match_participants : "1:N"
+    profiles ||--o{ tournament_team_members : "1:N"
     tournaments ||--o{ events : "1:N"
     events ||--o{ entries : "1:N"
     events ||--o{ matches : "1:N"
+    events ||--o{ tournament_teams : "1:N"
+    events ||--o{ bracket_matches : "1:N"
     matches ||--o{ match_participants : "1:N"
+    matches ||--o| bracket_matches : "1:0..1"
+    tournament_teams ||--o{ tournament_team_members : "1:N"
+    tournament_teams ||--o{ bracket_matches : "team_a/team_b/winner"
 
     auth_users {
         uuid id PK
@@ -92,6 +98,38 @@ erDiagram
         uuid profile_id FK
         text team
         text vote
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    tournament_teams {
+        uuid id PK
+        uuid event_id FK
+        text name
+        int seed
+        timestamp created_at
+    }
+
+    tournament_team_members {
+        uuid id PK
+        uuid team_id FK
+        uuid profile_id FK
+        timestamp created_at
+    }
+
+    bracket_matches {
+        uuid id PK
+        uuid event_id FK
+        text bracket_type
+        int round_number
+        int match_order
+        uuid team_a_id FK
+        uuid team_b_id FK
+        uuid winner_team_id FK
+        uuid winner_next_id FK
+        uuid loser_next_id FK
+        uuid match_id FK
+        text status
         timestamp created_at
         timestamp updated_at
     }
@@ -391,17 +429,75 @@ if team_a_win_count == team_b_win_count → 不一致（運営者通知）
 
 ---
 
-## Phase 3 以降で追加予定のテーブル（概要）
+## Phase 3: グランドファイナル関連テーブル
 
-### Phase 3: 招待制イベント対応
+### tournament_teams（トーナメントチーム）
 
-招待制（`entry_type = 'invite'`）のイベントに必要なテーブル。GF（グランドファイナル）はこの仕組みの上に構築する。
+GFイベントの4チームを管理する。
 
-| テーブル名 | 用途 |
-|-----------|------|
-| event_invitations | イベントへの招待（運営者が対象ユーザーを指定） |
+| カラム | 型 | NULL | デフォルト | 説明 |
+|--------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| event_id | uuid | NO | - | FK → events.id ON DELETE CASCADE |
+| name | text | NO | - | チーム名 |
+| seed | int | NO | - | シード順（1-4） |
+| created_at | timestamptz | NO | now() | 作成日時 |
 
-GF固有のチーム編成・ブラケット管理は Phase 3 の詳細設計時に決定する。
+- UNIQUE: (event_id, seed)
+- CHECK: seed >= 1 AND seed <= 4
+
+### tournament_team_members（チームメンバー）
+
+各チームの所属メンバーを管理する。
+
+| カラム | 型 | NULL | デフォルト | 説明 |
+|--------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| team_id | uuid | NO | - | FK → tournament_teams.id ON DELETE CASCADE |
+| profile_id | uuid | NO | - | FK → profiles.id ON DELETE CASCADE |
+| created_at | timestamptz | NO | now() | 作成日時 |
+
+- UNIQUE: (team_id, profile_id)
+
+### bracket_matches（ブラケット対戦）
+
+ダブルエリミネーションブラケットの構造と進行状態を管理する。実際の5v5試合は既存の matches テーブルを参照する。
+
+| カラム | 型 | NULL | デフォルト | 説明 |
+|--------|------|------|-----------|------|
+| id | uuid | NO | gen_random_uuid() | PK |
+| event_id | uuid | NO | - | FK → events.id ON DELETE CASCADE |
+| bracket_type | text | NO | - | 'winners', 'losers', 'grand_final' |
+| round_number | int | NO | - | ブラケット内ラウンド番号 |
+| match_order | int | NO | 1 | 同ラウンド内の対戦順 |
+| team_a_id | uuid | YES | NULL | FK → tournament_teams.id（未定の場合NULL） |
+| team_b_id | uuid | YES | NULL | FK → tournament_teams.id（未定の場合NULL） |
+| winner_team_id | uuid | YES | NULL | FK → tournament_teams.id（未確定の場合NULL） |
+| winner_next_id | uuid | YES | NULL | FK → bracket_matches.id（勝者の次戦） |
+| loser_next_id | uuid | YES | NULL | FK → bracket_matches.id（敗者の次戦、ウィナーズのみ） |
+| match_id | uuid | YES | NULL | FK → matches.id（実際の5v5マッチ、未開始の場合NULL） |
+| status | text | NO | 'pending' | 対戦ステータス |
+| created_at | timestamptz | NO | now() | 作成日時 |
+| updated_at | timestamptz | NO | now() | 更新日時 |
+
+- CHECK: bracket_type IN ('winners', 'losers', 'grand_final')
+- CHECK: status IN ('pending', 'ready', 'in_progress', 'confirmed')
+- CHECK: round_number >= 1
+
+**ステータス遷移:**
+- `pending`: 対戦チームが未定（前の対戦の結果待ち）
+- `ready`: 両チーム確定、試合開始待ち
+- `in_progress`: 試合進行中（match_id が設定済み）
+- `confirmed`: 結果確定（winner_team_id が設定済み）
+
+**4チームダブルエリミのブラケット構造（5〜6試合）:**
+
+```
+Winners R1-M1: Seed1 vs Seed4 ─┬─ Winners Final ─── Grand Final
+Winners R1-M2: Seed2 vs Seed3 ─┘       │                │
+                                     (敗者↓)          (リセット?)
+Losers R1: L(WR1-M1) vs L(WR1-M2) ── Losers Final ──┘
+```
 
 ---
 
