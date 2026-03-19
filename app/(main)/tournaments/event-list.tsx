@@ -244,6 +244,11 @@ export function EventList({
           isAdmin,
         )
         const entryCount = event.entries[0]?.count ?? 0
+        const isStarted =
+          event.status === "in_progress" || event.status === "completed"
+        const displayCount = isStarted
+          ? (event.participantCount ?? entryCount)
+          : entryCount
 
         return (
           <div
@@ -346,18 +351,19 @@ export function EventList({
               <div className="info-row sm:col-span-2">
                 <div className="flex items-center gap-2 text-gray-500">
                   <UserGroupIcon />
-                  <span className="text-xs font-medium">エントリー人数</span>
+                  <span className="text-xs font-medium">
+                    {isStarted ? "参加者" : "エントリー人数"}
+                  </span>
                 </div>
                 <Link
                   href={
-                    event.status === "in_progress" ||
-                    event.status === "completed"
+                    isStarted
                       ? `/tournaments/${tournamentId}/events/${event.id}/ranking`
                       : `/tournaments/${tournamentId}/events/${event.id}/entries`
                   }
                   className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
                 >
-                  {entryCount}人
+                  {displayCount}人
                   <svg
                     className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
                     fill="none"

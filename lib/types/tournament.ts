@@ -103,6 +103,7 @@ export type TournamentEventForDisplay = {
   gender: Gender | null
   status?: EventStatus
   entries: { count: number }[]
+  participantCount?: number
 }
 
 // 大会詳細画面用の大会型（表示に必要な最小限のフィールド）

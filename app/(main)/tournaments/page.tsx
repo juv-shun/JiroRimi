@@ -26,6 +26,34 @@ export default async function TournamentsPage() {
     throw error
   }
 
+  const tournamentList = (tournaments ?? []) as TournamentWithEvents[]
+
+  // 開始済み/完了イベントの参加者数（チェックイン済み）を取得
+  const startedEventIds = tournamentList
+    .flatMap((t) => t.events)
+    .filter((e) => e.status === "in_progress" || e.status === "completed")
+    .map((e) => e.id)
+
+  if (startedEventIds.length > 0) {
+    const { data: checkedInCounts } = await supabase
+      .from("entries")
+      .select("event_id")
+      .in("event_id", startedEventIds)
+      .not("checked_in_at", "is", null)
+
+    const countMap = new Map<string, number>()
+    for (const row of checkedInCounts ?? []) {
+      countMap.set(row.event_id, (countMap.get(row.event_id) ?? 0) + 1)
+    }
+    for (const t of tournamentList) {
+      for (const e of t.events) {
+        if (countMap.has(e.id)) {
+          e.participantCount = countMap.get(e.id)
+        }
+      }
+    }
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -41,7 +69,7 @@ export default async function TournamentsPage() {
       .single()
     userGender = userProfile?.gender ?? null
     isAdmin = userProfile?.role === "admin"
-    const allEventIds = tournaments?.flatMap((t) => t.events.map((e) => e.id)) ?? []
+    const allEventIds = tournamentList.flatMap((t) => t.events.map((e) => e.id))
     if (allEventIds.length > 0) {
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
@@ -77,7 +105,7 @@ export default async function TournamentsPage() {
         <PageHeader title="Tournaments" />
 
         <TournamentList
-          tournaments={tournaments as TournamentWithEvents[]}
+          tournaments={tournamentList}
           isLoggedIn={!!user}
           userEntries={userEntries}
           userGender={userGender}
