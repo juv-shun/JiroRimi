@@ -7,6 +7,69 @@ import type {
 } from "@/lib/types/match"
 
 /**
+ * 複数イベントの computeStandings() 結果を profileId で集約し wins/losses を合算する。
+ *
+ * Args:
+ *   standingsArray: 各イベントの computeStandings() 結果の配列
+ *
+ * Returns:
+ *   PlayerStanding[]: 勝数降順 → 勝率降順でソート済み
+ */
+export function mergeStandings(
+  standingsArray: PlayerStanding[][],
+): PlayerStanding[] {
+  const map = new Map<
+    string,
+    {
+      playerName: string | null
+      avatarUrl: string | null
+      wins: number
+      losses: number
+    }
+  >()
+
+  for (const standings of standingsArray) {
+    for (const s of standings) {
+      const existing = map.get(s.profileId)
+      if (existing) {
+        existing.wins += s.wins
+        existing.losses += s.losses
+        // 最新の情報で更新
+        if (s.playerName) existing.playerName = s.playerName
+        if (s.avatarUrl) existing.avatarUrl = s.avatarUrl
+      } else {
+        map.set(s.profileId, {
+          playerName: s.playerName,
+          avatarUrl: s.avatarUrl,
+          wins: s.wins,
+          losses: s.losses,
+        })
+      }
+    }
+  }
+
+  const result: PlayerStanding[] = []
+  for (const [profileId, entry] of map) {
+    const total = entry.wins + entry.losses
+    result.push({
+      profileId,
+      playerName: entry.playerName,
+      avatarUrl: entry.avatarUrl,
+      wins: entry.wins,
+      losses: entry.losses,
+      winRate: total > 0 ? entry.wins / total : 0,
+    })
+  }
+
+  result.sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins
+    return b.winRate - a.winRate
+  })
+
+  return result
+}
+
+/**
  * チーム投票から仮結果を算出する。
  *
  * 投票は自チーム視点: win = 自チーム勝利, lose = 自チーム敗北。
