@@ -128,6 +128,7 @@
 | 9 | SCR-010 | 参加者試合画面 | `/tournaments/[id]/events/[eid]/matches` | 認証済みユーザー（マッチ参加者） | 2.4 |
 | 10 | SCR-011 | チーム編成・試合進行管理画面（運営者向け） | `/admin/tournaments/[id]/events/[eid]/matches` | 運営者のみ | 2.3, 2.4 |
 | 11 | SCR-012 | ランキング・成績画面 | `/tournaments/[id]/events/[eid]/ranking` | 全員 | 2.5 |
+| 12 | SCR-013 | トーナメント表画面 | `/tournaments/[id]/events/[eid]/bracket` | 全員 | 3.4.1 |
 
 ---
 
@@ -149,6 +150,7 @@ flowchart TD
         ENTRY_LIST[SCR-005<br/>エントリー一覧]
         MATCH[SCR-010<br/>参加者試合画面]
         RANKING[SCR-012<br/>ランキング・成績]
+        BRACKET[SCR-013<br/>トーナメント表]
     end
 
     subgraph 運営者向け
@@ -174,6 +176,8 @@ flowchart TD
     MATCH -->|戻る| TOURNAMENTS
     TOURNAMENTS -->|ランキング（イベント開始後）| RANKING
     RANKING -->|戻る| TOURNAMENTS
+    TOURNAMENTS -->|トーナメント表（GFイベント）| BRACKET
+    BRACKET -->|戻る| TOURNAMENTS
 
     ADMIN_TOURNAMENTS -->|新規作成| ADMIN_TOURNAMENT_EDIT
     ADMIN_TOURNAMENTS -->|編集| ADMIN_TOURNAMENT_EDIT
