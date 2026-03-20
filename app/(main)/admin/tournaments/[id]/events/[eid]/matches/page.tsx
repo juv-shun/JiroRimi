@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ChevronLeft, Calendar, Swords, Users, Trophy } from "lucide-react"
+import { ChevronLeft, Calendar, Swords, Users } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
@@ -23,6 +23,8 @@ import {
   computeStandings,
   mergeStandings,
 } from "@/lib/utils/match-result"
+import type { RawBracketMatch, TeamInfo } from "@/lib/types/bracket"
+import { BracketAdminView } from "./bracket-admin-view"
 import { GfTeamAssignmentWrapper } from "./gf-team-assignment-wrapper"
 import { RoundManager } from "./round-manager"
 
@@ -190,21 +192,39 @@ export default async function AdminMatchesPage({
 
     const teamsAssigned = (teamCount ?? 0) > 0
 
-    // チーム確定済みの場合：読み取り専用で表示
+    // チーム確定済みの場合：ブラケット管理画面
     if (teamsAssigned) {
       const { data: existingTeams } = await supabase
         .from("tournament_teams")
-        .select(
-          `
-          id, name, seed,
-          tournament_team_members (
-            profile_id,
-            profiles (player_name, avatar_url, first_role, second_role, third_role)
-          )
-        `,
-        )
+        .select("id, name, seed")
         .eq("event_id", eid)
         .order("seed")
+
+      const teamsForBracket: TeamInfo[] = (existingTeams ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        seed: t.seed,
+      }))
+
+      const { data: bracketMatchesRaw } = await supabase
+        .from("bracket_matches")
+        .select(
+          "id, bracket_type, round_number, match_order, team_a_id, team_b_id, winner_team_id, status",
+        )
+        .eq("event_id", eid)
+
+      const bracketMatches: RawBracketMatch[] = (
+        bracketMatchesRaw ?? []
+      ).map((m) => ({
+        id: m.id,
+        bracket_type: m.bracket_type,
+        round_number: m.round_number,
+        match_order: m.match_order,
+        team_a_id: m.team_a_id,
+        team_b_id: m.team_b_id,
+        winner_team_id: m.winner_team_id,
+        status: m.status,
+      }))
 
       return (
         <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
@@ -246,58 +266,12 @@ export default async function AdminMatchesPage({
               </div>
             </div>
 
-            {/* チーム確定済み表示 */}
-            <div className="mb-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                <Trophy className="w-3.5 h-3.5 text-green-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">
-                チーム編成（確定済み）
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(existingTeams ?? []).map((team) => (
-                <div
-                  key={team.id}
-                  className="bg-white rounded-2xl shadow-sm border border-border p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-gray-700">
-                      Seed {team.seed} - {team.name}
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {(team.tournament_team_members ?? []).map((member) => {
-                      const prof = Array.isArray(member.profiles)
-                        ? member.profiles[0]
-                        : member.profiles
-                      const ranking = rankings.find(
-                        (r) => r.profileId === member.profile_id,
-                      )
-                      return (
-                        <div
-                          key={member.profile_id}
-                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg"
-                        >
-                          <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                            <Users className="w-3.5 h-3.5 text-gray-400" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-900 truncate">
-                            {prof?.player_name ?? "（未設定）"}
-                          </span>
-                          {ranking && (
-                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded flex-shrink-0 ml-auto">
-                              #{ranking.rank}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <BracketAdminView
+              initialBracketMatches={bracketMatches}
+              teams={teamsForBracket}
+              eventId={eid}
+              tournamentId={id}
+            />
           </div>
         </main>
       )
