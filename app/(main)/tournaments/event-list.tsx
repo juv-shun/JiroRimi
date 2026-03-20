@@ -336,12 +336,14 @@ export function EventList({
                 value={formatDateJST(event.scheduled_date)}
                 fullWidth
               />
-              <InfoRow
-                icon={<ClockIcon />}
-                label="エントリー"
-                value={`${formatDateTimeJST(event.entry_start)} 〜 ${formatDateTimeJST(event.entry_end)}`}
-                fullWidth
-              />
+              {event.entry_type !== "invite" && (
+                <InfoRow
+                  icon={<ClockIcon />}
+                  label="エントリー"
+                  value={`${formatDateTimeJST(event.entry_start)} 〜 ${formatDateTimeJST(event.entry_end)}`}
+                  fullWidth
+                />
+              )}
               <InfoRow
                 icon={<CheckCircleIcon />}
                 label="チェックイン"
