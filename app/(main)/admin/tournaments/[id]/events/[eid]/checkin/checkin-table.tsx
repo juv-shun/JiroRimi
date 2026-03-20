@@ -65,6 +65,7 @@ export function CheckinTable({
   const [isSearching, setIsSearching] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
+  const [confirmEntryId, setConfirmEntryId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [toast, setToast] = useState<{
@@ -425,7 +426,7 @@ export function CheckinTable({
                           ) : (
                             <button
                               type="button"
-                              onClick={() => handleCheckin(entry.id)}
+                              onClick={() => setConfirmEntryId(entry.id)}
                               disabled={isLoading}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
@@ -463,6 +464,40 @@ export function CheckinTable({
         </div>
         )}
       </div>
+
+      {confirmEntryId && (() => {
+        const targetEntry = entries.find((e) => e.id === confirmEntryId)
+        const playerName = targetEntry?.profiles?.player_name ?? "（不明）"
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+              <p className="text-sm text-gray-700 mb-6">
+                <span className="font-bold">{playerName}</span> さんを代わりにチェックイン済みにしますか？
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmEntryId(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const entryId = confirmEntryId
+                    setConfirmEntryId(null)
+                    handleCheckin(entryId)
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-success hover:bg-success/90 transition-colors"
+                >
+                  チェックインする
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <Toast
         message={toast.message}
