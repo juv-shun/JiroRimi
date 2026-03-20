@@ -36,7 +36,7 @@ type TeamAssignmentBoardProps = {
 
 // --- ユーティリティ ---
 
-function isAllowedAvatarUrl(url: string): boolean {
+export function isAllowedAvatarUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
@@ -105,7 +105,7 @@ function getParticipant(
 
 // --- サブコンポーネント ---
 
-function RoleBadge({ role, priority }: { role: Role; priority: 1 | 2 | 3 }) {
+export function RoleBadge({ role, priority }: { role: Role; priority: 1 | 2 | 3 }) {
   const colorClass = ROLE_BADGE_COLORS[role]
   return (
     <span
@@ -118,16 +118,18 @@ function RoleBadge({ role, priority }: { role: Role; priority: 1 | 2 | 3 }) {
   )
 }
 
-function PlayerCard({
+export function PlayerCard({
   participant,
   isDragging,
   wins,
   losses,
+  rankLabel,
 }: {
   participant: ParticipantInfo
   isDragging?: boolean
   wins?: number
   losses?: number
+  rankLabel?: string
 }) {
   const roles = [
     { role: participant.firstRole, priority: 1 as const },
@@ -154,9 +156,16 @@ function PlayerCard({
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-900 truncate">
-          {participant.playerName ?? "（未設定）"}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {participant.playerName ?? "（未設定）"}
+          </p>
+          {rankLabel && (
+            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded flex-shrink-0">
+              {rankLabel}
+            </span>
+          )}
+        </div>
         {roles.length > 0 && (
           <div className="flex flex-wrap gap-0.5 mt-0.5">
             {roles.map((r) => (
@@ -174,14 +183,16 @@ function PlayerCard({
   )
 }
 
-function DraggablePlayer({
+export function DraggablePlayer({
   participant,
   wins,
   losses,
+  rankLabel,
 }: {
   participant: ParticipantInfo
   wins?: number
   losses?: number
+  rankLabel?: string
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `player-${participant.profileId}`,
@@ -195,12 +206,13 @@ function DraggablePlayer({
         isDragging={isDragging}
         wins={wins}
         losses={losses}
+        rankLabel={rankLabel}
       />
     </div>
   )
 }
 
-function DroppableContainer({
+export function DroppableContainer({
   id,
   children,
   label,
