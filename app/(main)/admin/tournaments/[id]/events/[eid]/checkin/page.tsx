@@ -5,7 +5,7 @@ import { ChevronLeft, Calendar, Users, Clock } from "lucide-react"
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
 import type { EntryWithProfile } from "@/lib/types/entry"
-import type { EventStatus } from "@/lib/types/tournament"
+import type { EntryType, EventStatus } from "@/lib/types/tournament"
 import { formatDateJST, formatDateTimeJST } from "@/lib/utils/datetime"
 import { CheckinTable } from "./checkin-table"
 
@@ -41,7 +41,7 @@ export default async function AdminCheckinPage({
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, name, scheduled_date, checkin_start, checkin_end, status, tournaments!inner (id, name)",
+      "id, name, scheduled_date, checkin_start, checkin_end, status, entry_type, tournaments!inner (id, name)",
     )
     .eq("id", eid)
     .eq("tournament_id", id)
@@ -133,6 +133,7 @@ export default async function AdminCheckinPage({
           entries={entryList}
           eventId={eid}
           eventStatus={event.status as EventStatus}
+          entryType={event.entry_type as EntryType}
         />
       </div>
     </main>
