@@ -20,6 +20,7 @@ DECLARE
   v_checkin_ids uuid[];
   v_request_ids uuid[];
   v_existing_count int;
+  i int;
 BEGIN
   -- イベント取得（FOR UPDATEでロック）
   SELECT id, status, match_format
@@ -68,13 +69,15 @@ BEGIN
   END IF;
 
   -- チームとメンバーを作成
-  FOR v_team IN SELECT * FROM jsonb_array_elements(p_teams)
+  FOR i IN 0..jsonb_array_length(p_teams) - 1
   LOOP
+    v_team := p_teams -> i;
+
     INSERT INTO public.tournament_teams (event_id, name, seed)
-    VALUES (p_event_id, v_team.value ->> 'name', (v_team.value ->> 'seed')::int)
+    VALUES (p_event_id, v_team ->> 'name', (v_team ->> 'seed')::int)
     RETURNING id INTO v_team_id;
 
-    FOR v_member_id IN SELECT jsonb_array_elements_text(v_team.value -> 'member_profile_ids')
+    FOR v_member_id IN SELECT jsonb_array_elements_text(v_team -> 'member_profile_ids')
     LOOP
       INSERT INTO public.tournament_team_members (team_id, profile_id)
       VALUES (v_team_id, v_member_id::uuid);
