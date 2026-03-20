@@ -105,6 +105,7 @@ export type TournamentEventForDisplay = {
   entries: { count: number }[]
   participantCount?: number
   teamAssigned?: boolean
+  bracketExists?: boolean
 }
 
 // 大会詳細画面用の大会型（表示に必要な最小限のフィールド）

@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Swords } from "lucide-react"
+import { FileText, Swords, Trophy } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -394,6 +394,35 @@ export function EventList({
                       className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
                     >
                       チーム一覧
+                      <svg
+                        className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </Link>
+                  </div>
+                )}
+              {event.match_format === "double_elimination" &&
+                event.bracketExists && (
+                  <div className="info-row sm:col-span-2">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Trophy className="w-4 h-4" />
+                      <span className="text-xs font-medium">トーナメント</span>
+                    </div>
+                    <Link
+                      href={`/tournaments/${tournamentId}/events/${event.id}/bracket`}
+                      className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
+                    >
+                      トーナメント表
                       <svg
                         className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
                         fill="none"

@@ -69,10 +69,21 @@ export default async function TournamentsPage() {
     const teamEventIds = new Set(
       (teamCounts ?? []).map((row) => row.event_id as string),
     )
+    // bracket_matches 存在確認
+    const { data: bracketRows } = await supabase
+      .from("bracket_matches")
+      .select("event_id")
+      .in("event_id", gfEventIds)
+
+    const bracketEventIds = new Set(
+      (bracketRows ?? []).map((row) => row.event_id as string),
+    )
+
     for (const t of tournamentList) {
       for (const e of t.events) {
         if (e.match_format === "double_elimination") {
           e.teamAssigned = teamEventIds.has(e.id)
+          e.bracketExists = bracketEventIds.has(e.id)
         }
       }
     }
