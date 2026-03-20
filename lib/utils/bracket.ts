@@ -77,3 +77,95 @@ export function organizeBracketData(
 export function hasResetMatch(grandFinalRounds: BracketRound[]): boolean {
   return grandFinalRounds.some((r) => r.roundNumber === 2)
 }
+
+/**
+ * 全マッチが confirmed か判定する。
+ */
+export function isAllBracketMatchesConfirmed(
+  matches: RawBracketMatch[],
+): boolean {
+  return matches.every((m) => m.status === "confirmed")
+}
+
+/**
+ * ブラケット結果から最終順位を導出する（1位〜4位）。
+ *
+ * 全マッチが confirmed でない場合は空配列を返す。
+ *
+ * ロジック:
+ *   1位: GF R1（またはReset R2）の winner_team_id
+ *   2位: GF R1（またはReset R2）の敗者
+ *   3位: LF（losers, round=2）の敗者
+ *   4位: LR1（losers, round=1）の敗者
+ */
+export function deriveFinalRankings(
+  matches: RawBracketMatch[],
+  teamMap: Map<string, TeamInfo>,
+): { rank: number; team: TeamInfo }[] {
+  if (matches.length === 0) return []
+  if (!isAllBracketMatchesConfirmed(matches)) return []
+
+  const findMatch = (
+    bracketType: BracketType,
+    roundNumber: number,
+  ): RawBracketMatch | undefined =>
+    matches.find(
+      (m) =>
+        m.bracket_type === bracketType && m.round_number === roundNumber,
+    )
+
+  // Reset があればそちらが最終戦、なければ GF R1
+  const resetMatch = findMatch("grand_final", 2)
+  const finalMatch = resetMatch ?? findMatch("grand_final", 1)
+  const lf = findMatch("losers", 2)
+  const lr1 = findMatch("losers", 1)
+
+  if (!finalMatch) return []
+
+  const getLoser = (
+    m: RawBracketMatch,
+  ): string | null => {
+    if (!m.winner_team_id || !m.team_a_id || !m.team_b_id) return null
+    return m.winner_team_id === m.team_a_id ? m.team_b_id : m.team_a_id
+  }
+
+  const rankings: { rank: number; team: TeamInfo }[] = []
+
+  const first = finalMatch.winner_team_id
+    ? teamMap.get(finalMatch.winner_team_id)
+    : undefined
+  if (first) rankings.push({ rank: 1, team: first })
+
+  const secondId = getLoser(finalMatch)
+  const second = secondId ? teamMap.get(secondId) : undefined
+  if (second) rankings.push({ rank: 2, team: second })
+
+  if (lf) {
+    const thirdId = getLoser(lf)
+    const third = thirdId ? teamMap.get(thirdId) : undefined
+    if (third) rankings.push({ rank: 3, team: third })
+  }
+
+  if (lr1) {
+    const fourthId = getLoser(lr1)
+    const fourth = fourthId ? teamMap.get(fourthId) : undefined
+    if (fourth) rankings.push({ rank: 4, team: fourth })
+  }
+
+  return rankings
+}
+
+/**
+ * 確定操作が可能か判定する。
+ *
+ * ready または in_progress で両チームが揃っている場合に true。
+ */
+export function canConfirmBracketMatch(
+  match: BracketMatchForDisplay,
+): boolean {
+  return (
+    (match.status === "ready" || match.status === "in_progress") &&
+    match.teamA !== null &&
+    match.teamB !== null
+  )
+}
