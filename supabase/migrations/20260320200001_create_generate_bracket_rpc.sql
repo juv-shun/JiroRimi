@@ -51,7 +51,7 @@ BEGIN
     FROM tournament_teams
    WHERE event_id = p_event_id;
 
-  IF v_teams IS NULL OR array_length(v_teams, 1) < 4 THEN
+  IF v_teams IS NULL OR array_length(v_teams, 1) != 4 THEN
     RAISE EXCEPTION 'チームが4チーム必要です';
   END IF;
 

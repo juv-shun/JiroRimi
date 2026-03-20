@@ -50,10 +50,15 @@ export function BracketView({
     setBracketMatches((prev) => [...prev, newRow])
   }, [])
 
+  const onBracketMatchDelete = useCallback((matchId: string) => {
+    setBracketMatches((prev) => prev.filter((m) => m.id !== matchId))
+  }, [])
+
   useBracketRealtime({
     eventId,
     onBracketMatchUpdate,
     onBracketMatchInsert,
+    onBracketMatchDelete,
   })
 
   if (bracketMatches.length === 0) {

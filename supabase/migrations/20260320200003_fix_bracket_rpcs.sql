@@ -1,17 +1,21 @@
--- confirm_bracket_match: ブラケットマッチの結果を確定し、次戦にチームを自動配置する
-CREATE OR REPLACE FUNCTION confirm_bracket_match(p_event_id uuid, p_bracket_match_id uuid, p_winner_team_id uuid)
+-- Fix 1: generate_bracket - チーム数を厳密に4チーム固定にする
+-- Fix 2: confirm_bracket_match - p_event_idを追加し、所属チェック＋イベント状態検証を行う
+
+-- generate_bracket: チーム数チェックを != 4 に修正
+CREATE OR REPLACE FUNCTION generate_bracket(p_event_id uuid)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
   v_event RECORD;
-  v_match RECORD;
-  v_loser_team_id uuid;
-  v_winner_is_team_a boolean;
-  v_loser_is_team_a boolean;
+  v_teams uuid[];
+  v_confirmed_count int;
+  v_gf uuid;
+  v_lf uuid;
+  v_lr1 uuid;
+  v_wf uuid;
 BEGIN
-  -- 1. イベント状態検証
   SELECT id, status, match_format
     INTO v_event
     FROM events
@@ -30,7 +34,83 @@ BEGIN
     RAISE EXCEPTION 'ダブルエリミネーションイベントではありません';
   END IF;
 
-  -- 2. 対象マッチ取得（イベント所属チェック込み）
+  SELECT count(*) INTO v_confirmed_count
+    FROM bracket_matches
+   WHERE event_id = p_event_id
+     AND status = 'confirmed';
+
+  IF v_confirmed_count > 0 THEN
+    RAISE EXCEPTION 'ブラケットに確定済みの対戦があるため再生成できません';
+  END IF;
+
+  DELETE FROM bracket_matches WHERE event_id = p_event_id;
+
+  SELECT array_agg(id ORDER BY seed ASC)
+    INTO v_teams
+    FROM tournament_teams
+   WHERE event_id = p_event_id;
+
+  IF v_teams IS NULL OR array_length(v_teams, 1) != 4 THEN
+    RAISE EXCEPTION 'チームが4チーム必要です';
+  END IF;
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, status)
+  VALUES (p_event_id, 'grand_final', 1, 1, 'pending')
+  RETURNING id INTO v_gf;
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, status, winner_next_id)
+  VALUES (p_event_id, 'losers', 2, 1, 'pending', v_gf)
+  RETURNING id INTO v_lf;
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, status, winner_next_id)
+  VALUES (p_event_id, 'losers', 1, 1, 'pending', v_lf)
+  RETURNING id INTO v_lr1;
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, status, winner_next_id, loser_next_id)
+  VALUES (p_event_id, 'winners', 2, 1, 'pending', v_gf, v_lf)
+  RETURNING id INTO v_wf;
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, team_a_id, team_b_id, status, winner_next_id, loser_next_id)
+  VALUES (p_event_id, 'winners', 1, 1, v_teams[1], v_teams[4], 'ready', v_wf, v_lr1);
+
+  INSERT INTO bracket_matches (event_id, bracket_type, round_number, match_order, team_a_id, team_b_id, status, winner_next_id, loser_next_id)
+  VALUES (p_event_id, 'winners', 1, 2, v_teams[2], v_teams[3], 'ready', v_wf, v_lr1);
+END;
+$$;
+
+-- confirm_bracket_match: p_event_id を追加し、所属チェック＋イベント状態検証を行う
+CREATE OR REPLACE FUNCTION confirm_bracket_match(p_event_id uuid, p_bracket_match_id uuid, p_winner_team_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_event RECORD;
+  v_match RECORD;
+  v_loser_team_id uuid;
+  v_winner_is_team_a boolean;
+  v_loser_is_team_a boolean;
+BEGIN
+  -- イベント状態検証
+  SELECT id, status, match_format
+    INTO v_event
+    FROM events
+   WHERE id = p_event_id
+     FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'イベントが見つかりません';
+  END IF;
+
+  IF v_event.status != 'in_progress' THEN
+    RAISE EXCEPTION 'イベントが進行中ではありません';
+  END IF;
+
+  IF v_event.match_format != 'double_elimination' THEN
+    RAISE EXCEPTION 'ダブルエリミネーションイベントではありません';
+  END IF;
+
+  -- 対象マッチ取得（イベント所属チェック込み）
   SELECT id, event_id, bracket_type, round_number, match_order,
          team_a_id, team_b_id, winner_team_id, status,
          winner_next_id, loser_next_id
@@ -48,26 +128,21 @@ BEGIN
     RAISE EXCEPTION '対戦はまだ開始できない状態か、既に確定済みです';
   END IF;
 
-  -- 3. winner が team_a or team_b と一致確認
   IF p_winner_team_id != v_match.team_a_id AND p_winner_team_id != v_match.team_b_id THEN
     RAISE EXCEPTION '勝者は対戦チームのいずれかである必要があります';
   END IF;
 
-  -- 4. 敗者チーム特定
   IF p_winner_team_id = v_match.team_a_id THEN
     v_loser_team_id := v_match.team_b_id;
   ELSE
     v_loser_team_id := v_match.team_a_id;
   END IF;
 
-  -- 5. 当マッチ更新
   UPDATE bracket_matches
      SET winner_team_id = p_winner_team_id,
          status = 'confirmed'
    WHERE id = p_bracket_match_id;
 
-  -- 6. 配置先スロット決定
-  -- 勝者スロット
   v_winner_is_team_a := CASE
     WHEN v_match.bracket_type = 'winners' AND v_match.round_number = 1 AND v_match.match_order = 1 THEN true
     WHEN v_match.bracket_type = 'winners' AND v_match.round_number = 1 AND v_match.match_order = 2 THEN false
@@ -76,7 +151,6 @@ BEGIN
     ELSE true
   END;
 
-  -- 敗者スロット
   v_loser_is_team_a := CASE
     WHEN v_match.bracket_type = 'winners' AND v_match.round_number = 1 AND v_match.match_order = 1 THEN true
     WHEN v_match.bracket_type = 'winners' AND v_match.round_number = 1 AND v_match.match_order = 2 THEN false
@@ -84,20 +158,16 @@ BEGIN
     ELSE true
   END;
 
-  -- 7. 勝者の次戦配置
   IF v_match.winner_next_id IS NOT NULL THEN
     PERFORM place_team_in_next(v_match.winner_next_id, p_winner_team_id, v_winner_is_team_a);
   END IF;
 
-  -- 8. 敗者の次戦配置
   IF v_match.loser_next_id IS NOT NULL THEN
     PERFORM place_team_in_next(v_match.loser_next_id, v_loser_team_id, v_loser_is_team_a);
   END IF;
 
-  -- 9. リセットマッチ判定
   IF v_match.bracket_type = 'grand_final' AND v_match.round_number = 1 THEN
     IF p_winner_team_id = v_match.team_b_id THEN
-      -- LB側勝利 → Reset マッチ INSERT
       INSERT INTO bracket_matches (
         event_id, bracket_type, round_number, match_order,
         team_a_id, team_b_id, status,
@@ -107,40 +177,6 @@ BEGIN
         v_match.team_a_id, v_match.team_b_id, 'ready',
         NULL, NULL
       );
-    END IF;
-    -- WB側勝利 → なにもしない
-  END IF;
-END;
-$$;
-
--- place_team_in_next: 次戦にチームを配置するヘルパー関数
-CREATE OR REPLACE FUNCTION place_team_in_next(p_next_match_id uuid, p_team_id uuid, p_is_team_a_slot boolean)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_next RECORD;
-BEGIN
-  SELECT id, team_a_id, team_b_id, status
-    INTO v_next
-    FROM bracket_matches
-   WHERE id = p_next_match_id
-     FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RETURN;
-  END IF;
-
-  IF p_is_team_a_slot THEN
-    UPDATE bracket_matches SET team_a_id = p_team_id WHERE id = p_next_match_id;
-    IF v_next.team_b_id IS NOT NULL THEN
-      UPDATE bracket_matches SET status = 'ready' WHERE id = p_next_match_id;
-    END IF;
-  ELSE
-    UPDATE bracket_matches SET team_b_id = p_team_id WHERE id = p_next_match_id;
-    IF v_next.team_a_id IS NOT NULL THEN
-      UPDATE bracket_matches SET status = 'ready' WHERE id = p_next_match_id;
     END IF;
   END IF;
 END;

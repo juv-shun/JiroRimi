@@ -98,6 +98,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const { error: rpcError } = await supabase.rpc("confirm_bracket_match", {
+      p_event_id: id,
       p_bracket_match_id: parsed.data.bracket_match_id,
       p_winner_team_id: parsed.data.winner_team_id,
     })

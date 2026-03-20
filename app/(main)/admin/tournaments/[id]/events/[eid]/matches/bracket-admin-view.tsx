@@ -125,10 +125,15 @@ export function BracketAdminView({
     setBracketMatches((prev) => [...prev, newRow])
   }, [])
 
+  const onBracketMatchDelete = useCallback((matchId: string) => {
+    setBracketMatches((prev) => prev.filter((m) => m.id !== matchId))
+  }, [])
+
   useBracketRealtime({
     eventId,
     onBracketMatchUpdate,
     onBracketMatchInsert,
+    onBracketMatchDelete,
   })
 
   // Actions
