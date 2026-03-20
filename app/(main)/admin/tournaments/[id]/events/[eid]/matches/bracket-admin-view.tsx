@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronDown, ChevronUp, RefreshCw, Swords, Trophy } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { Toast } from "@/app/components/toast"
@@ -136,6 +136,11 @@ export function BracketAdminView({
     onBracketMatchDelete,
   })
 
+  // initialBracketMatches が変わったら state を同期（router.refresh() 後に反映）
+  useEffect(() => {
+    setBracketMatches(initialBracketMatches)
+  }, [initialBracketMatches])
+
   // Actions
   const handleGenerate = async () => {
     setIsLoading(true)
@@ -150,6 +155,8 @@ export function BracketAdminView({
         return
       }
       showToastMessage("ブラケットを生成しました", "success")
+      // Realtime で INSERT が来る前に state をリセットし、router.refresh() でサーバーから最新データを取得
+      setBracketMatches([])
       router.refresh()
     } catch {
       showToastMessage("サーバーエラーが発生しました", "error")
