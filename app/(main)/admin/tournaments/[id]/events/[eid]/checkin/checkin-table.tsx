@@ -1,19 +1,37 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
-import { Check, X, User, Loader2, CircleDot, CheckCircle2 } from "lucide-react"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import {
+  Check,
+  X,
+  User,
+  Loader2,
+  CircleDot,
+  CheckCircle2,
+  Search,
+  Plus,
+  Trash2,
+} from "lucide-react"
 
 import { Toast } from "@/app/components/toast"
 import type { EntryWithProfile } from "@/lib/types/entry"
 import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
-import type { EventStatus } from "@/lib/types/tournament"
+import type { EntryType, EventStatus } from "@/lib/types/tournament"
+
+type ProfileCandidate = {
+  id: string
+  player_name: string | null
+  avatar_url: string | null
+  first_role: string | null
+}
 
 type CheckinTableProps = {
   entries: EntryWithProfile[]
   eventId: string
   eventStatus: EventStatus
+  entryType: EntryType
 }
 
 function isAllowedAvatarUrl(url: string): boolean {
@@ -33,16 +51,121 @@ function isAllowedAvatarUrl(url: string): boolean {
   }
 }
 
-export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProps) {
+export function CheckinTable({
+  entries,
+  eventId,
+  eventStatus,
+  entryType,
+}: CheckinTableProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [candidates, setCandidates] = useState<ProfileCandidate[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [toast, setToast] = useState<{
     show: boolean
     message: string
     type: "success" | "error"
     isExiting: boolean
   }>({ show: false, message: "", type: "success", isExiting: false })
+
+  // ドロップダウン外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const searchProfiles = useCallback(
+    async (query: string) => {
+      if (query.length < 1) {
+        setCandidates([])
+        setShowDropdown(false)
+        return
+      }
+      setIsSearching(true)
+      try {
+        const params = new URLSearchParams({ q: query, event_id: eventId })
+        const res = await fetch(`/api/admin/profiles?${params}`)
+        const result = await res.json()
+        if (result.success) {
+          setCandidates(result.data)
+          setShowDropdown(true)
+        }
+      } catch {
+        // ignore
+      } finally {
+        setIsSearching(false)
+      }
+    },
+    [eventId],
+  )
+
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => searchProfiles(value), 300)
+  }
+
+  const handleAddEntry = (profileId: string) => {
+    setShowDropdown(false)
+    setSearchQuery("")
+    setCandidates([])
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/admin/entries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ event_id: eventId, profile_id: profileId }),
+        })
+        const result = await res.json()
+        if (result.success) {
+          showToast("エントリーを追加しました", "success")
+          router.refresh()
+        } else {
+          showToast(result.error ?? "エントリー追加に失敗しました", "error")
+        }
+      } catch {
+        showToast("通信エラーが発生しました", "error")
+      }
+    })
+  }
+
+  const handleDeleteEntry = (entryId: string) => {
+    setDeletingEntryId(entryId)
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/admin/entries", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ entry_id: entryId }),
+        })
+        const result = await res.json()
+        if (result.success) {
+          showToast("エントリーを削除しました", "success")
+          router.refresh()
+        } else {
+          showToast(result.error ?? "エントリー削除に失敗しました", "error")
+        }
+      } catch {
+        showToast("通信エラーが発生しました", "error")
+      } finally {
+        setDeletingEntryId(null)
+      }
+    })
+  }
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type, isExiting: false })
@@ -98,15 +221,83 @@ export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProp
     })
   }
 
-  if (entries.length === 0) {
+  const isScheduled = eventStatus === "scheduled"
+  const isInvite = entryType === "invite"
+  const showInviteControls = isInvite && isScheduled
+
+  const inviteSearchUI = showInviteControls && (
+    <div className="mb-4" ref={dropdownRef}>
+      <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              placeholder="プレイヤー名で検索してエントリー追加..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+            />
+            {isSearching && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+            )}
+          </div>
+        </div>
+
+        {showDropdown && candidates.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-border shadow-lg max-h-60 overflow-y-auto">
+            {candidates.map((candidate) => (
+              <button
+                key={candidate.id}
+                type="button"
+                onClick={() => handleAddEntry(candidate.id)}
+                disabled={isPending}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors text-left disabled:opacity-50"
+              >
+                {candidate.avatar_url &&
+                isAllowedAvatarUrl(candidate.avatar_url) ? (
+                  <img
+                    src={candidate.avatar_url}
+                    alt=""
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {candidate.player_name ?? "（未設定）"}
+                  </p>
+                  {candidate.first_role && (
+                    <p className="text-xs text-gray-500">
+                      {ROLE_LABELS[candidate.first_role as Role]}
+                    </p>
+                  )}
+                </div>
+                <Plus className="w-4 h-4 text-primary" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {showDropdown && searchQuery.length >= 1 && candidates.length === 0 && !isSearching && (
+          <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-border shadow-lg px-4 py-3 text-sm text-gray-500">
+            該当するプレイヤーが見つかりません
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  if (entries.length === 0 && !showInviteControls) {
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center text-gray-500">
         まだエントリーがありません
       </div>
     )
   }
-
-  const isScheduled = eventStatus === "scheduled"
 
   return (
     <>
@@ -126,7 +317,14 @@ export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProp
         )}
       </div>
 
+      {inviteSearchUI}
+
       <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
+        {entries.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            まだエントリーがありません
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -152,6 +350,7 @@ export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProp
               {entries.map((entry) => {
                 const isCheckedIn = entry.checked_in_at !== null
                 const isLoading = isPending && pendingEntryId === entry.id
+                const isDeleting = isPending && deletingEntryId === entry.id
 
                 return (
                   <tr
@@ -208,35 +407,52 @@ export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProp
                     {/* 操作ボタン */}
                     {isScheduled && (
                       <td className="px-4 py-3 text-center">
-                        {isCheckedIn ? (
-                          <button
-                            type="button"
-                            onClick={() => handleCancel(entry.id)}
-                            disabled={isLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {isLoading ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <X className="w-3 h-3" />
-                            )}
-                            取り消し
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleCheckin(entry.id)}
-                            disabled={isLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {isLoading ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Check className="w-3 h-3" />
-                            )}
-                            チェックイン
-                          </button>
-                        )}
+                        <div className="inline-flex items-center gap-2">
+                          {isCheckedIn ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCancel(entry.id)}
+                              disabled={isLoading}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <X className="w-3 h-3" />
+                              )}
+                              取り消し
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleCheckin(entry.id)}
+                              disabled={isLoading}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Check className="w-3 h-3" />
+                              )}
+                              チェックイン
+                            </button>
+                          )}
+                          {showInviteControls && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteEntry(entry.id)}
+                              disabled={isDeleting || isCheckedIn}
+                              title={isCheckedIn ? "チェックイン済みのため削除不可" : "エントリー削除"}
+                              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3 h-3" />
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -245,6 +461,7 @@ export function CheckinTable({ entries, eventId, eventStatus }: CheckinTableProp
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       <Toast
