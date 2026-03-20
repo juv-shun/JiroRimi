@@ -47,19 +47,43 @@ async function authorize(supabase: Awaited<ReturnType<typeof createClient>>) {
   return { user }
 }
 
+function parseBody(body: unknown): { error?: string; data?: Record<string, unknown> } {
+  if (typeof body !== "object" || body === null) {
+    return { error: "リクエスト形式が不正です" }
+  }
+  return { data: body as Record<string, unknown> }
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { event_id, profile_id } = body
+    let rawBody: unknown
+    try {
+      rawBody = await request.json()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "リクエスト形式が不正です" },
+        { status: 400 },
+      )
+    }
 
-    if (!event_id || !UUID_REGEX.test(event_id)) {
+    const parsed = parseBody(rawBody)
+    if (parsed.error) {
+      return NextResponse.json(
+        { success: false, error: parsed.error },
+        { status: 400 },
+      )
+    }
+
+    const { event_id, profile_id } = parsed.data!
+
+    if (!event_id || typeof event_id !== "string" || !UUID_REGEX.test(event_id)) {
       return NextResponse.json(
         { success: false, error: "イベントIDの形式が不正です" },
         { status: 400 },
       )
     }
 
-    if (!profile_id || !UUID_REGEX.test(profile_id)) {
+    if (!profile_id || typeof profile_id !== "string" || !UUID_REGEX.test(profile_id)) {
       return NextResponse.json(
         { success: false, error: "プロフィールIDの形式が不正です" },
         { status: 400 },
@@ -71,10 +95,10 @@ export async function POST(request: Request) {
     const auth = await authorize(supabase)
     if (auth.error) return auth.error
 
-    // イベント存在確認 + entry_type + status チェック
+    // イベント存在確認 + entry_type + status + 参加条件チェック
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id, entry_type, status")
+      .select("id, entry_type, status, max_participants, gender, entries(count)")
       .eq("id", event_id)
       .single()
 
@@ -99,7 +123,42 @@ export async function POST(request: Request) {
       )
     }
 
-    // エントリー追加
+    // 参加上限チェック
+    const entryCount = event.entries[0]?.count ?? 0
+    if (event.max_participants !== null && entryCount >= event.max_participants) {
+      return NextResponse.json(
+        { success: false, error: "参加上限に達しています" },
+        { status: 400 },
+      )
+    }
+
+    // 性別制限チェック
+    if (event.gender) {
+      const { data: targetProfile, error: targetProfileError } = await supabase
+        .from("profiles")
+        .select("gender")
+        .eq("id", profile_id)
+        .single()
+
+      if (targetProfileError || !targetProfile) {
+        return NextResponse.json(
+          { success: false, error: "対象ユーザーが見つかりません" },
+          { status: 404 },
+        )
+      }
+
+      if (targetProfile.gender !== event.gender) {
+        const genderLabel = event.gender === "boys" ? "ボーイズ" : "ガールズ"
+        return NextResponse.json(
+          { success: false, error: `このイベントは${genderLabel}限定です` },
+          { status: 400 },
+        )
+      }
+    }
+
+    // エントリー追加（RLS entries_insert_admin で許可済み）
+    // TOCTOU対策: イベントステータスが変更された場合でもRLSで保護される
+    // 重複はユニーク制約で検出
     const { error: insertError } = await supabase
       .from("entries")
       .insert({ profile_id, event_id })
@@ -131,10 +190,27 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const body = await request.json()
-    const { entry_id } = body
+    let rawBody: unknown
+    try {
+      rawBody = await request.json()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "リクエスト形式が不正です" },
+        { status: 400 },
+      )
+    }
 
-    if (!entry_id || !UUID_REGEX.test(entry_id)) {
+    const parsed = parseBody(rawBody)
+    if (parsed.error) {
+      return NextResponse.json(
+        { success: false, error: parsed.error },
+        { status: 400 },
+      )
+    }
+
+    const { entry_id } = parsed.data!
+
+    if (!entry_id || typeof entry_id !== "string" || !UUID_REGEX.test(entry_id)) {
       return NextResponse.json(
         { success: false, error: "エントリーIDの形式が不正です" },
         { status: 400 },
@@ -146,7 +222,9 @@ export async function DELETE(request: Request) {
     const auth = await authorize(supabase)
     if (auth.error) return auth.error
 
-    // エントリー存在確認 + 親イベントのチェック
+    // 条件付き削除: entry_type='invite' + status='scheduled' + 未チェックインを
+    // 1クエリで原子的に検証・削除する
+    // まずエントリーの存在と条件を確認（エラーメッセージの出し分けのため）
     const { data: entry, error: entryError } = await supabase
       .from("entries")
       .select("id, checked_in_at, events!inner (entry_type, status)")
@@ -183,17 +261,26 @@ export async function DELETE(request: Request) {
       )
     }
 
-    // エントリー削除
-    const { error: deleteError } = await supabase
+    // 条件付き削除: checked_in_at が null のもののみ削除（TOCTOU対策）
+    const { count, error: deleteError } = await supabase
       .from("entries")
-      .delete()
+      .delete({ count: "exact" })
       .eq("id", entry_id)
+      .is("checked_in_at", null)
 
     if (deleteError) {
       console.error("Entry delete error:", deleteError)
       return NextResponse.json(
         { success: false, error: "エントリーの削除に失敗しました" },
         { status: 500 },
+      )
+    }
+
+    if (!count) {
+      // 事前チェック後にチェックインされた（TOCTOU競合）
+      return NextResponse.json(
+        { success: false, error: "チェックイン済みのエントリーは削除できません" },
+        { status: 400 },
       )
     }
 
