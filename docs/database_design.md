@@ -587,7 +587,32 @@ entries テーブルの `checked_in_at` カラムで管理。RLS で以下を強
 - **matches**: 非運営者は `lobby_number` のみ変更可（`status`, `result` の変更を防止）
 - **match_participants**: 非運営者は `vote` のみ変更可（`team` の変更を防止）
 
-### 8. 試合開始前の情報非公開
+### 8. RPC関数
+
+#### generate_bracket(p_event_id uuid) → void
+
+4チームダブルエリミネーションブラケット（6試合）を生成する SECURITY DEFINER 関数。
+
+- イベントが `in_progress` かつ `double_elimination` であることを検証
+- 既存の confirmed マッチがある場合はエラー、それ以外は全削除→再生成（冪等）
+- Seed 1 vs 4、Seed 2 vs 3 で Winners R1 を構成し、WR1 のみ `ready` 状態で生成
+- winner_next_id / loser_next_id で次戦への参照を設定
+
+#### confirm_bracket_match(p_bracket_match_id uuid, p_winner_team_id uuid) → void
+
+ブラケットマッチの結果を確定し、次戦にチームを自動配置する SECURITY DEFINER 関数。
+
+- `ready` または `in_progress` のマッチのみ確定可能
+- 勝者を winner_next_id の次戦に、敗者を loser_next_id の次戦に配置
+- 配置先スロット（team_a / team_b）は元マッチの bracket_type・round_number・match_order で決定
+- 両チーム揃った次戦は自動的に `ready` に遷移
+- Grand Final R1 でルーザーズ側が勝利した場合、Reset Match（grand_final round=2）を自動 INSERT
+
+#### place_team_in_next(p_next_match_id uuid, p_team_id uuid, p_is_team_a_slot boolean) → void
+
+confirm_bracket_match から呼ばれるヘルパー関数。次戦の指定スロットにチームを配置し、両チーム揃ったら `ready` に更新。
+
+### 9. 試合開始前の情報非公開
 
 Supabase はクライアントから直接クエリ可能なため、アプリ層での非表示制御だけでは不十分。RLS で制御:
 - **matches**: `status IN ('in_progress', 'confirmed')` の場合のみ一般公開
