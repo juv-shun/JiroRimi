@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ChevronLeft, Calendar, Swords } from "lucide-react"
+import { ChevronLeft, Calendar, Swords, Users, Trophy } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
@@ -12,12 +12,18 @@ import type {
   MatchResult,
   MatchStatus,
   ParticipantInfo,
+  RankedPlayerStanding,
   Team,
   Vote,
 } from "@/lib/types/match"
 import type { Role } from "@/lib/types/profile"
 import { formatDateJST } from "@/lib/utils/datetime"
-import { computeStandings } from "@/lib/utils/match-result"
+import {
+  computeRankings,
+  computeStandings,
+  mergeStandings,
+} from "@/lib/utils/match-result"
+import { GfTeamAssignmentWrapper } from "./gf-team-assignment-wrapper"
 import { RoundManager } from "./round-manager"
 
 export default async function AdminMatchesPage({
@@ -52,7 +58,7 @@ export default async function AdminMatchesPage({
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, name, scheduled_date, status, matches_per_event, tournaments!inner(id, name)",
+      "id, name, scheduled_date, status, matches_per_event, match_format, tournament_id, tournaments!inner(id, name)",
     )
     .eq("id", eid)
     .eq("tournament_id", id)
@@ -65,6 +71,10 @@ export default async function AdminMatchesPage({
   if (event.status !== "in_progress") {
     redirect(`/admin/tournaments/${id}/edit`)
   }
+
+  const tournament = Array.isArray(event.tournaments)
+    ? event.tournaments[0]
+    : event.tournaments
 
   // チェックイン済みエントリー取得（profiles JOIN）
   const { data: entries, error: entriesError } = await supabase
@@ -93,6 +103,258 @@ export default async function AdminMatchesPage({
       thirdRole: (p?.third_role as Role) ?? null,
     }
   })
+
+  const isGf = event.match_format === "double_elimination"
+
+  // --- GF (double_elimination) の場合 ---
+  if (isGf) {
+    // 同大会の予選イベントからマッチを取得して予選成績を集計
+    const { data: qualifierEvents } = await supabase
+      .from("events")
+      .select("id")
+      .eq("tournament_id", event.tournament_id)
+      .eq("match_format", "qualifier")
+
+    let rankings: RankedPlayerStanding[] = []
+
+    if (qualifierEvents && qualifierEvents.length > 0) {
+      const qualifierEventIds = qualifierEvents.map((e) => e.id)
+
+      const { data: qualifierMatches } = await supabase
+        .from("matches")
+        .select(
+          `
+          id,
+          round_number,
+          lobby_number,
+          status,
+          result,
+          event_id,
+          match_participants (
+            id,
+            profile_id,
+            team,
+            vote,
+            profiles (player_name, avatar_url, first_role)
+          )
+        `,
+        )
+        .in("event_id", qualifierEventIds)
+        .eq("status", "confirmed")
+
+      if (qualifierMatches && qualifierMatches.length > 0) {
+        // イベントごとに成績を集計
+        const eventMatchMap = new Map<string, AdminMatchForDisplay[]>()
+        for (const m of qualifierMatches) {
+          const eventId = m.event_id as string
+          if (!eventMatchMap.has(eventId)) {
+            eventMatchMap.set(eventId, [])
+          }
+          const matchParticipants = (m.match_participants ?? []).map((mp) => {
+            const prof = Array.isArray(mp.profiles)
+              ? mp.profiles[0]
+              : mp.profiles
+            return {
+              profileId: mp.profile_id,
+              playerName: prof?.player_name ?? null,
+              avatarUrl: prof?.avatar_url ?? null,
+              firstRole: (prof?.first_role as Role) ?? null,
+              team: mp.team as Team,
+              vote: mp.vote as Vote | null,
+            } satisfies AdminMatchParticipant
+          })
+          eventMatchMap.get(eventId)!.push({
+            matchId: m.id,
+            roundNumber: m.round_number,
+            lobbyNumber: m.lobby_number,
+            status: m.status as MatchStatus,
+            result: m.result as MatchResult,
+            teamA: matchParticipants.filter((p) => p.team === "team_a"),
+            teamB: matchParticipants.filter((p) => p.team === "team_b"),
+          })
+        }
+
+        const standingsArray = Array.from(eventMatchMap.values()).map(
+          (matches) => computeStandings(matches),
+        )
+        const merged = mergeStandings(standingsArray)
+        rankings = computeRankings(merged)
+      }
+    }
+
+    // tournament_teams の存在チェック
+    const { count: teamCount } = await supabase
+      .from("tournament_teams")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eid)
+
+    const teamsAssigned = (teamCount ?? 0) > 0
+
+    // チーム確定済みの場合：読み取り専用で表示
+    if (teamsAssigned) {
+      const { data: existingTeams } = await supabase
+        .from("tournament_teams")
+        .select(
+          `
+          id, name, seed,
+          tournament_team_members (
+            profile_id,
+            profiles (player_name, avatar_url, first_role, second_role, third_role)
+          )
+        `,
+        )
+        .eq("event_id", eid)
+        .order("seed")
+
+      return (
+        <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto">
+            <Link
+              href={`/admin/tournaments/${id}/edit`}
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors mb-4"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              大会編集に戻る
+            </Link>
+
+            <PageHeader
+              title={tournament.name}
+              subtitle={`${event.name} - 試合管理`}
+            />
+
+            {/* GFサマリーカード */}
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-6 mb-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">開催日</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatDateJST(event.scheduled_date)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">参加者</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {participants.length}人
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* チーム確定済み表示 */}
+            <div className="mb-4 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                <Trophy className="w-3.5 h-3.5 text-green-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">
+                チーム編成（確定済み）
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(existingTeams ?? []).map((team) => (
+                <div
+                  key={team.id}
+                  className="bg-white rounded-2xl shadow-sm border border-border p-4"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-700">
+                      Seed {team.seed} - {team.name}
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    {(team.tournament_team_members ?? []).map((member) => {
+                      const prof = Array.isArray(member.profiles)
+                        ? member.profiles[0]
+                        : member.profiles
+                      const ranking = rankings.find(
+                        (r) => r.profileId === member.profile_id,
+                      )
+                      return (
+                        <div
+                          key={member.profile_id}
+                          className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg"
+                        >
+                          <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-3.5 h-3.5 text-gray-400" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 truncate">
+                            {prof?.player_name ?? "（未設定）"}
+                          </span>
+                          {ranking && (
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded flex-shrink-0 ml-auto">
+                              #{ranking.rank}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+      )
+    }
+
+    // チーム未作成：GfTeamAssignmentBoard 表示
+    return (
+      <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <Link
+            href={`/admin/tournaments/${id}/edit`}
+            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors mb-4"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            大会編集に戻る
+          </Link>
+
+          <PageHeader
+            title={tournament.name}
+            subtitle={`${event.name} - チーム編成`}
+          />
+
+          {/* GFサマリーカード */}
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-6 mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-xs text-gray-500">開催日</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatDateJST(event.scheduled_date)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-gray-400" />
+                <div>
+                  <p className="text-xs text-gray-500">GF進出者</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {participants.length}人
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <GfTeamAssignmentWrapper
+            participants={participants}
+            eventId={eid}
+            rankings={rankings}
+          />
+        </div>
+      </main>
+    )
+  }
+
+  // --- 予選 (qualifier) の場合 --- 既存ロジックそのまま
 
   // マッチ + 参加者（ロール情報含む）
   const { data: allMatches, error: matchError } = await supabase
@@ -192,12 +454,10 @@ export default async function AdminMatchesPage({
     standingsMap[s.profileId] = { wins: s.wins, losses: s.losses }
   }
 
-  const roundNumbers = [...new Set(matchList.map((m) => m.roundNumber))].sort((a, b) => a - b)
+  const roundNumbers = [...new Set(matchList.map((m) => m.roundNumber))].sort(
+    (a, b) => a - b,
+  )
   const matchCount = participants.length / 10
-
-  const tournament = Array.isArray(event.tournaments)
-    ? event.tournaments[0]
-    : event.tournaments
 
   // ラウンド進行状況
   const confirmedRounds = roundNumbers.filter((rn) =>
