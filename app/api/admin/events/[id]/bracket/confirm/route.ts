@@ -1,0 +1,122 @@
+import { revalidatePath } from "next/cache"
+import { NextResponse } from "next/server"
+import { z } from "zod"
+import { createClient } from "@/lib/supabase/server"
+
+type RouteContext = {
+  params: Promise<{ id: string }>
+}
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const requestSchema = z.object({
+  bracket_match_id: z.string().uuid(),
+  winner_team_id: z.string().uuid(),
+})
+
+async function authorize(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "認証が必要です" },
+        { status: 401 },
+      ),
+    }
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  if (profileError) {
+    console.error("Profile fetch error:", profileError)
+    return {
+      error: NextResponse.json(
+        { success: false, error: "権限の確認に失敗しました" },
+        { status: 500 },
+      ),
+    }
+  }
+
+  if (profile?.role !== "admin") {
+    return {
+      error: NextResponse.json(
+        { success: false, error: "管理者権限が必要です" },
+        { status: 403 },
+      ),
+    }
+  }
+
+  return { user }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  try {
+    const { id } = await context.params
+
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { success: false, error: "イベントIDの形式が不正です" },
+        { status: 400 },
+      )
+    }
+
+    const body = await request.json()
+    const parsed = requestSchema.safeParse(body)
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "リクエストの形式が不正です" },
+        { status: 400 },
+      )
+    }
+
+    const supabase = await createClient()
+
+    const auth = await authorize(supabase)
+    if (auth.error) return auth.error
+
+    // イベント存在確認
+    const { data: event, error: eventError } = await supabase
+      .from("events")
+      .select("id")
+      .eq("id", id)
+      .single()
+
+    if (eventError || !event) {
+      return NextResponse.json(
+        { success: false, error: "イベントが見つかりません" },
+        { status: 404 },
+      )
+    }
+
+    const { error: rpcError } = await supabase.rpc("confirm_bracket_match", {
+      p_bracket_match_id: parsed.data.bracket_match_id,
+      p_winner_team_id: parsed.data.winner_team_id,
+    })
+
+    if (rpcError) {
+      console.error("Confirm bracket match error:", rpcError)
+      return NextResponse.json(
+        { success: false, error: rpcError.message },
+        { status: 400 },
+      )
+    }
+
+    revalidatePath("/", "layout")
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    console.error("Confirm bracket match API error:", e)
+    return NextResponse.json(
+      { success: false, error: "サーバーエラーが発生しました" },
+      { status: 500 },
+    )
+  }
+}

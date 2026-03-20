@@ -70,7 +70,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
     // イベント取得
     const { data: event, error: eventError } = await supabase
       .from("events")
-      .select("id, status, matches_per_event")
+      .select("id, status, matches_per_event, match_format")
       .eq("id", id)
       .single()
 
@@ -88,43 +88,74 @@ export async function PATCH(_request: Request, context: RouteContext) {
       )
     }
 
-    // 全マッチ取得
-    const { data: allMatches, error: matchError } = await supabase
-      .from("matches")
-      .select("id, status, round_number")
-      .eq("event_id", id)
+    if (event.match_format === "double_elimination") {
+      // GF: bracket_matches で完了判定
+      const { data: bracketMatches, error: bracketError } = await supabase
+        .from("bracket_matches")
+        .select("id, status")
+        .eq("event_id", id)
 
-    if (matchError) {
-      console.error("Match fetch error:", matchError)
-      return NextResponse.json(
-        { success: false, error: "サーバーエラーが発生しました" },
-        { status: 500 },
-      )
-    }
-
-    // in_progress のマッチが残っていないか
-    const incompleteMatches = (allMatches ?? []).filter(
-      (m) => m.status === "in_progress",
-    )
-    if (incompleteMatches.length > 0) {
-      return NextResponse.json(
-        { success: false, error: "未完了のマッチが残っています" },
-        { status: 400 },
-      )
-    }
-
-    // 全ラウンド(1〜matches_per_event)が confirmed で埋まっているか
-    const confirmedRounds = new Set(
-      (allMatches ?? [])
-        .filter((m) => m.status === "confirmed")
-        .map((m) => m.round_number),
-    )
-    for (let rn = 1; rn <= event.matches_per_event; rn++) {
-      if (!confirmedRounds.has(rn)) {
+      if (bracketError) {
+        console.error("Bracket match fetch error:", bracketError)
         return NextResponse.json(
-          { success: false, error: "全ラウンドが完了していません" },
+          { success: false, error: "サーバーエラーが発生しました" },
+          { status: 500 },
+        )
+      }
+
+      if (!bracketMatches || bracketMatches.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "ブラケットが生成されていません" },
           { status: 400 },
         )
+      }
+
+      const nonConfirmed = bracketMatches.filter(
+        (m) => m.status !== "confirmed",
+      )
+      if (nonConfirmed.length > 0) {
+        return NextResponse.json(
+          { success: false, error: "未完了の対戦が残っています" },
+          { status: 400 },
+        )
+      }
+    } else {
+      // 予選: 既存ロジック（matches テーブルチェック）
+      const { data: allMatches, error: matchError } = await supabase
+        .from("matches")
+        .select("id, status, round_number")
+        .eq("event_id", id)
+
+      if (matchError) {
+        console.error("Match fetch error:", matchError)
+        return NextResponse.json(
+          { success: false, error: "サーバーエラーが発生しました" },
+          { status: 500 },
+        )
+      }
+
+      const incompleteMatches = (allMatches ?? []).filter(
+        (m) => m.status === "in_progress",
+      )
+      if (incompleteMatches.length > 0) {
+        return NextResponse.json(
+          { success: false, error: "未完了のマッチが残っています" },
+          { status: 400 },
+        )
+      }
+
+      const confirmedRounds = new Set(
+        (allMatches ?? [])
+          .filter((m) => m.status === "confirmed")
+          .map((m) => m.round_number),
+      )
+      for (let rn = 1; rn <= event.matches_per_event; rn++) {
+        if (!confirmedRounds.has(rn)) {
+          return NextResponse.json(
+            { success: false, error: "全ラウンドが完了していません" },
+            { status: 400 },
+          )
+        }
       }
     }
 
