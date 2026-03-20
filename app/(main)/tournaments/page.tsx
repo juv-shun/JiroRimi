@@ -54,6 +54,30 @@ export default async function TournamentsPage() {
     }
   }
 
+  // GFイベントのチーム編成済みフラグ取得
+  const gfEventIds = tournamentList
+    .flatMap((t) => t.events)
+    .filter((e) => e.match_format === "double_elimination")
+    .map((e) => e.id)
+
+  if (gfEventIds.length > 0) {
+    const { data: teamCounts } = await supabase
+      .from("tournament_teams")
+      .select("event_id")
+      .in("event_id", gfEventIds)
+
+    const teamEventIds = new Set(
+      (teamCounts ?? []).map((row) => row.event_id as string),
+    )
+    for (const t of tournamentList) {
+      for (const e of t.events) {
+        if (e.match_format === "double_elimination") {
+          e.teamAssigned = teamEventIds.has(e.id)
+        }
+      }
+    }
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
