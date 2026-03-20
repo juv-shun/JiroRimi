@@ -30,14 +30,8 @@ export const eventSchema = z
       .string()
       .min(1, "開催日は必須です")
       .regex(datePattern, "日付の形式が不正です"),
-    entry_start: z
-      .string()
-      .min(1, "エントリー開始日時は必須です")
-      .regex(datetimeLocalPattern, "日時の形式が不正です"),
-    entry_end: z
-      .string()
-      .min(1, "エントリー締切日時は必須です")
-      .regex(datetimeLocalPattern, "日時の形式が不正です"),
+    entry_start: z.string(),
+    entry_end: z.string(),
     checkin_start: z
       .string()
       .min(1, "チェックイン開始日時は必須です")
@@ -96,6 +90,35 @@ export const eventSchema = z
         message: "ダブルエリミネーション形式では試合数は設定できません",
         path: ["matches_per_event"],
       })
+    }
+    // オープンの場合は entry_start/entry_end 必須
+    if (data.entry_type === "open") {
+      if (!data.entry_start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "エントリー開始日時は必須です",
+          path: ["entry_start"],
+        })
+      } else if (!datetimeLocalPattern.test(data.entry_start)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "日時の形式が不正です",
+          path: ["entry_start"],
+        })
+      }
+      if (!data.entry_end) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "エントリー締切日時は必須です",
+          path: ["entry_end"],
+        })
+      } else if (!datetimeLocalPattern.test(data.entry_end)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "日時の形式が不正です",
+          path: ["entry_end"],
+        })
+      }
     }
   })
 

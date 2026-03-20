@@ -118,8 +118,17 @@ export function EventFields({
   const handleMatchFormatChange = (index: number, value: MatchFormat) => {
     if (value === "double_elimination") {
       setValue(`events.${index}.matches_per_event`, null)
+      setValue(`events.${index}.max_participants`, 20)
     } else if (value === "qualifier") {
       setValue(`events.${index}.matches_per_event`, 5)
+    }
+  }
+
+  // entry_type 変更時のハンドラ
+  const handleEntryTypeChange = (index: number, value: EntryType) => {
+    if (value === "invite") {
+      setValue(`events.${index}.entry_start`, "")
+      setValue(`events.${index}.entry_end`, "")
     }
   }
 
@@ -205,7 +214,13 @@ export function EventFields({
                 </label>
                 <select
                   id={`events.${index}.entry_type`}
-                  {...register(`events.${index}.entry_type`)}
+                  {...register(`events.${index}.entry_type`, {
+                    onChange: (e) =>
+                      handleEntryTypeChange(
+                        index,
+                        e.target.value as EntryType,
+                      ),
+                  })}
                   className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                 >
                   {Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => (
@@ -298,29 +313,45 @@ export function EventFields({
                   </div>
                 )
               })()}
-              <div>
-                <label
-                  htmlFor={`events.${index}.max_participants`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-                >
-                  参加上限（任意）
-                </label>
-                <input
-                  id={`events.${index}.max_participants`}
-                  type="number"
-                  {...register(`events.${index}.max_participants`, {
-                    valueAsNumber: true,
-                  })}
-                  min={1}
-                  placeholder="上限なし"
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                />
-                {errors.events?.[index]?.max_participants && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.events[index].max_participants.message}
-                  </p>
-                )}
-              </div>
+              {(() => {
+                const matchFormat = watch(`events.${index}.match_format`)
+                const isDoubleElimination = matchFormat === "double_elimination"
+                return (
+                  <div>
+                    <label
+                      htmlFor={`events.${index}.max_participants`}
+                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                    >
+                      参加上限{isDoubleElimination ? "" : "（任意）"}
+                    </label>
+                    <input
+                      id={`events.${index}.max_participants`}
+                      type="number"
+                      {...register(`events.${index}.max_participants`, {
+                        valueAsNumber: true,
+                      })}
+                      min={1}
+                      placeholder="上限なし"
+                      disabled={isDoubleElimination}
+                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                        isDoubleElimination
+                          ? "bg-gray-100 cursor-not-allowed opacity-60"
+                          : ""
+                      }`}
+                    />
+                    {isDoubleElimination && (
+                      <p className="mt-1 text-xs text-text-secondary">
+                        ダブルエリミネーション形式では20人固定です
+                      </p>
+                    )}
+                    {errors.events?.[index]?.max_participants && (
+                      <p className="mt-1 text-xs text-error">
+                        {errors.events[index].max_participants.message}
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* 開催日 */}
@@ -345,46 +376,63 @@ export function EventFields({
             </div>
 
             {/* エントリー開始/締切 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor={`events.${index}.entry_start`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-                >
-                  エントリー開始
-                </label>
-                <input
-                  id={`events.${index}.entry_start`}
-                  type="datetime-local"
-                  {...register(`events.${index}.entry_start`)}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                />
-                {errors.events?.[index]?.entry_start && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.events[index].entry_start.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor={`events.${index}.entry_end`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
-                >
-                  エントリー締切
-                </label>
-                <input
-                  id={`events.${index}.entry_end`}
-                  type="datetime-local"
-                  {...register(`events.${index}.entry_end`)}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                />
-                {errors.events?.[index]?.entry_end && (
-                  <p className="mt-1 text-xs text-error">
-                    {errors.events[index].entry_end.message}
-                  </p>
-                )}
-              </div>
-            </div>
+            {(() => {
+              const entryType = watch(`events.${index}.entry_type`)
+              const isInvite = entryType === "invite"
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor={`events.${index}.entry_start`}
+                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                    >
+                      エントリー開始
+                    </label>
+                    <input
+                      id={`events.${index}.entry_start`}
+                      type="datetime-local"
+                      {...register(`events.${index}.entry_start`)}
+                      disabled={isInvite}
+                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                        isInvite ? "bg-gray-100 cursor-not-allowed opacity-60" : ""
+                      }`}
+                    />
+                    {isInvite && (
+                      <p className="mt-1 text-xs text-text-secondary">
+                        招待制では不要です
+                      </p>
+                    )}
+                    {errors.events?.[index]?.entry_start && (
+                      <p className="mt-1 text-xs text-error">
+                        {errors.events[index].entry_start.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor={`events.${index}.entry_end`}
+                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                    >
+                      エントリー締切
+                    </label>
+                    <input
+                      id={`events.${index}.entry_end`}
+                      type="datetime-local"
+                      {...register(`events.${index}.entry_end`)}
+                      disabled={isInvite}
+                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                        isInvite ? "bg-gray-100 cursor-not-allowed opacity-60" : ""
+                      }`}
+                    />
+                    {errors.events?.[index]?.entry_end && (
+                      <p className="mt-1 text-xs text-error">
+                        {errors.events[index].entry_end.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* チェックイン開始/締切 */}
             <div className="grid grid-cols-2 gap-4">
