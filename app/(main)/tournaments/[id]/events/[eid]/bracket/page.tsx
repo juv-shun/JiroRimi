@@ -1,4 +1,4 @@
-import { ChevronLeft, Trophy } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -50,37 +50,6 @@ export default async function BracketPage({
     notFound()
   }
 
-  // 空状態
-  if (!bracketMatches || bracketMatches.length === 0) {
-    return (
-      <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Link
-            href="/tournaments"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary transition-colors mb-4"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            大会一覧に戻る
-          </Link>
-
-          <PageHeader
-            title={tournament.name}
-            subtitle={`${event.name} - トーナメント表`}
-          />
-
-          <div className="rich-card p-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-              <Trophy className="w-6 h-6 text-gray-400" />
-            </div>
-            <p className="text-gray-500 text-sm">
-              トーナメント表はまだ作成されていません
-            </p>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   // tournament_teams 取得
   const { data: teams, error: teamsError } = await supabase
     .from("tournament_teams")
@@ -109,7 +78,7 @@ export default async function BracketPage({
         />
 
         <BracketView
-          initialBracketMatches={bracketMatches as RawBracketMatch[]}
+          initialBracketMatches={(bracketMatches ?? []) as RawBracketMatch[]}
           teams={(teams ?? []) as TeamInfo[]}
           eventId={eid}
         />

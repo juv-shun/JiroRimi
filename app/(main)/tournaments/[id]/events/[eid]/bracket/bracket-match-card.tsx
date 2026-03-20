@@ -41,14 +41,14 @@ export function BracketMatchCard({ match }: BracketMatchCardProps) {
       )}
       <TeamRow
         team={match.teamA}
-        isWinner={isConfirmed && match.winner?.id === match.teamA?.id}
-        isLoser={isConfirmed && match.winner !== null && match.winner?.id !== match.teamA?.id}
+        isWinner={isConfirmed && match.winner !== null && match.teamA !== null && match.winner.id === match.teamA.id}
+        isLoser={isConfirmed && match.winner !== null && match.teamA !== null && match.winner.id !== match.teamA.id}
       />
       <div className="border-t border-inherit" />
       <TeamRow
         team={match.teamB}
-        isWinner={isConfirmed && match.winner?.id === match.teamB?.id}
-        isLoser={isConfirmed && match.winner !== null && match.winner?.id !== match.teamB?.id}
+        isWinner={isConfirmed && match.winner !== null && match.teamB !== null && match.winner.id === match.teamB.id}
+        isLoser={isConfirmed && match.winner !== null && match.teamB !== null && match.winner.id !== match.teamB.id}
       />
     </div>
   )
