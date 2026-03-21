@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
-import { Nunito } from "next/font/google"
+import { M_PLUS_Rounded_1c } from "next/font/google"
 import "./globals.css"
 
-const nunito = Nunito({
+const mPlusRounded1c = M_PLUS_Rounded_1c({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "700", "800"],
   display: "swap",
 })
 
@@ -20,7 +20,7 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ja">
-      <body className={`${nunito.className} bg-background min-h-screen`}>
+      <body className={`${mPlusRounded1c.className} bg-background min-h-screen`}>
         {children}
       </body>
     </html>
