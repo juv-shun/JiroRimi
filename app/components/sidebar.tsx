@@ -1,6 +1,7 @@
 "use client"
 
 import { signOut } from "@/app/actions/auth"
+import logoImage from "@/public/logo.png"
 import {
   Calendar,
   Home,
@@ -88,7 +89,7 @@ export function Sidebar({
       {/* Logo / App Name */}
       <div className="flex h-16 items-center gap-3 border-b border-primary/20 px-4">
         <Image
-          src="/logo.png"
+          src={logoImage}
           alt="Jiro-Rimi Cup"
           width={48}
           height={48}
@@ -235,7 +236,7 @@ export function Sidebar({
       <header className="fixed top-0 right-0 left-0 z-40 flex h-14 items-center justify-between border-b border-primary/10 bg-white/95 px-4 backdrop-blur-sm md:hidden">
         <div className="flex items-center gap-2">
           <Image
-            src="/logo.png"
+            src={logoImage}
             alt="Jiro-Rimi Cup"
             width={36}
             height={36}

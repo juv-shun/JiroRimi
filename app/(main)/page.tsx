@@ -1,4 +1,5 @@
 import Image from "next/image"
+import logoImage from "@/public/logo.png"
 
 export default function HomePage() {
   return (
@@ -9,7 +10,7 @@ export default function HomePage() {
           {/* Logo */}
           <div className="mb-8 inline-block animate-float">
             <Image
-              src="/logo.png"
+              src={logoImage}
               alt="Jiro-Rimi Cup"
               width={240}
               height={240}
