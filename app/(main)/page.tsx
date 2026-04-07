@@ -19,21 +19,36 @@ export default function HomePage() {
                   Jiro-Rimi Cup は、個人技と判断力を問うポケモンユナイトの公式感ある競技体験を目指したソロ大会です。
                   男子向けの「じろカップ」と女子向けの「りみカップ」に分かれ、それぞれで真剣勝負を楽しめます。
                 </p>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rich-card p-4">
-                    <p className="panel-title mb-2">Format</p>
-                    <p className="text-lg font-bold text-[#f4efe6]">Swiss Draw</p>
-                    <p className="mt-1 text-sm text-text-secondary">予選から順位戦まで、一貫した競技導線。</p>
+                    <div className="flex items-center gap-4">
+                      <Image
+                        src="/jiro-icon.png"
+                        alt="じろカップ"
+                        width={56}
+                        height={56}
+                        className="rounded-xl border border-[#d8a24c]/20 bg-black/40 p-1"
+                      />
+                      <div>
+                        <p className="panel-title mb-2">Boys Division</p>
+                        <p className="text-lg font-bold text-[#f4efe6]">じろカップ</p>
+                      </div>
+                    </div>
                   </div>
                   <div className="rich-card p-4">
-                    <p className="panel-title mb-2">Division</p>
-                    <p className="text-lg font-bold text-[#f4efe6]">Boys / Girls</p>
-                    <p className="mt-1 text-sm text-text-secondary">大会ごとの区分を視認しやすく整理。</p>
-                  </div>
-                  <div className="rich-card p-4">
-                    <p className="panel-title mb-2">Final Stage</p>
-                    <p className="text-lg font-bold text-[#f4efe6]">Grand Final</p>
-                    <p className="mt-1 text-sm text-text-secondary">上位プレイヤーによる決勝トーナメント。</p>
+                    <div className="flex items-center gap-4">
+                      <Image
+                        src="/rimi-icon.png"
+                        alt="りみカップ"
+                        width={56}
+                        height={56}
+                        className="rounded-xl border border-[#d8a24c]/20 bg-black/40 p-1"
+                      />
+                      <div>
+                        <p className="panel-title mb-2">Girls Division</p>
+                        <p className="text-lg font-bold text-[#f4efe6]">りみカップ</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -71,44 +86,6 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <div className="rich-card p-6">
-              <div className="mb-4 flex items-center gap-4">
-                <Image
-                  src="/jiro-icon.png"
-                  alt="じろカップ"
-                  width={64}
-                  height={64}
-                  className="rounded-xl border border-[#d8a24c]/20 bg-black/40 p-1"
-                />
-                <div>
-                  <p className="panel-title mb-1">Boys Division</p>
-                  <h2 className="text-2xl font-bold text-[#f4efe6]">じろカップ</h2>
-                </div>
-              </div>
-              <p className="text-sm leading-7 text-text-secondary">
-                駆け引き、判断速度、試合ごとの修正力。競技シーンらしい緊張感を前面に出した男子ソロ大会。
-              </p>
-            </div>
-            <div className="rich-card p-6">
-              <div className="mb-4 flex items-center gap-4">
-                <Image
-                  src="/rimi-icon.png"
-                  alt="りみカップ"
-                  width={64}
-                  height={64}
-                  className="rounded-xl border border-[#d8a24c]/20 bg-black/40 p-1"
-                />
-                <div>
-                  <p className="panel-title mb-1">Girls Division</p>
-                  <h2 className="text-2xl font-bold text-[#f4efe6]">りみカップ</h2>
-                </div>
-              </div>
-              <p className="text-sm leading-7 text-text-secondary">
-                一戦ごとの精度が結果に直結する、公式大会のような空気感を意識した女子ソロ大会。
-              </p>
             </div>
           </div>
         </div>
