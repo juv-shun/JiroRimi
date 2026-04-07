@@ -13,11 +13,11 @@ export default function HomePage() {
                 <h1 className="mb-5 text-4xl font-black leading-tight tracking-[0.06em] text-[#f4efe6] sm:text-5xl lg:text-6xl">
                   実力で勝ち切る
                   <br />
-                  本格ソロ大会。
+                  本格ソロ大会
                 </h1>
                 <p className="mb-8 max-w-2xl text-base leading-8 text-text-secondary sm:text-lg">
                   Jiro-Rimi Cup は、個人技と判断力を問うポケモンユナイトの公式感ある競技体験を目指したソロ大会です。
-                  熱量ではなく、勝負の緊張感が伝わるトーンへ画面全体を再設計します。
+                  男子向けの「じろカップ」と女子向けの「りみカップ」に分かれ、それぞれで真剣勝負を楽しめます。
                 </p>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rich-card p-4">
