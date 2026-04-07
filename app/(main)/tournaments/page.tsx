@@ -137,7 +137,7 @@ export default async function TournamentsPage() {
   return (
     <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 page-bg-pattern">
       <div className="max-w-4xl mx-auto">
-        <PageHeader title="Tournaments" />
+        <PageHeader title="Tournaments" subtitle="Official Entry Console" />
 
         <TournamentList
           tournaments={tournamentList}

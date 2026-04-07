@@ -137,12 +137,12 @@ export function EventFields({
       {fields.map((field, index) => (
         <section
           key={field.id}
-          className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden"
+          className="rich-card overflow-hidden rounded-2xl"
         >
           {/* ヘッダー */}
-          <div className="bg-gradient-to-r from-success/10 via-success/5 to-transparent px-6 py-4 border-b border-border/50 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-              <span className="w-1.5 h-5 bg-success rounded-full" />
+          <div className="flex items-center justify-between border-b border-[#d8a24c]/10 bg-gradient-to-r from-success/12 via-success/6 to-transparent px-6 py-4">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
+              <span className="h-5 w-1.5 rounded-full bg-success" />
               イベント {index + 1}
             </h3>
             <div className="flex items-center gap-1.5">
@@ -153,13 +153,13 @@ export function EventFields({
                 return (
                   <>
                     {status === "in_progress" && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/12 px-2.5 py-1 text-xs font-medium text-rose-200">
                         <CircleDot className="w-3 h-3" />
                         進行中
                       </span>
                     )}
                     {status === "completed" && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#d8a24c]/20 bg-[#d8a24c]/10 px-2.5 py-1 text-xs font-medium text-[#f2d7aa]">
                         <CheckCircle2 className="w-3 h-3" />
                         終了
                       </span>
@@ -171,7 +171,7 @@ export function EventFields({
                 <button
                   type="button"
                   onClick={() => remove(index)}
-                  className="p-1.5 text-text-secondary hover:text-error hover:bg-error/10 rounded-lg transition-colors duration-200"
+                  className="rounded-lg p-1.5 text-text-secondary transition-colors duration-200 hover:bg-error/10 hover:text-error"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -185,7 +185,7 @@ export function EventFields({
             <div>
               <label
                 htmlFor={`events.${index}.name`}
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 イベント名
               </label>
@@ -194,7 +194,7 @@ export function EventFields({
                 type="text"
                 {...register(`events.${index}.name`)}
                 placeholder="例: 予選1"
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               {errors.events?.[index]?.name && (
                 <p className="mt-1 text-xs text-error">
@@ -204,11 +204,11 @@ export function EventFields({
             </div>
 
             {/* エントリー方式 / 進行形式 */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label
                   htmlFor={`events.${index}.entry_type`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   エントリー方式
                 </label>
@@ -221,7 +221,7 @@ export function EventFields({
                         e.target.value as EntryType,
                       ),
                   })}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   {Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -238,7 +238,7 @@ export function EventFields({
               <div>
                 <label
                   htmlFor={`events.${index}.match_format`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   進行形式
                 </label>
@@ -251,7 +251,7 @@ export function EventFields({
                         e.target.value as MatchFormat,
                       ),
                   })}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   {Object.entries(MATCH_FORMAT_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -268,7 +268,7 @@ export function EventFields({
             </div>
 
             {/* 試合数 / 参加上限 */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {(() => {
                 const matchFormat = watch(`events.${index}.match_format`)
                 const isDoubleElimination = matchFormat === "double_elimination"
@@ -276,7 +276,7 @@ export function EventFields({
                   <div>
                     <label
                       htmlFor={`events.${index}.matches_per_event`}
-                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                      className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                     >
                       試合数
                     </label>
@@ -294,9 +294,9 @@ export function EventFields({
                       min={1}
                       max={10}
                       disabled={isDoubleElimination}
-                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                      className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                         isDoubleElimination
-                          ? "bg-gray-100 cursor-not-allowed opacity-60"
+                          ? "cursor-not-allowed bg-white/[0.03] opacity-60"
                           : ""
                       }`}
                     />
@@ -320,7 +320,7 @@ export function EventFields({
                   <div>
                     <label
                       htmlFor={`events.${index}.max_participants`}
-                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                      className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                     >
                       参加上限{isDoubleElimination ? "" : "（任意）"}
                     </label>
@@ -333,9 +333,9 @@ export function EventFields({
                       min={1}
                       placeholder="上限なし"
                       disabled={isDoubleElimination}
-                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
+                      className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
                         isDoubleElimination
-                          ? "bg-gray-100 cursor-not-allowed opacity-60"
+                          ? "cursor-not-allowed bg-white/[0.03] opacity-60"
                           : ""
                       }`}
                     />
@@ -358,7 +358,7 @@ export function EventFields({
             <div>
               <label
                 htmlFor={`events.${index}.scheduled_date`}
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 開催日
               </label>
@@ -366,7 +366,7 @@ export function EventFields({
                 id={`events.${index}.scheduled_date`}
                 type="date"
                 {...register(`events.${index}.scheduled_date`)}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               {errors.events?.[index]?.scheduled_date && (
                 <p className="mt-1 text-xs text-error">
@@ -380,11 +380,11 @@ export function EventFields({
               const entryType = watch(`events.${index}.entry_type`)
               const isInvite = entryType === "invite"
               return (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label
                       htmlFor={`events.${index}.entry_start`}
-                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                      className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                     >
                       エントリー開始
                     </label>
@@ -393,8 +393,8 @@ export function EventFields({
                       type="datetime-local"
                       {...register(`events.${index}.entry_start`)}
                       disabled={isInvite}
-                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
-                        isInvite ? "bg-gray-100 cursor-not-allowed opacity-60" : ""
+                      className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                        isInvite ? "cursor-not-allowed bg-white/[0.03] opacity-60" : ""
                       }`}
                     />
                     {isInvite && (
@@ -411,7 +411,7 @@ export function EventFields({
                   <div>
                     <label
                       htmlFor={`events.${index}.entry_end`}
-                      className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                      className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                     >
                       エントリー締切
                     </label>
@@ -420,8 +420,8 @@ export function EventFields({
                       type="datetime-local"
                       {...register(`events.${index}.entry_end`)}
                       disabled={isInvite}
-                      className={`w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 ${
-                        isInvite ? "bg-gray-100 cursor-not-allowed opacity-60" : ""
+                      className={`w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 ${
+                        isInvite ? "cursor-not-allowed bg-white/[0.03] opacity-60" : ""
                       }`}
                     />
                     {errors.events?.[index]?.entry_end && (
@@ -435,11 +435,11 @@ export function EventFields({
             })()}
 
             {/* チェックイン開始/締切 */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label
                   htmlFor={`events.${index}.checkin_start`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   チェックイン開始
                 </label>
@@ -447,7 +447,7 @@ export function EventFields({
                   id={`events.${index}.checkin_start`}
                   type="datetime-local"
                   {...register(`events.${index}.checkin_start`)}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {errors.events?.[index]?.checkin_start && (
                   <p className="mt-1 text-xs text-error">
@@ -458,7 +458,7 @@ export function EventFields({
               <div>
                 <label
                   htmlFor={`events.${index}.checkin_end`}
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   チェックイン締切
                 </label>
@@ -466,7 +466,7 @@ export function EventFields({
                   id={`events.${index}.checkin_end`}
                   type="datetime-local"
                   {...register(`events.${index}.checkin_end`)}
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {errors.events?.[index]?.checkin_end && (
                   <p className="mt-1 text-xs text-error">
@@ -480,7 +480,7 @@ export function EventFields({
             <div>
               <label
                 htmlFor={`events.${index}.gender`}
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 性別区分
               </label>
@@ -489,7 +489,7 @@ export function EventFields({
                 {...register(`events.${index}.gender`, {
                   setValueAs: (v) => (v === "" ? null : v),
                 })}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">制限なし</option>
                 {Object.entries(GENDER_LABELS).map(([value, label]) => (
@@ -512,7 +512,7 @@ export function EventFields({
             <div>
               <label
                 htmlFor={`events.${index}.rules`}
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 ルール
               </label>
@@ -521,7 +521,7 @@ export function EventFields({
                 {...register(`events.${index}.rules`)}
                 rows={3}
                 placeholder="このイベントのルールを入力してください"
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-y"
+                className="w-full resize-y rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
               <p className="mt-1 text-xs text-text-secondary">任意</p>
             </div>
@@ -532,10 +532,10 @@ export function EventFields({
               if (mode !== "edit" || !tournamentId || !eventId) return null
               const status = eventStatuses?.[eventId]
               return (
-                <div className="border-t border-border/50 pt-4 flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 border-t border-[#d8a24c]/10 pt-4">
                   <Link
                     href={`/admin/tournaments/${tournamentId}/events/${eventId}/checkin`}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-border text-text-secondary hover:text-primary hover:border-primary/50 hover:bg-primary/5"
+                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-200 hover:border-primary/30 hover:bg-primary/10 hover:text-[#ffd7dc]"
                   >
                     <ClipboardCheck className="w-4 h-4" />
                     チェックイン管理
@@ -545,7 +545,7 @@ export function EventFields({
                       type="button"
                       onClick={() => handleStartClick(eventId)}
                       disabled={loadingEventId === eventId}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 bg-gradient-to-r from-primary to-amber-500 text-white hover:from-primary/90 hover:to-amber-500/90 disabled:opacity-50"
+                      className="glow-button inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-200 disabled:opacity-50"
                     >
                       {loadingEventId === eventId ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -558,7 +558,7 @@ export function EventFields({
                   {status === "in_progress" && (
                     <Link
                       href={`/admin/tournaments/${tournamentId}/events/${eventId}/matches`}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                      className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-[#ffd7dc] transition-all duration-200 hover:bg-primary/15"
                     >
                       <Swords className="w-4 h-4" />
                       試合管理
@@ -575,7 +575,7 @@ export function EventFields({
       <button
         type="button"
         onClick={() => append(EMPTY_EVENT)}
-        className="w-full py-3 border-2 border-dashed border-border hover:border-primary/50 rounded-2xl text-text-secondary hover:text-primary flex items-center justify-center gap-2 transition-all duration-200"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/10 py-3 text-text-secondary transition-all duration-200 hover:border-primary/35 hover:bg-primary/8 hover:text-[#ffd7dc]"
       >
         <Plus className="w-4 h-4" />
         イベントを追加

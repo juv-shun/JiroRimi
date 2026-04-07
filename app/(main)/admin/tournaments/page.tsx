@@ -36,9 +36,9 @@ export default async function AdminTournamentsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 page-bg-pattern">
       <div className="max-w-2xl mx-auto">
-        <PageHeader title="大会管理" />
+        <PageHeader title="大会管理" subtitle="Tournament Admin Console" />
 
         <TournamentList
           tournaments={tournaments as TournamentWithEventCount[]}

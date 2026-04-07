@@ -114,11 +114,11 @@ export function ProfileForm({
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
       {/* プロフィール情報カード */}
-      <section className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-200 hover:shadow-md">
+      <section className="rich-card overflow-hidden rounded-2xl">
         {/* ヘッダー部分：グラデーション背景 */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/50">
-          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-primary rounded-full" />
+        <div className="border-b border-[#d8a24c]/10 bg-gradient-to-r from-primary/12 via-primary/6 to-transparent px-6 py-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
+            <span className="h-5 w-1.5 rounded-full bg-primary" />
             Profile
           </h2>
         </div>
@@ -132,12 +132,12 @@ export function ProfileForm({
                 <img
                   src={profile.avatar_url}
                   alt="プロフィール画像"
-                  className="w-20 h-20 rounded-2xl border-2 border-primary/20 shadow-sm object-cover transition-transform duration-200 group-hover:scale-105"
+                  className="h-20 w-20 rounded-2xl border-2 border-primary/20 object-cover shadow-sm transition-transform duration-200 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 border-2 border-border flex items-center justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-white/10 bg-gradient-to-br from-white/8 to-white/4">
                   <svg
-                    className="w-10 h-10 text-gray-400"
+                    className="h-10 w-10 text-text-secondary"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                     aria-hidden="true"
@@ -147,7 +147,7 @@ export function ProfileForm({
                 </div>
               )}
               {/* アバターの装飾 */}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+              <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-lg bg-primary shadow-sm">
                 <svg
                   className="w-3.5 h-3.5 text-white"
                   fill="none"
@@ -171,7 +171,7 @@ export function ProfileForm({
               <div>
                 <label
                   htmlFor="player_name"
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   Player Name
                 </label>
@@ -180,7 +180,7 @@ export function ProfileForm({
                   type="text"
                   {...register("player_name")}
                   placeholder="Your in-game name"
-                  className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {errors.player_name && (
                   <p className="mt-1 text-xs text-error">
@@ -193,12 +193,12 @@ export function ProfileForm({
               <div>
                 <label
                   htmlFor="x_id"
-                  className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+                  className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
                 >
                   X ID
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">
                     @
                   </span>
                   <input
@@ -206,7 +206,7 @@ export function ProfileForm({
                     type="text"
                     {...register("x_id")}
                     placeholder="username"
-                    className="w-full pl-7 pr-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pr-3 pl-7 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 {errors.x_id && (
@@ -219,7 +219,7 @@ export function ProfileForm({
 
             {/* 右：性別選択（縦並びトグル） */}
             <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-text-secondary uppercase tracking-wide text-center">
+              <span className="text-center text-xs font-medium uppercase tracking-wide text-text-secondary">
                 Gender
               </span>
               <div className="flex flex-col gap-1.5">
@@ -232,15 +232,15 @@ export function ProfileForm({
                       className="peer sr-only"
                     />
                     <div
-                      className={`w-16 py-2 rounded-xl border-2 text-center transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md ${
+                      className={`w-16 rounded-xl border-2 py-2 text-center transition-all duration-200 peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-md ${
                         gender === "boys"
-                          ? "border-blue-200 hover:border-blue-300 bg-blue-50/50"
-                          : "border-pink-200 hover:border-pink-300 bg-pink-50/50"
+                          ? "border-sky-400/20 bg-sky-400/10 hover:border-sky-400/35"
+                          : "border-pink-400/20 bg-pink-400/10 hover:border-pink-400/35"
                       }`}
                     >
                       <span
                         className={`text-sm font-medium transition-colors peer-checked:text-white ${
-                          gender === "boys" ? "text-blue-600" : "text-pink-600"
+                          gender === "boys" ? "text-sky-200" : "text-pink-200"
                         }`}
                       >
                         {GENDER_LABELS[gender]}
@@ -260,32 +260,32 @@ export function ProfileForm({
       </section>
 
       {/* ロール設定カード */}
-      <section className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-200 hover:shadow-md">
+      <section className="rich-card overflow-hidden rounded-2xl">
         {/* ヘッダー部分：グラデーション背景 */}
-        <div className="bg-gradient-to-r from-success/10 via-success/5 to-transparent px-6 py-4 border-b border-border/50">
-          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-success rounded-full" />
+        <div className="border-b border-[#d8a24c]/10 bg-gradient-to-r from-success/12 via-success/6 to-transparent px-6 py-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
+            <span className="h-5 w-1.5 rounded-full bg-success" />
             Role Priority
           </h2>
         </div>
 
         <div className="p-6">
           {/* 3カラムグリッドでセレクトを横並び */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* 第1希望 */}
             <div>
               <label
                 htmlFor="first_role"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
+                className="mb-1 block text-center text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 1st
               </label>
               <select
                 id="first_role"
                 {...register("first_role")}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 appearance-none cursor-pointer"
+                className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b1aa9f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                   backgroundPosition: "right 0.5rem center",
                   backgroundRepeat: "no-repeat",
                   backgroundSize: "1.25em 1.25em",
@@ -313,16 +313,16 @@ export function ProfileForm({
             <div>
               <label
                 htmlFor="second_role"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
+                className="mb-1 block text-center text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 2nd
               </label>
               <select
                 id="second_role"
                 {...register("second_role")}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 appearance-none cursor-pointer"
+                className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b1aa9f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                   backgroundPosition: "right 0.5rem center",
                   backgroundRepeat: "no-repeat",
                   backgroundSize: "1.25em 1.25em",
@@ -350,16 +350,16 @@ export function ProfileForm({
             <div>
               <label
                 htmlFor="third_role"
-                className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1 text-center"
+                className="mb-1 block text-center text-xs font-medium uppercase tracking-wide text-text-secondary"
               >
                 3rd
               </label>
               <select
                 id="third_role"
                 {...register("third_role")}
-                className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 appearance-none cursor-pointer"
+                className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23b1aa9f' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                   backgroundPosition: "right 0.5rem center",
                   backgroundRepeat: "no-repeat",
                   backgroundSize: "1.25em 1.25em",
@@ -388,7 +388,7 @@ export function ProfileForm({
 
       {/* メッセージ表示 */}
       {state && !state.success && (
-        <div className="p-4 bg-red-50 border border-error/20 rounded-lg">
+        <div className="rounded-lg border border-error/20 bg-error/10 p-4">
           <p className="text-sm text-error">{state.error}</p>
         </div>
       )}
@@ -400,7 +400,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full py-4 bg-primary hover:bg-primary-hover disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] disabled:transform-none shadow-md hover:shadow-lg disabled:shadow-none"
+        className="w-full rounded-2xl bg-primary py-4 font-medium text-white shadow-md transition-all duration-200 hover:scale-[1.01] hover:bg-primary-hover hover:shadow-lg active:scale-[0.99] disabled:transform-none disabled:bg-stone-500 disabled:shadow-none"
       >
         {isPending ? (
           <span className="flex items-center justify-center gap-2">

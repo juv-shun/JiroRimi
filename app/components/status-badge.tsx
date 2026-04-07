@@ -5,24 +5,24 @@ import {
 
 const STATUS_STYLES: Record<TournamentStatus, { bg: string; text: string; dot: string }> = {
   draft: {
-    bg: "bg-gradient-to-r from-gray-100 to-gray-50",
-    text: "text-gray-600",
-    dot: "bg-gray-400",
+    bg: "bg-white/5 border-white/10",
+    text: "text-stone-300",
+    dot: "bg-stone-500",
   },
   open: {
-    bg: "bg-gradient-to-r from-emerald-100 to-green-50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
+    bg: "bg-emerald-500/10 border-emerald-400/20",
+    text: "text-emerald-300",
+    dot: "bg-emerald-400",
   },
   in_progress: {
-    bg: "bg-gradient-to-r from-blue-100 to-sky-50",
-    text: "text-blue-700",
-    dot: "bg-blue-500",
+    bg: "bg-primary/12 border-primary/30",
+    text: "text-rose-200",
+    dot: "bg-primary",
   },
   completed: {
-    bg: "bg-gradient-to-r from-gray-100 to-slate-50",
-    text: "text-gray-600",
-    dot: "bg-gray-400",
+    bg: "bg-[#d8a24c]/10 border-[#d8a24c]/20",
+    text: "text-[#f2d7aa]",
+    dot: "bg-[#d8a24c]",
   },
 }
 
@@ -31,7 +31,7 @@ export function StatusBadge({ status }: { status: TournamentStatus }) {
 
   return (
     <span
-      className={`status-badge ${styles.bg} ${styles.text} border border-current/10 shadow-sm`}
+      className={`status-badge ${styles.bg} ${styles.text} border shadow-sm`}
     >
       <span
         className={`w-1.5 h-1.5 rounded-full ${styles.dot} ${

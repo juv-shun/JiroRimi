@@ -21,7 +21,7 @@ export default async function MyPage() {
   const isFirstTimeSetup = !isProfileComplete(profile as Profile | null)
 
   return (
-    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 page-bg-pattern">
       <div className="max-w-2xl mx-auto">
         <PageHeader
           title="My Page"
@@ -33,8 +33,8 @@ export default async function MyPage() {
         />
 
         {isFirstTimeSetup && (
-          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/10 p-4">
-            <h2 className="font-semibold text-lg text-primary">Welcome!</h2>
+          <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 p-4 shadow-[0_16px_32px_rgba(0,0,0,0.18)]">
+            <h2 className="text-lg font-semibold text-[#ffd7dc]">Welcome!</h2>
             <p className="mt-1 text-sm text-text-secondary">
               プロフィールを完成させてください。
             </p>

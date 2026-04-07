@@ -45,13 +45,13 @@ export function Toast({
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 bg-white rounded-xl shadow-lg border ${config.borderColor} ${
+      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border bg-[#111214] px-5 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.45)] ${config.borderColor} ${
         isExiting ? "animate-toast-out" : "animate-toast-in"
       }`}
       role="alert"
     >
       <div
-        className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}
+        className={`flex h-8 w-8 items-center justify-center rounded-full ${config.bgColor}`}
       >
         <svg
           className={`w-5 h-5 ${config.iconColor}`}
