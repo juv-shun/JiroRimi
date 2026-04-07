@@ -55,11 +55,6 @@ export default function HomePage() {
 
               <div className="relative">
                 <div className="absolute inset-x-10 top-6 h-40 rounded-full bg-primary/20 blur-3xl" />
-                <div className="relative rounded-[2rem] border border-[#d8a24c]/25 bg-[#2a241f]/88 px-6 py-10 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-                  <div className="mb-6 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.24em] text-[#d8a24c]">
-                    <span>Main Visual</span>
-                    <span>Jiro-Rimi Cup</span>
-                  </div>
                   <div className="rounded-[2rem] border border-[#d8a24c]/20 bg-[#f3ecde] px-6 py-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_36px_rgba(0,0,0,0.2)]">
                     <Image
                       src={logoImage}
@@ -70,21 +65,6 @@ export default function HomePage() {
                       priority
                     />
                   </div>
-                  <div className="mt-8 grid gap-3 text-left sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-white/4 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8a24c]">
-                        Tournament
-                      </p>
-                      <p className="mt-2 text-sm text-text-secondary">本番感のある配色とシャープな情報設計。</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-white/4 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8a24c]">
-                        Broadcast Ready
-                      </p>
-                      <p className="mt-2 text-sm text-text-secondary">観戦や進行を意識したステージ感のあるUI。</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
