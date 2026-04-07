@@ -29,7 +29,7 @@ export default async function MainLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-text-primary">
       <Sidebar
         isLoggedIn={!!user}
         userName={userName}

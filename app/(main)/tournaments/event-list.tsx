@@ -107,9 +107,9 @@ export function EventList({
   if (events.length === 0) {
     return (
       <div className="rich-card p-8 text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/4">
           <svg
-            className="w-6 h-6 text-gray-400"
+            className="h-6 w-6 text-[#d8a24c]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -123,7 +123,7 @@ export function EventList({
             />
           </svg>
         </div>
-        <p className="text-gray-500 text-sm">
+        <p className="text-sm text-text-secondary">
           イベントがまだ作成されていません
         </p>
       </div>
@@ -258,39 +258,44 @@ export function EventList({
               animation: `card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.08}s forwards`,
             }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-amber-100 text-primary font-bold text-sm">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#d8a24c]/20 bg-white/5 text-sm font-black text-[#f2d7aa]">
                   {event.event_number}
                 </div>
-                <h3 className="font-semibold text-gray-900 text-lg">
-                  {event.name}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setRulesModal({
-                      eventName: event.name,
-                      rules: event.rules ?? "",
-                    })
-                  }
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors text-xs"
-                  aria-label="ルール詳細"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  ルール
-                </button>
-                {event.gender && (
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      event.gender === "boys"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-pink-100 text-pink-700"
-                    }`}
-                  >
-                    {event.gender === "boys" ? "Boys" : "Girls"}
-                  </span>
-                )}
+                <div>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-bold text-[#f4efe6]">{event.name}</h3>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRulesModal({
+                          eventName: event.name,
+                          rules: event.rules ?? "",
+                        })
+                      }
+                      className="flex items-center gap-1 rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-text-secondary transition-colors hover:border-[#d8a24c]/20 hover:text-[#f4efe6]"
+                      aria-label="ルール詳細"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      Rules
+                    </button>
+                    {event.gender && (
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                          event.gender === "boys"
+                            ? "border-sky-400/20 bg-sky-400/10 text-sky-200"
+                            : "border-pink-400/20 bg-pink-400/10 text-pink-200"
+                        }`}
+                      >
+                        {event.gender === "boys" ? "Boys" : "Girls"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8a24c]">
+                    Event {event.event_number}
+                  </p>
+                </div>
               </div>
               {badgeState !== "none" && (
                 <span className={`event-badge event-badge-${badgeState}`}>
@@ -311,7 +316,7 @@ export function EventList({
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+            <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <InfoRow
                 icon={<GameIcon />}
                 label="試合数"
@@ -351,7 +356,7 @@ export function EventList({
                 fullWidth
               />
               <div className="info-row sm:col-span-2">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-text-secondary">
                   <UserGroupIcon />
                   <span className="text-xs font-medium">
                     {isStarted ? "参加者" : "エントリー人数"}
@@ -363,7 +368,7 @@ export function EventList({
                       ? `/tournaments/${tournamentId}/events/${event.id}/ranking`
                       : `/tournaments/${tournamentId}/events/${event.id}/entries`
                   }
-                  className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
+                  className="group ml-auto flex items-center gap-1 text-sm font-semibold text-[#f2d7aa] transition-colors hover:text-[#f4efe6]"
                 >
                   {displayCount}人
                   <svg
@@ -385,13 +390,13 @@ export function EventList({
               {event.match_format === "double_elimination" &&
                 event.teamAssigned && (
                   <div className="info-row sm:col-span-2">
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-text-secondary">
                       <Swords className="w-4 h-4" />
                       <span className="text-xs font-medium">GFチーム</span>
                     </div>
                     <Link
                       href={`/tournaments/${tournamentId}/events/${event.id}/teams`}
-                      className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
+                      className="group ml-auto flex items-center gap-1 text-sm font-semibold text-[#f2d7aa] transition-colors hover:text-[#f4efe6]"
                     >
                       チーム一覧
                       <svg
@@ -414,13 +419,13 @@ export function EventList({
               {event.match_format === "double_elimination" &&
                 event.bracketExists && (
                   <div className="info-row sm:col-span-2">
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-text-secondary">
                       <Trophy className="w-4 h-4" />
                       <span className="text-xs font-medium">トーナメント</span>
                     </div>
                     <Link
                       href={`/tournaments/${tournamentId}/events/${event.id}/bracket`}
-                      className="ml-auto text-sm font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1 group"
+                      className="group ml-auto flex items-center gap-1 text-sm font-semibold text-[#f2d7aa] transition-colors hover:text-[#f4efe6]"
                     >
                       トーナメント表
                       <svg
@@ -525,11 +530,11 @@ function InfoRow({
 }) {
   return (
     <div className={`info-row ${fullWidth ? "sm:col-span-2" : ""}`}>
-      <div className="flex items-center gap-2 text-gray-500">
+      <div className="flex items-center gap-2 text-text-secondary">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <span className="ml-auto text-sm font-medium text-gray-900">{value}</span>
+      <span className="ml-auto text-right text-sm font-medium text-[#f4efe6]">{value}</span>
     </div>
   )
 }
@@ -687,14 +692,14 @@ function EntryButton({
   const isActive = state === "can_entry" || state === "not_logged_in"
 
   let className =
-    "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+    "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200"
 
   if (state === "invite" || state === "before_start" || state === "closed" || state === "gender_mismatch") {
-    className += " bg-gray-100 text-gray-400 cursor-not-allowed"
+    className += " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
   } else if (isCancel) {
     className += cancelling
-      ? " bg-red-400 text-white cursor-not-allowed"
-      : " bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:shadow-red-500/40 hover:-translate-y-0.5 active:translate-y-0"
+      ? " cursor-not-allowed bg-red-400 text-white"
+      : " border border-red-300/10 bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-950/25 hover:-translate-y-0.5 hover:shadow-red-950/40 active:translate-y-0"
   } else if (isActive) {
     className += loading
       ? " glow-button text-white cursor-not-allowed opacity-70"
@@ -755,17 +760,17 @@ function CheckinButton({
   const isDisabled = loading || state !== "can_checkin"
 
   let className =
-    "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+    "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200"
 
   if (state === "checked_in") {
-    className += " bg-green-100 text-green-700 cursor-not-allowed"
+    className += " cursor-not-allowed border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
   } else if (state === "can_checkin") {
     className += loading
       ? " glow-button text-white cursor-not-allowed opacity-70"
       : " glow-button text-white"
   } else {
     // not_entered / before_checkin / checkin_closed / event_started
-    className += " bg-gray-100 text-gray-400 cursor-not-allowed"
+    className += " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
   }
 
   if (additionalClassName) {
@@ -822,7 +827,7 @@ function LobbyButton({
 
   if (state === "can_enter") {
     let className =
-      "glow-button px-4 py-2.5 text-sm font-semibold rounded-xl text-white flex items-center justify-center gap-2"
+      "glow-button flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white"
     if (additionalClassName) className += ` ${additionalClassName}`
 
     return (
@@ -837,7 +842,7 @@ function LobbyButton({
   }
 
   let className =
-    "px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed"
+    "flex items-center justify-center gap-2 rounded-2xl border border-white/8 bg-white/5 px-4 py-2.5 text-sm font-semibold text-stone-500 transition-all duration-200 cursor-not-allowed"
   if (additionalClassName) className += ` ${additionalClassName}`
 
   return (
@@ -880,9 +885,9 @@ function EntryConfirmModal({
           animation: "card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         }}
       >
-        <div className="px-6 py-5 border-b border-orange-100 bg-gradient-to-r from-primary/5 to-amber-50">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center">
+        <div className="border-b border-[#d8a24c]/10 bg-white/[0.02] px-6 py-5">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[#f4efe6]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#d8a24c]">
               <svg
                 className="w-4 h-4 text-white"
                 fill="none"
@@ -902,22 +907,22 @@ function EntryConfirmModal({
           </h2>
         </div>
         <div className="px-6 py-5">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="mb-4 text-sm text-text-secondary">
             以下のイベントにエントリーしますか？
           </p>
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 space-y-2 border border-orange-100">
+          <div className="space-y-2 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-20">イベント</span>
-              <span className="font-semibold text-gray-900">{event.name}</span>
+              <span className="w-20 text-xs text-text-secondary">イベント</span>
+              <span className="font-semibold text-[#f4efe6]">{event.name}</span>
             </div>
             {event.gender && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 w-20">性別区分</span>
+                <span className="w-20 text-xs text-text-secondary">性別区分</span>
                 <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     event.gender === "boys"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-pink-100 text-pink-700"
+                      ? "bg-sky-400/10 text-sky-200"
+                      : "bg-pink-400/10 text-pink-200"
                   }`}
                 >
                   {event.gender === "boys" ? "Boys" : "Girls"}
@@ -925,32 +930,32 @@ function EntryConfirmModal({
               </div>
             )}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-20">開催日</span>
-              <span className="text-sm text-gray-700">
+              <span className="w-20 text-xs text-text-secondary">開催日</span>
+              <span className="text-sm text-[#f4efe6]">
                 {formatDateJST(event.scheduled_date)}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-20">チェックイン</span>
-              <span className="text-sm text-gray-700">
+              <span className="w-20 text-xs text-text-secondary">チェックイン</span>
+              <span className="text-sm text-[#f4efe6]">
                 {formatTimeJST(event.checkin_start)} 〜{" "}
                 {formatTimeJST(event.checkin_end)}
               </span>
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 border-t border-orange-100 flex gap-3 bg-gray-50/50">
+        <div className="flex gap-3 border-t border-[#d8a24c]/10 bg-white/[0.02] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="glass-button flex-1 px-4 py-2.5 text-sm font-medium rounded-xl text-gray-700"
+            className="glass-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-medium text-[#f4efe6]"
           >
             キャンセル
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="glow-button flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl text-white"
+            className="glow-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-semibold text-white"
           >
             エントリーする
           </button>
@@ -992,9 +997,9 @@ function CancelConfirmModal({
           animation: "card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         }}
       >
-        <div className="px-6 py-5 border-b border-red-100 bg-gradient-to-r from-red-50 to-orange-50">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
+        <div className="border-b border-primary/15 bg-primary/6 px-6 py-5">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[#f4efe6]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-red-700">
               <svg
                 className="w-4 h-4 text-white"
                 fill="none"
@@ -1014,34 +1019,34 @@ function CancelConfirmModal({
           </h2>
         </div>
         <div className="px-6 py-5">
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="mb-4 text-sm text-text-secondary">
             以下のイベントのエントリーをキャンセルしますか？
           </p>
-          <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-4 space-y-2 border border-red-100">
+          <div className="space-y-2 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-20">イベント</span>
-              <span className="font-semibold text-gray-900">{event.name}</span>
+              <span className="w-20 text-xs text-text-secondary">イベント</span>
+              <span className="font-semibold text-[#f4efe6]">{event.name}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-20">開催日</span>
-              <span className="text-sm text-gray-700">
+              <span className="w-20 text-xs text-text-secondary">開催日</span>
+              <span className="text-sm text-[#f4efe6]">
                 {formatDateJST(event.scheduled_date)}
               </span>
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 border-t border-red-100 flex gap-3 bg-gray-50/50">
+        <div className="flex gap-3 border-t border-primary/15 bg-white/[0.02] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="glass-button flex-1 px-4 py-2.5 text-sm font-medium rounded-xl text-gray-700"
+            className="glass-button flex-1 rounded-2xl px-4 py-2.5 text-sm font-medium text-[#f4efe6]"
           >
             戻る
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25 hover:shadow-red-500/40 transition-all"
+            className="flex-1 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-950/25 transition-all hover:shadow-red-950/40"
           >
             キャンセルする
           </button>
@@ -1083,9 +1088,9 @@ function RulesModal({
           animation: "card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         }}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-orange-100 bg-gradient-to-r from-primary/5 to-amber-50">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center">
+        <div className="flex items-center justify-between border-b border-[#d8a24c]/10 bg-white/[0.02] px-6 py-5">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-[#f4efe6]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-[#d8a24c]">
               <svg
                 className="w-4 h-4 text-white"
                 fill="none"
@@ -1106,7 +1111,7 @@ function RulesModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-text-secondary transition-colors hover:bg-white/10 hover:text-[#f4efe6]"
             aria-label="閉じる"
           >
             <svg
@@ -1125,16 +1130,16 @@ function RulesModal({
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5 overflow-y-auto max-h-[60vh]">
-          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+        <div className="max-h-[60vh] overflow-y-auto px-6 py-5">
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-text-secondary">
             {rules || "ルールが設定されていません。"}
           </pre>
         </div>
-        <div className="px-6 py-4 border-t border-orange-100 bg-gray-50/50">
+        <div className="border-t border-[#d8a24c]/10 bg-white/[0.02] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="glass-button w-full px-4 py-2.5 text-sm font-medium rounded-xl text-gray-700"
+            className="glass-button w-full rounded-2xl px-4 py-2.5 text-sm font-medium text-[#f4efe6]"
           >
             閉じる
           </button>
@@ -1143,4 +1148,3 @@ function RulesModal({
     </div>
   )
 }
-

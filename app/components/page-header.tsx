@@ -9,28 +9,32 @@ export function PageHeader({
   subtitle,
   showIcons = true,
 }: PageHeaderProps) {
-  const StarIcon = () => (
-    <svg
-      className="w-8 h-8 text-primary animate-pulse"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-    </svg>
-  )
-
   return (
     <div className="mb-10 text-center">
-      <div className="inline-flex items-center gap-3 mb-2">
-        {showIcons && <StarIcon />}
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-orange-400 to-amber-500 bg-clip-text text-transparent">
+      <div className="mb-3 flex items-center justify-center gap-4">
+        {showIcons && (
+          <span
+            className="h-px w-10 bg-gradient-to-r from-transparent via-[#d8a24c] to-transparent"
+            aria-hidden="true"
+          />
+        )}
+        <span className="panel-title">Tournament View</span>
+        {showIcons && (
+          <span
+            className="h-px w-10 bg-gradient-to-r from-transparent via-[#d8a24c] to-transparent"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+      <div className="inline-flex items-center gap-3">
+        <h1 className="bg-gradient-to-r from-[#f4efe6] via-[#d8a24c] to-[#c61f2a] bg-clip-text text-4xl font-black tracking-[0.08em] text-transparent sm:text-5xl">
           {title}
         </h1>
-        {showIcons && <StarIcon />}
       </div>
       {subtitle && (
-        <p className="text-text-secondary text-sm tracking-wide">{subtitle}</p>
+        <p className="mt-3 text-sm tracking-[0.18em] text-text-secondary uppercase">
+          {subtitle}
+        </p>
       )}
     </div>
   )

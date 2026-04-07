@@ -19,9 +19,9 @@ export function TournamentList({
   if (tournaments.length === 0) {
     return (
       <div className="rich-card p-12 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary-light to-orange-100 mb-4">
+        <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-[#d8a24c]/20 bg-white/5">
           <svg
-            className="w-8 h-8 text-primary"
+            className="h-8 w-8 text-[#d8a24c]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -35,7 +35,7 @@ export function TournamentList({
             />
           </svg>
         </div>
-        <p className="text-gray-500 text-sm">現在公開中の大会はありません</p>
+        <p className="text-sm text-text-secondary">現在公開中の大会はありません</p>
       </div>
     )
   }
@@ -50,14 +50,28 @@ export function TournamentList({
             animation: `card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.1}s forwards`,
           }}
         >
-          <div className="flex items-center gap-3 mb-6">
+          <div className="mb-6 flex items-center gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-1.5 h-8 rounded-full bg-gradient-to-b from-primary to-amber-400" />
-              <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                {tournament.name}
-              </h2>
+              <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-[#d8a24c] via-[#f4efe6] to-primary" />
+              <div>
+                <p className="panel-title mb-1">Tournament</p>
+                <h2 className="text-xl font-bold tracking-tight text-[#f4efe6]">
+                  {tournament.name}
+                </h2>
+              </div>
             </div>
-            <StatusBadge status={tournament.status} />
+            <div className="ml-auto">
+              <StatusBadge status={tournament.status} />
+            </div>
+          </div>
+
+          <div className="mb-5 rounded-2xl border border-white/6 bg-white/[0.03] px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#d8a24c]">
+              Match Schedule
+            </p>
+            <p className="mt-2 text-sm text-text-secondary">
+              進行中の大会とエントリー可能なイベントを一覧で確認できます。
+            </p>
           </div>
 
           <EventList
