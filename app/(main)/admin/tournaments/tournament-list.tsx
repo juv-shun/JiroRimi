@@ -19,17 +19,17 @@ export function TournamentList({
 }) {
   if (tournaments.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center text-gray-500">
+      <div className="rich-card rounded-2xl p-8 text-center text-text-secondary">
         大会がまだ作成されていません
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-border overflow-x-auto">
+    <div className="rich-card overflow-x-auto rounded-2xl">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-gray-500">
+          <tr className="border-b border-[#d8a24c]/10 text-left text-text-secondary">
             <th className="px-4 py-3 font-medium">大会名</th>
             <th className="px-4 py-3 font-medium">ステータス</th>
             <th className="px-4 py-3 font-medium text-center">イベント数</th>
@@ -41,24 +41,24 @@ export function TournamentList({
           {tournaments.map((tournament) => (
             <tr
               key={tournament.id}
-              className="border-b border-border last:border-b-0 hover:bg-gray-50 transition-colors"
+              className="border-b border-white/6 transition-colors hover:bg-white/[0.03] last:border-b-0"
             >
-              <td className="px-4 py-3 font-medium text-gray-900">
+              <td className="px-4 py-3 font-medium text-text-primary">
                 {tournament.name}
               </td>
               <td className="px-4 py-3">
                 <StatusBadge status={tournament.status} />
               </td>
-              <td className="px-4 py-3 text-center text-gray-600">
+              <td className="px-4 py-3 text-center text-text-secondary">
                 {tournament.events[0]?.count ?? 0}
               </td>
-              <td className="px-4 py-3 text-gray-600">
+              <td className="px-4 py-3 text-text-secondary">
                 {formatDate(tournament.created_at)}
               </td>
               <td className="px-4 py-3 text-center">
                 <Link
                   href={`/admin/tournaments/${tournament.id}/edit`}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-colors"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-white/[0.06] hover:text-[#f2d7aa]"
                 >
                   <Pencil className="w-4 h-4" />
                 </Link>

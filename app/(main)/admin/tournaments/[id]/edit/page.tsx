@@ -98,7 +98,7 @@ export default async function EditTournamentPage({
   }
 
   return (
-    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 page-bg-pattern">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="大会編集" subtitle="大会情報を編集します" />
         <TournamentForm

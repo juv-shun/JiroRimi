@@ -23,12 +23,12 @@ const STATUS_LABELS: Record<TournamentStatus, string> = {
 
 const STATUS_BADGE_STYLES: Record<TournamentStatus, string> = {
   draft:
-    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-600",
-  open: "inline-block px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700",
+    "inline-block rounded-full bg-white/5 px-3 py-1 text-sm font-medium text-stone-300 border border-white/10",
+  open: "inline-block rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-300 border border-emerald-400/20",
   in_progress:
-    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700",
+    "inline-block rounded-full bg-primary/12 px-3 py-1 text-sm font-medium text-rose-200 border border-primary/25",
   completed:
-    "inline-block px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-700",
+    "inline-block rounded-full bg-[#d8a24c]/10 px-3 py-1 text-sm font-medium text-[#f2d7aa] border border-[#d8a24c]/20",
 }
 
 type TournamentFormProps = {
@@ -157,10 +157,10 @@ export function TournamentForm({
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       {/* 大会基本情報 */}
-      <section className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/50">
-          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-            <span className="w-1.5 h-5 bg-primary rounded-full" />
+      <section className="rich-card overflow-hidden rounded-2xl">
+        <div className="border-b border-[#d8a24c]/10 bg-gradient-to-r from-primary/12 via-primary/6 to-transparent px-6 py-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-text-primary">
+            <span className="h-5 w-1.5 rounded-full bg-primary" />
             大会基本情報
           </h2>
         </div>
@@ -170,7 +170,7 @@ export function TournamentForm({
           <div>
             <label
               htmlFor="name"
-              className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1"
+              className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary"
             >
               大会名
             </label>
@@ -179,7 +179,7 @@ export function TournamentForm({
               type="text"
               {...register("name")}
               placeholder="例: 第1回 Jiro-Rimi Cup"
-              className="w-full px-3 py-2 rounded-lg border border-border text-text-primary text-sm placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {errors.name && (
               <p className="mt-1 text-xs text-error">{errors.name.message}</p>
@@ -189,7 +189,7 @@ export function TournamentForm({
           {/* ステータス表示（編集時のみ） */}
           {mode === "edit" && (
             <div>
-              <label className="block text-xs font-medium text-text-secondary uppercase tracking-wide mb-1">
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-text-secondary">
                 ステータス
               </label>
               <input type="hidden" {...register("status")} />
@@ -217,7 +217,7 @@ export function TournamentForm({
 
       {/* エラー表示 */}
       {state && !state.success && (
-        <div className="p-4 bg-red-50 border border-error/20 rounded-lg">
+        <div className="rounded-lg border border-error/20 bg-error/10 p-4">
           <p className="text-sm text-error">{state.error}</p>
         </div>
       )}
@@ -230,7 +230,7 @@ export function TournamentForm({
         <button
           type="button"
           onClick={() => router.push("/admin/tournaments")}
-          className="flex-1 py-3 border border-border text-text-secondary font-medium rounded-lg hover:bg-gray-50 transition-all duration-200"
+          className="glass-button flex-1 rounded-2xl py-3 font-medium text-text-primary transition-all duration-200"
         >
           キャンセル
         </button>
@@ -256,7 +256,7 @@ export function TournamentForm({
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 py-3 bg-primary hover:bg-primary-hover disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:shadow-none"
+          className="glow-button flex-1 rounded-2xl py-3 font-medium text-white transition-all duration-200 disabled:bg-stone-500 disabled:shadow-none"
         >
           {isPending ? <SpinnerLabel text="保存中..." /> : "保存"}
         </button>
@@ -310,7 +310,7 @@ function StatusButton({
       type="button"
       onClick={onClick}
       disabled={isPending}
-      className={`flex-1 py-3 disabled:bg-gray-300 text-white font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:shadow-none ${className}`}
+      className={`flex-1 rounded-2xl py-3 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-stone-500 disabled:shadow-none ${className}`}
     >
       {isPending ? <SpinnerLabel text="処理中..." /> : label}
     </button>
