@@ -107,9 +107,6 @@ export function Sidebar({
             </span>
           </div>
         </div>
-        <p className="text-xs leading-5 text-text-secondary">
-          競技進行と参加導線をまとめたトーナメントコンソール
-        </p>
       </div>
 
       {/* Navigation */}
