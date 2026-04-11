@@ -9,7 +9,7 @@ export default function HomePage() {
           <div className="hero-frame px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16">
             <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
               <div>
-                <p className="panel-title mb-4">Official Solo Tournament</p>
+                <p className="panel-title mb-4">Solo Tournament</p>
                 <h1 className="mb-5 text-4xl font-black leading-tight tracking-[0.06em] text-[#f4efe6] sm:text-5xl lg:text-6xl">
                   実力で勝ち切る
                   <br />
