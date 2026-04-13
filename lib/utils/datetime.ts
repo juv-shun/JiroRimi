@@ -6,6 +6,13 @@
 export const datetimeLocalToTimestamptz = (dt: string): string =>
   `${dt}:00+09:00`
 
+type NormalizeEventEntryWindowInput = {
+  entry_type: "open" | "invite"
+  entry_start: string
+  entry_end: string
+  checkin_start: string
+}
+
 /** DB の timestamptz を datetime-local 形式（JST）に変換 */
 export const timestamptzToDatetimeLocal = (timestamptz: string): string => {
   const date = new Date(timestamptz)
@@ -47,3 +54,34 @@ export const formatDateTimeJST = (timestamptz: string): string =>
     timeZone: "Asia/Tokyo",
     hour12: false,
   }).format(new Date(timestamptz))
+
+/**
+ * 招待制イベントでは entry_start / entry_end を使わないため、
+ * 未入力時は checkin_start を基準に有効な時系列へ正規化する。
+ */
+export const normalizeEventEntryWindow = ({
+  entry_type,
+  entry_start,
+  entry_end,
+  checkin_start,
+}: NormalizeEventEntryWindowInput): {
+  entry_start: string
+  entry_end: string
+} => {
+  if (entry_type === "open") {
+    return { entry_start, entry_end }
+  }
+
+  const normalizedEntryEnd = entry_end || checkin_start
+  if (entry_start) {
+    return { entry_start, entry_end: normalizedEntryEnd }
+  }
+
+  const baseDate = new Date(datetimeLocalToTimestamptz(normalizedEntryEnd))
+  const oneMinuteBefore = new Date(baseDate.getTime() - 60 * 1000)
+
+  return {
+    entry_start: timestamptzToDatetimeLocal(oneMinuteBefore.toISOString()),
+    entry_end: normalizedEntryEnd,
+  }
+}

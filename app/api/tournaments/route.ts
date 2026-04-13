@@ -1,7 +1,10 @@
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { datetimeLocalToTimestamptz } from "@/lib/utils/datetime"
+import {
+  datetimeLocalToTimestamptz,
+  normalizeEventEntryWindow,
+} from "@/lib/utils/datetime"
 import { tournamentCreateSchema } from "@/lib/validations/tournament"
 
 export async function POST(request: Request) {
@@ -74,27 +77,31 @@ export async function POST(request: Request) {
     }
 
     // イベント一括INSERT
-    const eventsToInsert = data.events.map((ev, index) => ({
-      tournament_id: tournament.id,
-      event_number: index + 1,
-      name: ev.name,
-      entry_type: ev.entry_type,
-      match_format: ev.match_format,
-      matches_per_event:
-        ev.match_format === "double_elimination" ? null : ev.matches_per_event,
-      max_participants:
-        ev.max_participants && !Number.isNaN(ev.max_participants)
-          ? ev.max_participants
-          : null,
-      scheduled_date: ev.scheduled_date,
-      entry_start: datetimeLocalToTimestamptz(ev.entry_start),
-      entry_end: datetimeLocalToTimestamptz(ev.entry_end),
-      checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
-      checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
-      gender: ev.gender ?? null,
-      rules: ev.rules || null,
-      status: "scheduled",
-    }))
+    const eventsToInsert = data.events.map((ev, index) => {
+      const normalizedEntryWindow = normalizeEventEntryWindow(ev)
+
+      return {
+        tournament_id: tournament.id,
+        event_number: index + 1,
+        name: ev.name,
+        entry_type: ev.entry_type,
+        match_format: ev.match_format,
+        matches_per_event:
+          ev.match_format === "double_elimination" ? null : ev.matches_per_event,
+        max_participants:
+          ev.max_participants && !Number.isNaN(ev.max_participants)
+            ? ev.max_participants
+            : null,
+        scheduled_date: ev.scheduled_date,
+        entry_start: datetimeLocalToTimestamptz(normalizedEntryWindow.entry_start),
+        entry_end: datetimeLocalToTimestamptz(normalizedEntryWindow.entry_end),
+        checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
+        checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
+        gender: ev.gender ?? null,
+        rules: ev.rules || null,
+        status: "scheduled",
+      }
+    })
 
     const { error: eventsError } = await supabase
       .from("events")

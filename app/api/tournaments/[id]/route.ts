@@ -1,7 +1,10 @@
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { datetimeLocalToTimestamptz } from "@/lib/utils/datetime"
+import {
+  datetimeLocalToTimestamptz,
+  normalizeEventEntryWindow,
+} from "@/lib/utils/datetime"
 import { tournamentUpdateSchema } from "@/lib/validations/tournament"
 
 export async function PUT(
@@ -138,6 +141,7 @@ export async function PUT(
 
     // イベントの更新・追加
     for (const ev of data.events) {
+      const normalizedEntryWindow = normalizeEventEntryWindow(ev)
       const eventData = {
         name: ev.name,
         entry_type: ev.entry_type,
@@ -151,8 +155,8 @@ export async function PUT(
             ? ev.max_participants
             : null,
         scheduled_date: ev.scheduled_date,
-        entry_start: datetimeLocalToTimestamptz(ev.entry_start),
-        entry_end: datetimeLocalToTimestamptz(ev.entry_end),
+        entry_start: datetimeLocalToTimestamptz(normalizedEntryWindow.entry_start),
+        entry_end: datetimeLocalToTimestamptz(normalizedEntryWindow.entry_end),
         checkin_start: datetimeLocalToTimestamptz(ev.checkin_start),
         checkin_end: datetimeLocalToTimestamptz(ev.checkin_end),
         gender: ev.gender ?? null,
