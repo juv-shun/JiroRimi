@@ -99,9 +99,6 @@ export function Sidebar({
             />
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d8a24c]">
-              Official
-            </p>
             <span className="text-lg font-black tracking-[0.08em] text-text-primary">
               Jiro-Rimi Cup
             </span>
