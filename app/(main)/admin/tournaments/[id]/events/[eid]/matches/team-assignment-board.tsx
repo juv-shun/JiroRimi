@@ -34,7 +34,15 @@ type TeamAssignmentBoardProps = {
   onSuccess: () => void
 }
 
+type EditableMatchSlot = MatchSlot & {
+  slotId: string
+}
+
 // --- ユーティリティ ---
+
+function createMatchSlotId(roundNumber: number, index: number): string {
+  return `round-${roundNumber}-match-${index + 1}`
+}
 
 export function isAllowedAvatarUrl(url: string): boolean {
   try {
@@ -105,7 +113,13 @@ function getParticipant(
 
 // --- サブコンポーネント ---
 
-export function RoleBadge({ role, priority }: { role: Role; priority: 1 | 2 | 3 }) {
+export function RoleBadge({
+  role,
+  priority,
+}: {
+  role: Role
+  priority: 1 | 2 | 3
+}) {
   const colorClass = ROLE_BADGE_COLORS[role]
   return (
     <span
@@ -391,17 +405,22 @@ export function TeamAssignmentBoard({
   )
   const participantIds = new Set(participants.map((p) => p.profileId))
 
-  const initialMatches: MatchSlot[] = prevRound
+  const initialMatches: EditableMatchSlot[] = prevRound
     ? Array.from({ length: matchCount }, (_, i) => {
         const prev = prevRound.matches[i]
         return prev
           ? {
+              slotId: createMatchSlotId(roundNumber, i),
               teamA: prev.teamA.filter((p) => participantIds.has(p.profileId)),
               teamB: prev.teamB.filter((p) => participantIds.has(p.profileId)),
             }
-          : { teamA: [], teamB: [] }
+          : { slotId: createMatchSlotId(roundNumber, i), teamA: [], teamB: [] }
       })
-    : Array.from({ length: matchCount }, () => ({ teamA: [], teamB: [] }))
+    : Array.from({ length: matchCount }, (_, i) => ({
+        slotId: createMatchSlotId(roundNumber, i),
+        teamA: [],
+        teamB: [],
+      }))
 
   const assignedIds = new Set(
     initialMatches.flatMap((m) => [
@@ -415,7 +434,7 @@ export function TeamAssignmentBoard({
 
   const [unassigned, setUnassigned] =
     useState<ParticipantInfo[]>(initialUnassigned)
-  const [matches, setMatches] = useState<MatchSlot[]>(initialMatches)
+  const [matches, setMatches] = useState<EditableMatchSlot[]>(initialMatches)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [isAiAssigning, setIsAiAssigning] = useState(false)
   const [toastState, setToastState] = useState<{
@@ -519,6 +538,7 @@ export function TeamAssignmentBoard({
           (p) => p.profileId !== activeId,
         )
         const nextMatches = matches.map((m) => ({
+          slotId: m.slotId,
           teamA: m.teamA.filter((p) => p.profileId !== activeId),
           teamB: m.teamB.filter((p) => p.profileId !== activeId),
         }))
@@ -577,6 +597,7 @@ export function TeamAssignmentBoard({
         if (srcMatchIdx === targetMatchIdx && srcTeam === targetTeam) return
 
         const nextMatches = matches.map((m) => ({
+          slotId: m.slotId,
           teamA: [...m.teamA],
           teamB: [...m.teamB],
         }))
@@ -646,7 +667,8 @@ export function TeamAssignmentBoard({
       }
 
       const newMatches: typeof matches = json.data.matches.map(
-        (m: { teamA: string[]; teamB: string[] }) => ({
+        (m: { teamA: string[]; teamB: string[] }, i: number) => ({
+          slotId: matches[i]?.slotId ?? createMatchSlotId(roundNumber, i),
           teamA: m.teamA
             .map((id: string) => participantMap.get(id))
             .filter(Boolean),
@@ -664,7 +686,15 @@ export function TeamAssignmentBoard({
     } finally {
       setIsAiAssigning(false)
     }
-  }, [unassigned, matches, eventId, matchCount, standingsMap, showToast])
+  }, [
+    unassigned,
+    matches,
+    eventId,
+    matchCount,
+    standingsMap,
+    showToast,
+    roundNumber,
+  ])
 
   const [showAiConfirm, setShowAiConfirm] = useState(false)
 
@@ -708,7 +738,7 @@ export function TeamAssignmentBoard({
           <div className="space-y-4">
             {matches.map((match, idx) => (
               <div
-                key={`${match.teamA.map((p) => p.profileId).join("-")}:${match.teamB.map((p) => p.profileId).join("-")}`}
+                key={match.slotId}
                 className="bg-white rounded-2xl shadow-sm border border-border p-4"
               >
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">
