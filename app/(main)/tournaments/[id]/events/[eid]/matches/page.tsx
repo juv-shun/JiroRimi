@@ -74,7 +74,7 @@ export default async function MatchesPage({
   const { data: allParticipants, error: allError } = await supabase
     .from("match_participants")
     .select(
-      "match_id, profile_id, team, vote, profiles (player_name, avatar_url, first_role)",
+      "match_id, profile_id, team, vote, profiles (player_name, avatar_url, first_role, second_role, third_role)",
     )
     .in("match_id", matchIds)
     .order("team", { ascending: true })
@@ -104,6 +104,8 @@ export default async function MatchesPage({
         playerName: profile?.player_name ?? null,
         avatarUrl: profile?.avatar_url ?? null,
         firstRole: (profile?.first_role as Role | null) ?? null,
+        secondRole: (profile?.second_role as Role | null) ?? null,
+        thirdRole: (profile?.third_role as Role | null) ?? null,
         team: p.team as Team,
         vote: p.vote as Vote | null,
       }

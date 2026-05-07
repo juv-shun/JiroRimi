@@ -22,6 +22,8 @@ export type MatchParticipantForDisplay = {
   playerName: string | null
   avatarUrl: string | null
   firstRole: Role | null
+  secondRole: Role | null
+  thirdRole: Role | null
   team: Team
   vote: Vote | null
 }

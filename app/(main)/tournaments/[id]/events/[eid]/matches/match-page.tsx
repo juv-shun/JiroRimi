@@ -10,10 +10,7 @@ import type {
   MatchForDisplay,
   MatchParticipantForDisplay,
 } from "@/lib/types/match"
-import {
-  ROLE_LABELS,
-  ROLE_BADGE_COLORS,
-} from "@/lib/types/profile"
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/lib/types/profile"
 
 type MatchPageProps = {
   matches: MatchForDisplay[]
@@ -76,10 +73,12 @@ export function MatchPage({ matches, eventId }: MatchPageProps) {
         prev.map((m) => {
           if (m.matchId !== matchId) return m
           const updateVote = (members: MatchParticipantForDisplay[]) =>
-            members.map((p) =>
-              p.profileId === profileId ? { ...p, vote } : p,
-            )
-          return { ...m, teamA: updateVote(m.teamA), teamB: updateVote(m.teamB) }
+            members.map((p) => (p.profileId === profileId ? { ...p, vote } : p))
+          return {
+            ...m,
+            teamA: updateVote(m.teamA),
+            teamB: updateVote(m.teamB),
+          }
         }),
       )
     },
@@ -355,33 +354,55 @@ function TeamSection({
         </span>
       </div>
       <div className="space-y-1.5">
-        {members.map((m) => (
-          <div key={m.profileId} className="flex items-center gap-2">
-            {m.avatarUrl && isAllowedAvatarUrl(m.avatarUrl) ? (
-              <img
-                src={m.avatarUrl}
-                alt=""
-                className="w-6 h-6 rounded-full"
-              />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-[10px] text-gray-500">
-                  {(m.playerName ?? "?")[0]}
+        {members.map((m) => {
+          const roles = [
+            { role: m.firstRole, priority: 1 },
+            { role: m.secondRole, priority: 2 },
+            { role: m.thirdRole, priority: 3 },
+          ].filter(
+            (r): r is { role: NonNullable<typeof r.role>; priority: number } =>
+              r.role !== null,
+          )
+
+          return (
+            <div key={m.profileId} className="flex items-start gap-2">
+              {m.avatarUrl && isAllowedAvatarUrl(m.avatarUrl) ? (
+                <img
+                  src={m.avatarUrl}
+                  alt=""
+                  className="w-6 h-6 rounded-full flex-shrink-0"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[10px] text-gray-500">
+                    {(m.playerName ?? "?")[0]}
+                  </span>
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-gray-900 truncate">
+                  {m.playerName ?? "名前未設定"}
                 </span>
+                {roles.length > 0 && (
+                  <div className="flex flex-wrap gap-0.5 mt-0.5">
+                    {roles.map((r) => (
+                      <span
+                        key={r.role}
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${ROLE_BADGE_COLORS[r.role]} ${
+                          r.priority === 1
+                            ? "ring-1 ring-current/20"
+                            : "opacity-60"
+                        }`}
+                      >
+                        {ROLE_LABELS[r.role]}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-            <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-              {m.playerName ?? "名前未設定"}
-            </span>
-            {m.firstRole && (
-              <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${ROLE_BADGE_COLORS[m.firstRole]}`}
-              >
-                {ROLE_LABELS[m.firstRole]}
-              </span>
-            )}
-          </div>
-        ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
