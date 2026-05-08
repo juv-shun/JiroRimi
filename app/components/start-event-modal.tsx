@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Loader2, Play } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import type { EntryWithProfile } from "@/lib/types/entry"
 
@@ -12,26 +12,29 @@ type StartEventModalProps = {
   onSuccess: () => void
 }
 
+export function sortEntriesByEntryTimeDesc(
+  entries: EntryWithProfile[],
+): EntryWithProfile[] {
+  return [...entries].sort((a, b) => b.created_at.localeCompare(a.created_at))
+}
+
+export function getInitialExcludedEntryIds(
+  entries: EntryWithProfile[],
+): Set<string> {
+  const sortedEntries = sortEntriesByEntryTimeDesc(entries)
+  const excludeCount = sortedEntries.length % 10
+  return new Set(sortedEntries.slice(0, excludeCount).map((e) => e.id))
+}
+
 export function StartEventModal({
   eventId,
   entries,
   onClose,
   onSuccess,
 }: StartEventModalProps) {
-  // チェックイン時刻降順（遅い順）にソート → 除外候補が上部に来る
-  const sortedEntries = [...entries].sort((a, b) => {
-    const aTime = a.checked_in_at ?? ""
-    const bTime = b.checked_in_at ?? ""
-    return bTime.localeCompare(aTime)
-  })
-
-  // 除外人数 = チェックイン済み人数 % 10
-  const excludeCount = sortedEntries.length % 10
-
-  // 初期状態: 先頭（チェックインが遅い順）から除外
-  const initialExcluded = new Set(
-    sortedEntries.slice(0, excludeCount).map((e) => e.id),
-  )
+  // エントリー日時降順（遅い順）にソート → 除外候補が上部に来る
+  const sortedEntries = sortEntriesByEntryTimeDesc(entries)
+  const initialExcluded = getInitialExcludedEntryIds(sortedEntries)
 
   const [excludedIds, setExcludedIds] = useState<Set<string>>(initialExcluded)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -114,23 +117,21 @@ export function StartEventModal({
         <div className="px-6 pt-5 pb-3">
           <div
             className={`text-sm font-medium rounded-lg px-3 py-2 ${
-              isValid
-                ? "bg-blue-50 text-blue-700"
-                : "bg-red-50 text-red-700"
+              isValid ? "bg-blue-50 text-blue-700" : "bg-red-50 text-red-700"
             }`}
           >
-            チェックイン: {sortedEntries.length}人 → 参加:{" "}
-            {participantCount}人（{excludedIds.size}人除外）
+            チェックイン: {sortedEntries.length}人 → 参加: {participantCount}
+            人（{excludedIds.size}人除外）
             {!isValid && participantCount < 10 && (
-              <span className="block text-xs mt-1">
-                参加人数が10人未満です
-              </span>
+              <span className="block text-xs mt-1">参加人数が10人未満です</span>
             )}
-            {!isValid && participantCount >= 10 && participantCount % 10 !== 0 && (
-              <span className="block text-xs mt-1">
-                参加人数が10の倍数ではありません
-              </span>
-            )}
+            {!isValid &&
+              participantCount >= 10 &&
+              participantCount % 10 !== 0 && (
+                <span className="block text-xs mt-1">
+                  参加人数が10の倍数ではありません
+                </span>
+              )}
           </div>
         </div>
 
