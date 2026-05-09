@@ -41,6 +41,19 @@ function ParticipantRow({
   participant: AdminMatchParticipant
   showVote: boolean
 }) {
+  const voteLabel =
+    participant.vote === "win"
+      ? "Win"
+      : participant.vote === "lose"
+        ? "Lose"
+        : "―"
+  const voteClass =
+    participant.vote === "win"
+      ? "bg-red-100 text-red-700"
+      : participant.vote === "lose"
+        ? "bg-blue-100 text-blue-700"
+        : "bg-gray-100 text-gray-400"
+
   return (
     <div className="flex items-center gap-2">
       {participant.avatarUrl && isAllowedAvatarUrl(participant.avatarUrl) ? (
@@ -74,13 +87,9 @@ function ParticipantRow({
       )}
       {showVote && (
         <span
-          className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-            participant.vote
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-100 text-gray-400"
-          }`}
+          className={`text-xs font-medium px-1.5 py-0.5 rounded ${voteClass}`}
         >
-          {participant.vote ? "✓" : "―"}
+          {voteLabel}
         </span>
       )}
     </div>
