@@ -645,6 +645,12 @@ export function TeamAssignmentBoard({
       const participantMap = new Map(
         allParticipants.map((p) => [p.profileId, p]),
       )
+      const previousTeams = matches
+        .filter((m) => m.teamA.length === 5 && m.teamB.length === 5)
+        .map((m) => ({
+          teamA: m.teamA.map((p) => p.profileId),
+          teamB: m.teamB.map((p) => p.profileId),
+        }))
 
       const res = await fetch(
         `/api/admin/events/${eventId}/ai-team-assignment`,
@@ -660,6 +666,7 @@ export function TeamAssignmentBoard({
             })),
             matchCount,
             standingsMap,
+            previousTeams,
           }),
         },
       )

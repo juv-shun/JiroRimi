@@ -13,6 +13,7 @@ type BuildPromptParams = {
   participants: ParticipantInput[]
   matchCount: number
   standingsMap: Record<string, { wins: number; losses: number }>
+  previousTeams?: { teamA: string[]; teamB: string[] }[]
 }
 
 function formatRole(role: Role | null): string {
@@ -26,8 +27,9 @@ function formatWinRate(wins: number, losses: number): string {
 }
 
 export function buildTeamAssignmentPrompt(params: BuildPromptParams): string {
-  const { participants, matchCount, standingsMap } = params
+  const { participants, matchCount, standingsMap, previousTeams = [] } = params
   const hasStandings = Object.keys(standingsMap).length > 0
+  const hasPreviousTeams = previousTeams.length > 0
 
   const lines: string[] = []
 
@@ -40,14 +42,28 @@ export function buildTeamAssignmentPrompt(params: BuildPromptParams): string {
 
   if (hasStandings) {
     lines.push("## 優先順位")
-    lines.push("1. 全チームの平均勝率をできるだけ均一にすること（最重要）")
-    lines.push("2. 各チーム内でロール希望が偏らないようにすること")
+    lines.push(
+      "1. 勝敗数が同じ、または近い参加者同士が同じチームに固まるようにすること（最重要）",
+    )
+    lines.push("2. 直前の編成案と同じ5人のチームを作らないこと")
+    lines.push("3. 各チーム内でロール希望が偏らないようにすること")
   } else {
     lines.push("## 優先順位")
     lines.push(
       "1. 各チーム内でロール希望が偏らないようにすること（ロール分散）",
     )
     lines.push("2. 同じロール第1希望の選手が1チームに集中しないようにすること")
+  }
+
+  if (hasPreviousTeams) {
+    lines.push("")
+    lines.push("## 避けたい直前の編成案")
+    lines.push("")
+
+    previousTeams.forEach((match, index) => {
+      lines.push(`- 試合${index + 1} TeamA: ${match.teamA.join(", ")}`)
+      lines.push(`- 試合${index + 1} TeamB: ${match.teamB.join(", ")}`)
+    })
   }
 
   lines.push("")

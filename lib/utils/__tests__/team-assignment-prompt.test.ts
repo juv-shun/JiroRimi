@@ -54,7 +54,26 @@ describe("buildTeamAssignmentPrompt", () => {
     expect(prompt).toContain("勝率")
     expect(prompt).toContain("2勝1敗")
     expect(prompt).toContain("67%")
-    expect(prompt).toContain("平均勝率をできるだけ均一")
+    expect(prompt).toContain("勝敗数が同じ、または近い参加者同士")
+  })
+
+  it("直前の編成案がある場合 → 同じ5人のチームを避ける指示が含まれる", () => {
+    const prompt = buildTeamAssignmentPrompt({
+      participants: [makeParticipant("p1", "mid")],
+      matchCount: 1,
+      standingsMap: { p1: { wins: 2, losses: 1 } },
+      previousTeams: [
+        {
+          teamA: ["p1", "p2", "p3", "p4", "p5"],
+          teamB: ["p6", "p7", "p8", "p9", "p10"],
+        },
+      ],
+    })
+
+    expect(prompt).toContain("直前の編成案と同じ5人のチームを作らない")
+    expect(prompt).toContain("## 避けたい直前の編成案")
+    expect(prompt).toContain("試合1 TeamA: p1, p2, p3, p4, p5")
+    expect(prompt).toContain("試合1 TeamB: p6, p7, p8, p9, p10")
   })
 
   it("全参加者IDがプロンプトに含まれる", () => {

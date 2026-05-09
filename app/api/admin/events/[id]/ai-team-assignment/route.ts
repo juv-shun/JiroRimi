@@ -37,6 +37,14 @@ const requestSchema = z
         losses: z.number().int().min(0),
       }),
     ),
+    previousTeams: z
+      .array(
+        z.object({
+          teamA: z.array(z.string().regex(UUID_REGEX)).length(5),
+          teamB: z.array(z.string().regex(UUID_REGEX)).length(5),
+        }),
+      )
+      .optional(),
   })
   .refine((data) => data.participants.length === data.matchCount * 10, {
     message: "参加者数とマッチ数が一致しません",
@@ -201,12 +209,14 @@ export async function POST(request: Request, context: RouteContext) {
       )
     }
 
-    const { participants, matchCount, standingsMap } = parsed.data
+    const { participants, matchCount, standingsMap, previousTeams } =
+      parsed.data
 
     const prompt = buildTeamAssignmentPrompt({
       participants,
       matchCount,
       standingsMap,
+      previousTeams,
     })
 
     const ai = new GoogleGenAI({ apiKey })
