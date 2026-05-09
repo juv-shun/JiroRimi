@@ -98,9 +98,9 @@ export function MatchCard({
 
   const tentativeLabel =
     tentativeResult === "team_a"
-      ? "Team A"
+      ? "Purple"
       : tentativeResult === "team_b"
-        ? "Team B"
+        ? "Orange"
         : tentativeResult === "conflict"
           ? "⚠ 不一致"
           : "―"
@@ -146,8 +146,8 @@ export function MatchCard({
 
       {/* チーム表示 */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl bg-blue-50/50 p-3">
-          <p className="text-xs font-semibold text-blue-600 mb-2">Team A</p>
+        <div className="rounded-xl bg-purple-50/50 p-3">
+          <p className="text-xs font-semibold text-purple-600 mb-2">Purple</p>
           <div className="space-y-1.5">
             {match.teamA.map((p) => (
               <ParticipantRow
@@ -158,8 +158,8 @@ export function MatchCard({
             ))}
           </div>
         </div>
-        <div className="rounded-xl bg-red-50/50 p-3">
-          <p className="text-xs font-semibold text-red-600 mb-2">Team B</p>
+        <div className="rounded-xl bg-orange-50/50 p-3">
+          <p className="text-xs font-semibold text-orange-600 mb-2">Orange</p>
           <div className="space-y-1.5">
             {match.teamB.map((p) => (
               <ParticipantRow
@@ -193,9 +193,9 @@ export function MatchCard({
             {isConfirmed ? (
               <span className="text-sm font-semibold text-gray-900">
                 {match.result === "team_a"
-                  ? "Team A"
+                  ? "Purple"
                   : match.result === "team_b"
-                    ? "Team B"
+                    ? "Orange"
                     : "―"}
               </span>
             ) : isRoundInProgress ? (
@@ -211,10 +211,10 @@ export function MatchCard({
               >
                 <option value="">未選択</option>
                 <option value="team_a" className="text-purple-800">
-                  Team A
+                  Purple
                 </option>
                 <option value="team_b" className="text-orange-800">
-                  Team B
+                  Orange
                 </option>
               </select>
             ) : null}
