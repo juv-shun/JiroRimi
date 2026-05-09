@@ -1,14 +1,13 @@
 "use client"
 
 import { AlertTriangle, User } from "lucide-react"
-
-import { ROLE_LABELS, ROLE_BADGE_COLORS } from "@/lib/types/profile"
 import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
   MatchResult,
   TentativeResult,
 } from "@/lib/types/match"
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/lib/types/profile"
 
 type MatchCardProps = {
   match: AdminMatchForDisplay
@@ -44,8 +43,7 @@ function ParticipantRow({
 }) {
   return (
     <div className="flex items-center gap-2">
-      {participant.avatarUrl &&
-      isAllowedAvatarUrl(participant.avatarUrl) ? (
+      {participant.avatarUrl && isAllowedAvatarUrl(participant.avatarUrl) ? (
         <img
           src={participant.avatarUrl}
           alt=""
@@ -118,9 +116,7 @@ export function MatchCard({
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">
-            マッチ
-          </span>
+          <span className="text-sm font-semibold text-gray-700">マッチ</span>
           {match.lobbyNumber && (
             <span className="text-xs text-gray-400">
               ロビー: {match.lobbyNumber}
@@ -205,7 +201,7 @@ export function MatchCard({
                     (e.target.value as MatchResult) || null,
                   )
                 }
-                className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                className="text-sm font-semibold rounded-lg border border-gray-400 bg-white px-3 py-1.5 text-gray-900 shadow-sm hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               >
                 <option value="">未選択</option>
                 <option value="team_a">Team A</option>
