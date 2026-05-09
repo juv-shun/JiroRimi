@@ -4,6 +4,7 @@ import { Loader2, Play } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import type { EntryWithProfile } from "@/lib/types/entry"
+import { formatDateTimeJST } from "@/lib/utils/datetime"
 
 type StartEventModalProps = {
   eventId: string
@@ -155,14 +156,23 @@ export function StartEventModal({
                     onChange={() => toggleEntry(entry.id)}
                     className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/50"
                   />
-                  <span
-                    className={`text-sm ${
-                      isExcluded
-                        ? "text-gray-400 line-through"
-                        : "text-gray-900"
-                    }`}
-                  >
-                    {entry.profiles?.player_name ?? "（未設定）"}
+                  <span className="flex min-w-0 flex-col">
+                    <span
+                      className={`text-sm ${
+                        isExcluded
+                          ? "text-gray-400 line-through"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {entry.profiles?.player_name ?? "（未設定）"}
+                    </span>
+                    <span
+                      className={`text-xs ${
+                        isExcluded ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      エントリー: {formatDateTimeJST(entry.created_at)}
+                    </span>
                   </span>
                 </label>
               )
