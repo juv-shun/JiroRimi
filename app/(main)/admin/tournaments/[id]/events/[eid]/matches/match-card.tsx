@@ -104,6 +104,12 @@ export function MatchCard({
         : tentativeResult === "conflict"
           ? "⚠ 不一致"
           : "―"
+  const resultSelectColorClass =
+    selectedResult === "team_a"
+      ? "border-purple-400 bg-purple-50 text-purple-800 hover:border-purple-500 focus:border-purple-500 focus:ring-purple-200"
+      : selectedResult === "team_b"
+        ? "border-orange-400 bg-orange-50 text-orange-800 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-200"
+        : "border-gray-400 bg-white text-gray-900 hover:border-gray-500 focus:border-primary focus:ring-primary/30"
 
   return (
     <div
@@ -201,11 +207,15 @@ export function MatchCard({
                     (e.target.value as MatchResult) || null,
                   )
                 }
-                className="text-sm font-semibold rounded-lg border border-gray-400 bg-white px-3 py-1.5 text-gray-900 shadow-sm hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                className={`text-sm font-semibold rounded-lg border px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 ${resultSelectColorClass}`}
               >
                 <option value="">未選択</option>
-                <option value="team_a">Team A</option>
-                <option value="team_b">Team B</option>
+                <option value="team_a" className="text-purple-800">
+                  Team A
+                </option>
+                <option value="team_b" className="text-orange-800">
+                  Team B
+                </option>
               </select>
             ) : null}
           </div>
