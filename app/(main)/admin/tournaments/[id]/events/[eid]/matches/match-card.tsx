@@ -1,14 +1,13 @@
 "use client"
 
 import { AlertTriangle, User } from "lucide-react"
-
-import { ROLE_LABELS, ROLE_BADGE_COLORS } from "@/lib/types/profile"
 import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
   MatchResult,
   TentativeResult,
 } from "@/lib/types/match"
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/lib/types/profile"
 
 type MatchCardProps = {
   match: AdminMatchForDisplay
@@ -44,8 +43,7 @@ function ParticipantRow({
 }) {
   return (
     <div className="flex items-center gap-2">
-      {participant.avatarUrl &&
-      isAllowedAvatarUrl(participant.avatarUrl) ? (
+      {participant.avatarUrl && isAllowedAvatarUrl(participant.avatarUrl) ? (
         <img
           src={participant.avatarUrl}
           alt=""
@@ -100,12 +98,18 @@ export function MatchCard({
 
   const tentativeLabel =
     tentativeResult === "team_a"
-      ? "Team A"
+      ? "Purple"
       : tentativeResult === "team_b"
-        ? "Team B"
+        ? "Orange"
         : tentativeResult === "conflict"
           ? "⚠ 不一致"
           : "―"
+  const resultSelectColorClass =
+    selectedResult === "team_a"
+      ? "border-purple-400 bg-purple-50 text-purple-800 hover:border-purple-500 focus:border-purple-500 focus:ring-purple-200"
+      : selectedResult === "team_b"
+        ? "border-orange-400 bg-orange-50 text-orange-800 hover:border-orange-500 focus:border-orange-500 focus:ring-orange-200"
+        : "border-gray-400 bg-white text-gray-900 hover:border-gray-500 focus:border-primary focus:ring-primary/30"
 
   return (
     <div
@@ -118,9 +122,7 @@ export function MatchCard({
       {/* ヘッダー */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700">
-            マッチ
-          </span>
+          <span className="text-sm font-semibold text-gray-700">マッチ</span>
           {match.lobbyNumber && (
             <span className="text-xs text-gray-400">
               ロビー: {match.lobbyNumber}
@@ -144,8 +146,8 @@ export function MatchCard({
 
       {/* チーム表示 */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl bg-blue-50/50 p-3">
-          <p className="text-xs font-semibold text-blue-600 mb-2">Team A</p>
+        <div className="rounded-xl bg-purple-50/50 p-3">
+          <p className="text-xs font-semibold text-purple-600 mb-2">Purple</p>
           <div className="space-y-1.5">
             {match.teamA.map((p) => (
               <ParticipantRow
@@ -156,8 +158,8 @@ export function MatchCard({
             ))}
           </div>
         </div>
-        <div className="rounded-xl bg-red-50/50 p-3">
-          <p className="text-xs font-semibold text-red-600 mb-2">Team B</p>
+        <div className="rounded-xl bg-orange-50/50 p-3">
+          <p className="text-xs font-semibold text-orange-600 mb-2">Orange</p>
           <div className="space-y-1.5">
             {match.teamB.map((p) => (
               <ParticipantRow
@@ -191,9 +193,9 @@ export function MatchCard({
             {isConfirmed ? (
               <span className="text-sm font-semibold text-gray-900">
                 {match.result === "team_a"
-                  ? "Team A"
+                  ? "Purple"
                   : match.result === "team_b"
-                    ? "Team B"
+                    ? "Orange"
                     : "―"}
               </span>
             ) : isRoundInProgress ? (
@@ -205,11 +207,15 @@ export function MatchCard({
                     (e.target.value as MatchResult) || null,
                   )
                 }
-                className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                className={`text-sm font-semibold rounded-lg border px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 ${resultSelectColorClass}`}
               >
                 <option value="">未選択</option>
-                <option value="team_a">Team A</option>
-                <option value="team_b">Team B</option>
+                <option value="team_a" className="text-purple-800">
+                  Purple
+                </option>
+                <option value="team_b" className="text-orange-800">
+                  Orange
+                </option>
               </select>
             ) : null}
           </div>
