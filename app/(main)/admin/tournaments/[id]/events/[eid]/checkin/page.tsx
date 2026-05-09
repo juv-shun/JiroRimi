@@ -1,6 +1,6 @@
+import { Calendar, ChevronLeft, Clock, Users } from "lucide-react"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ChevronLeft, Calendar, Users, Clock } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
@@ -55,7 +55,7 @@ export default async function AdminCheckinPage({
   const { data: entries, error: entriesError } = await supabase
     .from("entries")
     .select(
-      "id, created_at, checked_in_at, profiles (player_name, avatar_url, first_role, second_role, third_role)",
+      "id, created_at, checked_in_at, profiles (player_name, x_id, avatar_url, first_role, second_role, third_role)",
     )
     .eq("event_id", eid)
     .order("created_at", { ascending: true })
@@ -69,11 +69,13 @@ export default async function AdminCheckinPage({
     created_at: entry.created_at,
     checked_in_at: entry.checked_in_at,
     profiles: Array.isArray(entry.profiles)
-      ? entry.profiles[0] ?? null
+      ? (entry.profiles[0] ?? null)
       : entry.profiles,
   }))
 
-  const checkedInCount = entryList.filter((e) => e.checked_in_at !== null).length
+  const checkedInCount = entryList.filter(
+    (e) => e.checked_in_at !== null,
+  ).length
   const tournament = Array.isArray(event.tournaments)
     ? event.tournaments[0]
     : event.tournaments

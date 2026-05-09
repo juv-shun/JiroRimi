@@ -13,6 +13,7 @@ export type EntryWithProfile = {
   checked_in_at: string | null
   profiles: {
     player_name: string | null
+    x_id?: string | null
     avatar_url: string | null
     first_role: Role | null
     second_role: Role | null

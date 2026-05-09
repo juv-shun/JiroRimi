@@ -417,6 +417,7 @@
 | チェックイン状態 | ✓ アイコン or 「-」 |
 | アバター | profiles.avatar_url |
 | プレイヤー名 | profiles.player_name |
+| X ID | profiles.x_id（未設定・PENDING の場合は「-」） |
 | 第1希望ロール | profiles.first_role |
 | チェックイン日時 | entries.checked_in_at（チェックイン済みの場合） |
 | 操作 | 「チェックイン」/「取り消し」ボタン |
