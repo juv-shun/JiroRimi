@@ -1,9 +1,10 @@
+import { Calendar, ChevronLeft, Swords, Users } from "lucide-react"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { ChevronLeft, Calendar, Swords, Users } from "lucide-react"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
+import type { RawBracketMatch, TeamInfo } from "@/lib/types/bracket"
 import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
@@ -23,7 +24,6 @@ import {
   computeStandings,
   mergeStandings,
 } from "@/lib/utils/match-result"
-import type { RawBracketMatch, TeamInfo } from "@/lib/types/bracket"
 import { BracketAdminView } from "./bracket-admin-view"
 import { GfTeamAssignmentWrapper } from "./gf-team-assignment-wrapper"
 import { RoundManager } from "./round-manager"
@@ -82,7 +82,7 @@ export default async function AdminMatchesPage({
   const { data: entries, error: entriesError } = await supabase
     .from("entries")
     .select(
-      "profile_id, profiles (id, player_name, avatar_url, first_role, second_role, third_role)",
+      "profile_id, profiles (id, player_name, discord_username, avatar_url, first_role, second_role, third_role)",
     )
     .eq("event_id", eid)
     .not("checked_in_at", "is", null)
@@ -93,12 +93,11 @@ export default async function AdminMatchesPage({
   }
 
   const participants: ParticipantInfo[] = (entries ?? []).map((entry) => {
-    const p = Array.isArray(entry.profiles)
-      ? entry.profiles[0]
-      : entry.profiles
+    const p = Array.isArray(entry.profiles) ? entry.profiles[0] : entry.profiles
     return {
       profileId: entry.profile_id,
       playerName: p?.player_name ?? null,
+      discordUsername: p?.discord_username ?? null,
       avatarUrl: p?.avatar_url ?? null,
       firstRole: (p?.first_role as Role) ?? null,
       secondRole: (p?.second_role as Role) ?? null,
@@ -213,18 +212,18 @@ export default async function AdminMatchesPage({
         )
         .eq("event_id", eid)
 
-      const bracketMatches: RawBracketMatch[] = (
-        bracketMatchesRaw ?? []
-      ).map((m) => ({
-        id: m.id,
-        bracket_type: m.bracket_type,
-        round_number: m.round_number,
-        match_order: m.match_order,
-        team_a_id: m.team_a_id,
-        team_b_id: m.team_b_id,
-        winner_team_id: m.winner_team_id,
-        status: m.status,
-      }))
+      const bracketMatches: RawBracketMatch[] = (bracketMatchesRaw ?? []).map(
+        (m) => ({
+          id: m.id,
+          bracket_type: m.bracket_type,
+          round_number: m.round_number,
+          match_order: m.match_order,
+          team_a_id: m.team_a_id,
+          team_b_id: m.team_b_id,
+          winner_team_id: m.winner_team_id,
+          status: m.status,
+        }),
+      )
 
       return (
         <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
@@ -345,7 +344,7 @@ export default async function AdminMatchesPage({
         profile_id,
         team,
         vote,
-        profiles (player_name, avatar_url, first_role, second_role, third_role)
+        profiles (player_name, discord_username, avatar_url, first_role, second_role, third_role)
       )
     `,
     )
@@ -394,12 +393,11 @@ export default async function AdminMatchesPage({
         teamB: [],
       }
       for (const mp of m.match_participants ?? []) {
-        const prof = Array.isArray(mp.profiles)
-          ? mp.profiles[0]
-          : mp.profiles
+        const prof = Array.isArray(mp.profiles) ? mp.profiles[0] : mp.profiles
         const participant: ParticipantInfo = {
           profileId: mp.profile_id,
           playerName: prof?.player_name ?? null,
+          discordUsername: prof?.discord_username ?? null,
           avatarUrl: prof?.avatar_url ?? null,
           firstRole: (prof?.first_role as Role) ?? null,
           secondRole: (prof?.second_role as Role) ?? null,

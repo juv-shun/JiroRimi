@@ -180,6 +180,11 @@ export function PlayerCard({
             </span>
           )}
         </div>
+        {participant.discordUsername && (
+          <p className="text-[10px] text-gray-400 truncate">
+            @{participant.discordUsername}
+          </p>
+        )}
         {roles.length > 0 && (
           <div className="flex flex-wrap gap-0.5 mt-0.5">
             {roles.map((r) => (

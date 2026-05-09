@@ -1,23 +1,23 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import {
   Check,
-  X,
-  User,
-  Loader2,
-  CircleDot,
   CheckCircle2,
-  Search,
+  CircleDot,
+  Loader2,
   Plus,
+  Search,
   Trash2,
+  User,
+  X,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 
 import { Toast } from "@/app/components/toast"
 import type { EntryWithProfile } from "@/lib/types/entry"
-import { ROLE_LABELS } from "@/lib/types/profile"
 import type { Role } from "@/lib/types/profile"
+import { ROLE_LABELS } from "@/lib/types/profile"
 import type { EntryType, EventStatus } from "@/lib/types/tournament"
 
 type ProfileCandidate = {
@@ -32,6 +32,13 @@ type CheckinTableProps = {
   eventId: string
   eventStatus: EventStatus
   entryType: EntryType
+}
+
+function formatXId(xId: string | null | undefined): string | null {
+  if (!xId || xId === "PENDING") {
+    return null
+  }
+  return `@${xId}`
 }
 
 function isAllowedAvatarUrl(url: string): boolean {
@@ -283,11 +290,14 @@ export function CheckinTable({
           </div>
         )}
 
-        {showDropdown && searchQuery.length >= 1 && candidates.length === 0 && !isSearching && (
-          <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-border shadow-lg px-4 py-3 text-sm text-gray-500">
-            該当するプレイヤーが見つかりません
-          </div>
-        )}
+        {showDropdown &&
+          searchQuery.length >= 1 &&
+          candidates.length === 0 &&
+          !isSearching && (
+            <div className="absolute z-10 mt-1 w-full bg-white rounded-xl border border-border shadow-lg px-4 py-3 text-sm text-gray-500">
+              該当するプレイヤーが見つかりません
+            </div>
+          )}
       </div>
     </div>
   )
@@ -326,178 +336,196 @@ export function CheckinTable({
             まだエントリーがありません
           </div>
         ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-gray-50">
-                <th className="px-4 py-3 text-left font-medium text-gray-500 w-14" />
-                <th className="px-4 py-3 text-left font-medium text-gray-500">
-                  プレイヤー名
-                </th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">
-                  第1希望
-                </th>
-                <th className="px-4 py-3 text-center font-medium text-gray-500">
-                  チェックイン
-                </th>
-                {isScheduled && (
-                  <th className="px-4 py-3 text-center font-medium text-gray-500">
-                    操作
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-gray-50">
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 w-14" />
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    プレイヤー名
                   </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => {
-                const isCheckedIn = entry.checked_in_at !== null
-                const isLoading = isPending && pendingEntryId === entry.id
-                const isDeleting = isPending && deletingEntryId === entry.id
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    X ID
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">
+                    第1希望
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-gray-500">
+                    チェックイン
+                  </th>
+                  {isScheduled && (
+                    <th className="px-4 py-3 text-center font-medium text-gray-500">
+                      操作
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => {
+                  const isCheckedIn = entry.checked_in_at !== null
+                  const isLoading = isPending && pendingEntryId === entry.id
+                  const isDeleting = isPending && deletingEntryId === entry.id
+                  const xId = formatXId(entry.profiles?.x_id)
 
-                return (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-border last:border-b-0 hover:bg-gray-50 transition-colors"
-                  >
-                    {/* アバター */}
-                    <td className="px-4 py-3">
-                      {entry.profiles?.avatar_url &&
-                      isAllowedAvatarUrl(entry.profiles.avatar_url) ? (
-                        <img
-                          src={entry.profiles.avatar_url}
-                          alt=""
-                          loading="lazy"
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="w-5 h-5 text-gray-400" />
-                        </div>
-                      )}
-                    </td>
-
-                    {/* プレイヤー名 */}
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {entry.profiles?.player_name ?? (
-                        <span className="text-gray-400">（未設定）</span>
-                      )}
-                    </td>
-
-                    {/* 第1希望ロール */}
-                    <td className="px-4 py-3 text-gray-700">
-                      {entry.profiles?.first_role ? (
-                        ROLE_LABELS[entry.profiles.first_role as Role]
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-
-                    {/* チェックイン状況 */}
-                    <td className="px-4 py-3 text-center">
-                      {isCheckedIn ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
-                          <Check className="w-3 h-3" />
-                          済
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                          未
-                        </span>
-                      )}
-                    </td>
-
-                    {/* 操作ボタン */}
-                    {isScheduled && (
-                      <td className="px-4 py-3 text-center">
-                        <div className="inline-flex items-center gap-2">
-                          {isCheckedIn ? (
-                            <button
-                              type="button"
-                              onClick={() => handleCancel(entry.id)}
-                              disabled={isLoading}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {isLoading ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <X className="w-3 h-3" />
-                              )}
-                              取り消し
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setConfirmEntryId(entry.id)}
-                              disabled={isLoading}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {isLoading ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Check className="w-3 h-3" />
-                              )}
-                              チェックイン
-                            </button>
-                          )}
-                          {showInviteControls && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteEntry(entry.id)}
-                              disabled={isDeleting || isCheckedIn}
-                              title={isCheckedIn ? "チェックイン済みのため削除不可" : "エントリー削除"}
-                              className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {isDeleting ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3 h-3" />
-                              )}
-                            </button>
-                          )}
-                        </div>
+                  return (
+                    <tr
+                      key={entry.id}
+                      className="border-b border-border last:border-b-0 hover:bg-gray-50 transition-colors"
+                    >
+                      {/* アバター */}
+                      <td className="px-4 py-3">
+                        {entry.profiles?.avatar_url &&
+                        isAllowedAvatarUrl(entry.profiles.avatar_url) ? (
+                          <img
+                            src={entry.profiles.avatar_url}
+                            alt=""
+                            loading="lazy"
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <User className="w-5 h-5 text-gray-400" />
+                          </div>
+                        )}
                       </td>
-                    )}
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+
+                      {/* プレイヤー名 */}
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {entry.profiles?.player_name ?? (
+                          <span className="text-gray-400">（未設定）</span>
+                        )}
+                      </td>
+
+                      {/* X ID */}
+                      <td className="px-4 py-3 text-gray-700">
+                        {xId ? (
+                          <span className="font-mono text-xs">{xId}</span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+
+                      {/* 第1希望ロール */}
+                      <td className="px-4 py-3 text-gray-700">
+                        {entry.profiles?.first_role ? (
+                          ROLE_LABELS[entry.profiles.first_role as Role]
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+
+                      {/* チェックイン状況 */}
+                      <td className="px-4 py-3 text-center">
+                        {isCheckedIn ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                            <Check className="w-3 h-3" />済
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                            未
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 操作ボタン */}
+                      {isScheduled && (
+                        <td className="px-4 py-3 text-center">
+                          <div className="inline-flex items-center gap-2">
+                            {isCheckedIn ? (
+                              <button
+                                type="button"
+                                onClick={() => handleCancel(entry.id)}
+                                disabled={isLoading}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-error bg-error/10 hover:bg-error/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {isLoading ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <X className="w-3 h-3" />
+                                )}
+                                取り消し
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmEntryId(entry.id)}
+                                disabled={isLoading}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-success bg-success/10 hover:bg-success/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {isLoading ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Check className="w-3 h-3" />
+                                )}
+                                チェックイン
+                              </button>
+                            )}
+                            {showInviteControls && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                disabled={isDeleting || isCheckedIn}
+                                title={
+                                  isCheckedIn
+                                    ? "チェックイン済みのため削除不可"
+                                    : "エントリー削除"
+                                }
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {isDeleting ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {confirmEntryId && (() => {
-        const targetEntry = entries.find((e) => e.id === confirmEntryId)
-        const playerName = targetEntry?.profiles?.player_name ?? "（不明）"
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-              <p className="text-sm text-gray-700 mb-6">
-                <span className="font-bold">{playerName}</span> さんを代わりにチェックイン済みにしますか？
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setConfirmEntryId(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const entryId = confirmEntryId
-                    setConfirmEntryId(null)
-                    handleCheckin(entryId)
-                  }}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-success hover:bg-success/90 transition-colors"
-                >
-                  チェックインする
-                </button>
+      {confirmEntryId &&
+        (() => {
+          const targetEntry = entries.find((e) => e.id === confirmEntryId)
+          const playerName = targetEntry?.profiles?.player_name ?? "（不明）"
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+                <p className="text-sm text-gray-700 mb-6">
+                  <span className="font-bold">{playerName}</span>{" "}
+                  さんを代わりにチェックイン済みにしますか？
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmEntryId(null)}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const entryId = confirmEntryId
+                      setConfirmEntryId(null)
+                      handleCheckin(entryId)
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-success hover:bg-success/90 transition-colors"
+                  >
+                    チェックインする
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
 
       <Toast
         message={toast.message}
