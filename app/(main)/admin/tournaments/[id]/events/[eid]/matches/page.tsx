@@ -363,6 +363,7 @@ export default async function AdminMatchesPage({
       return {
         profileId: mp.profile_id,
         playerName: prof?.player_name ?? null,
+        discordUsername: prof?.discord_username ?? null,
         avatarUrl: prof?.avatar_url ?? null,
         firstRole: (prof?.first_role as Role) ?? null,
         team: mp.team as Team,

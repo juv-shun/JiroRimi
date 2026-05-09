@@ -81,6 +81,7 @@ export type ExistingRound = {
 export type AdminMatchParticipant = {
   profileId: string
   playerName: string | null
+  discordUsername?: string | null
   avatarUrl: string | null
   firstRole: Role | null
   team: Team

@@ -55,9 +55,16 @@ function ParticipantRow({
           <User className="w-3 h-3 text-gray-400" />
         </div>
       )}
-      <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-        {participant.playerName ?? "（未設定）"}
-      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {participant.playerName ?? "（未設定）"}
+        </p>
+        {participant.discordUsername && (
+          <p className="text-[10px] text-gray-400 truncate">
+            @{participant.discordUsername}
+          </p>
+        )}
+      </div>
       {participant.firstRole && (
         <span
           className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${ROLE_BADGE_COLORS[participant.firstRole]}`}
