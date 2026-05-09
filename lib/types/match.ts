@@ -51,6 +51,7 @@ export type RoundInfo = {
 export type ParticipantInfo = {
   profileId: string
   playerName: string | null
+  discordUsername: string | null
   avatarUrl: string | null
   firstRole: Role | null
   secondRole: Role | null
