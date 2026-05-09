@@ -331,7 +331,8 @@
 - 大会名: 1-100文字
 - イベント名: 1-100文字
 - 試合数: 予選の場合は必須（1-10の整数）、ダブルエリミネーションの場合は入力不可
-- 時系列制約: `entry_start < entry_end <= checkin_start < checkin_end`
+- 時系列制約: `entry_start < entry_end`、`checkin_start < checkin_end`
+- エントリー期間とチェックイン期間の重なりは許可する
 - イベントは最低1つ必要
 
 **操作ボタン**:
