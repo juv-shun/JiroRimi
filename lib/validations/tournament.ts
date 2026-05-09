@@ -53,16 +53,6 @@ export const eventSchema = z
   )
   .refine(
     (data) =>
-      !data.entry_end ||
-      !data.checkin_start ||
-      data.entry_end <= data.checkin_start,
-    {
-      message: "チェックイン開始はエントリー締切以降にしてください",
-      path: ["checkin_start"],
-    },
-  )
-  .refine(
-    (data) =>
       !data.checkin_start ||
       !data.checkin_end ||
       data.checkin_start < data.checkin_end,

@@ -246,11 +246,13 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 - `in_progress`: 試合進行中
 - `completed`: 終了
 
-> **Note**: エントリー受付中・エントリー締切済・チェックイン受付中などの時間ベースのフェーズは、`entry_start` / `entry_end` / `checkin_start` / `checkin_end` からアプリ層で算出する（後述「ステータス管理」セクション参照）。
+> **Note**: エントリー受付可否・チェックイン受付可否などの時間ベースの状態は、`entry_start` / `entry_end` / `checkin_start` / `checkin_end` からアプリ層で独立して算出する（後述「ステータス管理」セクション参照）。
 
 **ユニーク制約**: (tournament_id, event_number)
 
-**時系列制約**: `entry_start < entry_end <= checkin_start < checkin_end`
+**時系列制約**: `entry_start < entry_end`、`checkin_start < checkin_end`
+
+エントリー期間とチェックイン期間の重なりは許可する。これにより、チェックイン受付中でも `entry_end` まではエントリーを受け付けられる。
 
 ---
 
@@ -382,17 +384,20 @@ Supabase Auth の `auth.users` と 1:1 で紐づくプロフィール情報。
 | `in_progress` | 運営者がイベント開始操作（参加メンバー確定。チェックイン締切前でも操作可能） |
 | `completed` | 運営者がイベント完了操作 |
 
-**時間ベースのフェーズ** — アプリ層で `entry_start` / `entry_end` / `checkin_start` / `checkin_end` から算出:
+**時間ベースの状態** — アプリ層で `entry_start` / `entry_end` / `checkin_start` / `checkin_end` から独立して算出:
 
-| 条件 | 表示フェーズ |
-|------|------------|
-| `now() < entry_start` | 予定 |
-| `entry_start <= now() < entry_end` | エントリー受付中 |
-| `entry_end <= now() < checkin_start` | エントリー締切済 |
-| `checkin_start <= now() < checkin_end` | チェックイン受付中 |
-| `checkin_end <= now()` かつ `status = 'scheduled'` | チェックイン締切済（イベント開始待ち） |
-| `status = 'in_progress'` | イベント進行中 |
-| `status = 'completed'` | 終了 |
+| 判定 | 条件 |
+|------|------|
+| エントリー開始前 | `now() < entry_start` |
+| エントリー受付中 | `entry_start <= now() <= entry_end` |
+| エントリー締切済 | `entry_end < now()` |
+| チェックイン開始前 | `now() < checkin_start` |
+| チェックイン受付中 | `checkin_start <= now() <= checkin_end` |
+| チェックイン締切済 | `checkin_end < now()` かつ `status = 'scheduled'` |
+| イベント進行中 | `status = 'in_progress'` |
+| 終了 | `status = 'completed'` |
+
+エントリー受付中とチェックイン受付中は同時に成立し得る。UIやAPIはそれぞれの受付可否を個別に判定する。
 
 > **設計判断**: 時間ベースで算出可能なフェーズをDBステータスとして持つと、バッチ処理によるステータス更新が必要になり、タイミングのズレや障害時の不整合リスクが発生する。時間カラムから都度算出することでこれらの問題を回避する。RLSポリシーでも `entry_start <= now()` のようにSQL内で直接判定可能。
 
