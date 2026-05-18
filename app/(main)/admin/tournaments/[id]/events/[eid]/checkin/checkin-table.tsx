@@ -244,7 +244,7 @@ export function CheckinTable({
               value={searchQuery}
               onChange={(e) => handleSearchInput(e.target.value)}
               placeholder="プレイヤー名で検索してエントリー追加..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-white text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
             />
             {isSearching && (
               <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
