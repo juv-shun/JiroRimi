@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 
 import { PageHeader } from "@/app/components/page-header"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import type {
   MatchForDisplay,
@@ -14,6 +15,125 @@ import type {
 } from "@/lib/types/match"
 import type { Role } from "@/lib/types/profile"
 import { MatchPage } from "./match-page"
+
+type BracketMatchForEnsure = {
+  id: string
+  round_number: number
+  team_a_id: string | null
+  team_b_id: string | null
+  status: "ready" | "in_progress"
+  match_id: string | null
+}
+
+type TeamMemberForEnsure = {
+  team_id: string
+  profile_id: string
+}
+
+async function ensureGfMatchesForUser(
+  eventId: string,
+  profileId: string,
+): Promise<void> {
+  const admin = createAdminClient()
+
+  const { data: memberships, error: membershipError } = await admin
+    .from("tournament_team_members")
+    .select("team_id, profile_id, tournament_teams!inner (event_id)")
+    .eq("profile_id", profileId)
+    .eq("tournament_teams.event_id", eventId)
+
+  if (membershipError) {
+    throw membershipError
+  }
+
+  const myTeamIds = new Set(
+    (memberships ?? []).map((membership) => membership.team_id as string),
+  )
+  if (myTeamIds.size === 0) return
+
+  const { data: bracketMatches, error: bracketError } = await admin
+    .from("bracket_matches")
+    .select("id, round_number, team_a_id, team_b_id, status, match_id")
+    .eq("event_id", eventId)
+    .in("status", ["ready", "in_progress"])
+
+  if (bracketError) {
+    throw bracketError
+  }
+
+  const targetMatches = (
+    (bracketMatches ?? []) as BracketMatchForEnsure[]
+  ).filter(
+    (match) =>
+      (match.team_a_id !== null && myTeamIds.has(match.team_a_id)) ||
+      (match.team_b_id !== null && myTeamIds.has(match.team_b_id)),
+  )
+
+  for (const bracketMatch of targetMatches) {
+    if (
+      !bracketMatch.team_a_id ||
+      !bracketMatch.team_b_id ||
+      bracketMatch.match_id
+    ) {
+      continue
+    }
+
+    const { data: createdMatch, error: matchError } = await admin
+      .from("matches")
+      .insert({
+        event_id: eventId,
+        round_number: bracketMatch.round_number,
+        status: "in_progress",
+      })
+      .select("id")
+      .single()
+
+    if (matchError || !createdMatch) {
+      throw matchError ?? new Error("GFマッチの作成に失敗しました")
+    }
+
+    const teamIds = [bracketMatch.team_a_id, bracketMatch.team_b_id]
+    const { data: teamMembers, error: memberError } = await admin
+      .from("tournament_team_members")
+      .select("team_id, profile_id")
+      .in("team_id", teamIds)
+
+    if (memberError) {
+      throw memberError
+    }
+
+    const participants = ((teamMembers ?? []) as TeamMemberForEnsure[]).map(
+      (member) => ({
+        match_id: createdMatch.id as string,
+        profile_id: member.profile_id,
+        team: member.team_id === bracketMatch.team_a_id ? "team_a" : "team_b",
+      }),
+    )
+
+    if (participants.length > 0) {
+      const { error: participantError } = await admin
+        .from("match_participants")
+        .insert(participants)
+
+      if (participantError) {
+        throw participantError
+      }
+    }
+
+    const { error: updateError } = await admin
+      .from("bracket_matches")
+      .update({
+        match_id: createdMatch.id,
+        status: "in_progress",
+      })
+      .eq("id", bracketMatch.id)
+      .is("match_id", null)
+
+    if (updateError) {
+      throw updateError
+    }
+  }
+}
 
 export default async function MatchesPage({
   params,
@@ -36,7 +156,7 @@ export default async function MatchesPage({
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select(
-      "id, tournament_id, name, scheduled_date, tournaments!inner (id, name)",
+      "id, tournament_id, name, scheduled_date, match_format, tournaments!inner (id, name)",
     )
     .eq("id", eid)
     .eq("tournament_id", id)
@@ -44,6 +164,10 @@ export default async function MatchesPage({
 
   if (eventError || !event) {
     notFound()
+  }
+
+  if (event.match_format === "double_elimination") {
+    await ensureGfMatchesForUser(eid, user.id)
   }
 
   // ユーザーの match_participants を取得（RLS で未開始マッチは公開されない）

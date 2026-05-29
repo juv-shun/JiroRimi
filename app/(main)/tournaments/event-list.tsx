@@ -833,10 +833,7 @@ function LobbyButton({
   className?: string
 }) {
   const label = LOBBY_BUTTON_LABELS[state]
-  const href =
-    event.match_format === "double_elimination"
-      ? `/tournaments/${tournamentId}/events/${event.id}/bracket`
-      : `/tournaments/${tournamentId}/events/${event.id}/matches`
+  const href = `/tournaments/${tournamentId}/events/${event.id}/matches`
 
   if (state === "can_enter") {
     let className =
