@@ -4,7 +4,11 @@ import { notFound, redirect } from "next/navigation"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { RawBracketMatch, TeamInfo } from "@/lib/types/bracket"
+import type {
+  RawBracketMatch,
+  TeamInfo,
+  TeamMemberInfo,
+} from "@/lib/types/bracket"
 import type {
   AdminMatchForDisplay,
   AdminMatchParticipant,
@@ -27,6 +31,37 @@ import {
 import { BracketAdminView } from "./bracket-admin-view"
 import { GfTeamAssignmentWrapper } from "./gf-team-assignment-wrapper"
 import { RoundManager } from "./round-manager"
+
+type TeamMemberRow = {
+  profile_id: string
+  profiles:
+    | {
+        player_name: string | null
+        avatar_url: string | null
+        first_role: string | null
+      }
+    | {
+        player_name: string | null
+        avatar_url: string | null
+        first_role: string | null
+      }[]
+    | null
+}
+
+function mapTeamMembers(members: TeamMemberRow[] | null): TeamMemberInfo[] {
+  return (members ?? []).map((member) => {
+    const profile = Array.isArray(member.profiles)
+      ? (member.profiles[0] ?? null)
+      : member.profiles
+
+    return {
+      profileId: member.profile_id,
+      playerName: profile?.player_name ?? null,
+      avatarUrl: profile?.avatar_url ?? null,
+      firstRole: profile?.first_role ?? null,
+    }
+  })
+}
 
 export default async function AdminMatchesPage({
   params,
@@ -195,7 +230,15 @@ export default async function AdminMatchesPage({
     if (teamsAssigned) {
       const { data: existingTeams } = await supabase
         .from("tournament_teams")
-        .select("id, name, seed")
+        .select(
+          `
+          id, name, seed,
+          tournament_team_members (
+            profile_id,
+            profiles (player_name, avatar_url, first_role)
+          )
+        `,
+        )
         .eq("event_id", eid)
         .order("seed")
 
@@ -203,6 +246,9 @@ export default async function AdminMatchesPage({
         id: t.id,
         name: t.name,
         seed: t.seed,
+        members: mapTeamMembers(
+          t.tournament_team_members as TeamMemberRow[] | null,
+        ),
       }))
 
       const { data: bracketMatchesRaw } = await supabase

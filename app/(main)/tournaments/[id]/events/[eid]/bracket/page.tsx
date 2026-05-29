@@ -4,9 +4,44 @@ import { notFound } from "next/navigation"
 
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { RawBracketMatch, TeamInfo } from "@/lib/types/bracket"
+import type {
+  RawBracketMatch,
+  TeamInfo,
+  TeamMemberInfo,
+} from "@/lib/types/bracket"
 
 import { BracketView } from "./bracket-view"
+
+type TeamMemberRow = {
+  profile_id: string
+  profiles:
+    | {
+        player_name: string | null
+        avatar_url: string | null
+        first_role: string | null
+      }
+    | {
+        player_name: string | null
+        avatar_url: string | null
+        first_role: string | null
+      }[]
+    | null
+}
+
+function mapTeamMembers(members: TeamMemberRow[] | null): TeamMemberInfo[] {
+  return (members ?? []).map((member) => {
+    const profile = Array.isArray(member.profiles)
+      ? (member.profiles[0] ?? null)
+      : member.profiles
+
+    return {
+      profileId: member.profile_id,
+      playerName: profile?.player_name ?? null,
+      avatarUrl: profile?.avatar_url ?? null,
+      firstRole: profile?.first_role ?? null,
+    }
+  })
+}
 
 export default async function BracketPage({
   params,
@@ -53,7 +88,15 @@ export default async function BracketPage({
   // tournament_teams 取得
   const { data: teams, error: teamsError } = await supabase
     .from("tournament_teams")
-    .select("id, name, seed")
+    .select(
+      `
+      id, name, seed,
+      tournament_team_members (
+        profile_id,
+        profiles (player_name, avatar_url, first_role)
+      )
+    `,
+    )
     .eq("event_id", eid)
     .order("seed")
 
@@ -79,7 +122,16 @@ export default async function BracketPage({
 
         <BracketView
           initialBracketMatches={(bracketMatches ?? []) as RawBracketMatch[]}
-          teams={(teams ?? []) as TeamInfo[]}
+          teams={
+            (teams ?? []).map((team) => ({
+              id: team.id,
+              name: team.name,
+              seed: team.seed,
+              members: mapTeamMembers(
+                team.tournament_team_members as TeamMemberRow[] | null,
+              ),
+            })) satisfies TeamInfo[]
+          }
           eventId={eid}
         />
       </div>

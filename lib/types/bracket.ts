@@ -3,12 +3,24 @@
  */
 
 export type BracketType = "winners" | "losers" | "grand_final"
-export type BracketMatchStatus = "pending" | "ready" | "in_progress" | "confirmed"
+export type BracketMatchStatus =
+  | "pending"
+  | "ready"
+  | "in_progress"
+  | "confirmed"
+
+export type TeamMemberInfo = {
+  profileId: string
+  playerName: string | null
+  avatarUrl: string | null
+  firstRole: string | null
+}
 
 export type TeamInfo = {
   id: string
   name: string
   seed: number
+  members?: TeamMemberInfo[]
 }
 
 export type RawBracketMatch = {

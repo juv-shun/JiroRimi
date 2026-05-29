@@ -1,4 +1,11 @@
-import type { BracketMatchForDisplay } from "@/lib/types/bracket"
+"use client"
+
+import { ChevronDown, User } from "lucide-react"
+import Image from "next/image"
+import { useState } from "react"
+import type { BracketMatchForDisplay, TeamInfo } from "@/lib/types/bracket"
+import type { Role } from "@/lib/types/profile"
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/lib/types/profile"
 
 type BracketMatchCardProps = {
   match: BracketMatchForDisplay
@@ -26,6 +33,30 @@ const STATUS_STYLES = {
   },
 } as const
 
+function isAllowedAvatarUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return false
+    }
+    const { hostname } = parsed
+    return (
+      hostname === "cdn.discordapp.com" ||
+      hostname.endsWith(".discordapp.com") ||
+      hostname.endsWith(".discord.com")
+    )
+  } catch {
+    return false
+  }
+}
+
+function toRole(role: string | null): Role | null {
+  if (role && role in ROLE_LABELS) {
+    return role as Role
+  }
+  return null
+}
+
 export function BracketMatchCard({ match }: BracketMatchCardProps) {
   const style = STATUS_STYLES[match.status]
   const isConfirmed = match.status === "confirmed"
@@ -41,14 +72,34 @@ export function BracketMatchCard({ match }: BracketMatchCardProps) {
       )}
       <TeamRow
         team={match.teamA}
-        isWinner={isConfirmed && match.winner !== null && match.teamA !== null && match.winner.id === match.teamA.id}
-        isLoser={isConfirmed && match.winner !== null && match.teamA !== null && match.winner.id !== match.teamA.id}
+        isWinner={
+          isConfirmed &&
+          match.winner !== null &&
+          match.teamA !== null &&
+          match.winner.id === match.teamA.id
+        }
+        isLoser={
+          isConfirmed &&
+          match.winner !== null &&
+          match.teamA !== null &&
+          match.winner.id !== match.teamA.id
+        }
       />
       <div className="border-t border-inherit" />
       <TeamRow
         team={match.teamB}
-        isWinner={isConfirmed && match.winner !== null && match.teamB !== null && match.winner.id === match.teamB.id}
-        isLoser={isConfirmed && match.winner !== null && match.teamB !== null && match.winner.id !== match.teamB.id}
+        isWinner={
+          isConfirmed &&
+          match.winner !== null &&
+          match.teamB !== null &&
+          match.winner.id === match.teamB.id
+        }
+        isLoser={
+          isConfirmed &&
+          match.winner !== null &&
+          match.teamB !== null &&
+          match.winner.id !== match.teamB.id
+        }
       />
     </div>
   )
@@ -59,10 +110,12 @@ function TeamRow({
   isWinner,
   isLoser,
 }: {
-  team: { id: string; name: string; seed: number } | null
+  team: TeamInfo | null
   isWinner: boolean
   isLoser: boolean
 }) {
+  const [isOpen, setIsOpen] = useState(false)
+
   if (!team) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
@@ -74,22 +127,80 @@ function TeamRow({
     )
   }
 
+  const members = team.members ?? []
+
   return (
-    <div className="flex items-center gap-2 px-3 py-2">
-      <span className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/10 to-amber-100 flex items-center justify-center text-[10px] text-primary font-bold flex-shrink-0">
-        {team.seed}
-      </span>
-      <span
-        className={`text-sm truncate ${
-          isWinner
-            ? "font-bold text-primary"
-            : isLoser
-              ? "text-gray-400 line-through"
-              : "text-gray-900"
-        }`}
+    <div>
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        aria-expanded={isOpen}
+        className="flex items-center gap-2 px-3 py-2 w-full text-left transition-colors hover:bg-white/60"
       >
-        {team.name}
-      </span>
+        <span className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/10 to-amber-100 flex items-center justify-center text-[10px] text-primary font-bold flex-shrink-0">
+          {team.seed}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span
+            className={`block text-sm truncate ${
+              isWinner
+                ? "font-bold text-primary"
+                : isLoser
+                  ? "text-gray-400 line-through"
+                  : "text-gray-900"
+            }`}
+          >
+            {team.name}
+          </span>
+          <span className="block text-[10px] text-gray-500 leading-tight">
+            {members.length}人
+          </span>
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {isOpen && (
+        <div className="px-3 pb-2 space-y-1">
+          {members.map((member) => {
+            const role = toRole(member.firstRole)
+            return (
+              <div
+                key={member.profileId}
+                className="flex items-center gap-2 rounded-lg bg-white/60 px-2 py-1.5"
+              >
+                {member.avatarUrl && isAllowedAvatarUrl(member.avatarUrl) ? (
+                  <Image
+                    src={member.avatarUrl}
+                    alt=""
+                    width={24}
+                    height={24}
+                    loading="lazy"
+                    unoptimized
+                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <User className="w-3.5 h-3.5 text-gray-400" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 text-xs font-medium text-gray-800 truncate">
+                  {member.playerName ?? "（未設定）"}
+                </span>
+                {role && (
+                  <span
+                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight flex-shrink-0 ${ROLE_BADGE_COLORS[role]}`}
+                  >
+                    {ROLE_LABELS[role]}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
