@@ -26,14 +26,11 @@ import {
   type EntryButtonState,
   getEntryButtonState,
 } from "./get-entry-button-state"
+import { EVENT_BADGE_LABELS, getEventBadgeState } from "./get-event-badge-state"
 import {
-  EVENT_BADGE_LABELS,
-  getEventBadgeState,
-} from "./get-event-badge-state"
-import {
+  getLobbyButtonState,
   LOBBY_BUTTON_LABELS,
   type LobbyButtonState,
-  getLobbyButtonState,
 } from "./get-lobby-button-state"
 
 type EventListProps = {
@@ -265,7 +262,9 @@ export function EventList({
                 </div>
                 <div>
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <h3 className="text-lg font-bold text-[#f4efe6]">{event.name}</h3>
+                    <h3 className="text-lg font-bold text-[#f4efe6]">
+                      {event.name}
+                    </h3>
                     <button
                       type="button"
                       onClick={() =>
@@ -472,7 +471,7 @@ export function EventList({
                   entryInfo?.hasInProgressMatch ?? false,
                 )}
                 tournamentId={tournamentId}
-                eventId={event.id}
+                event={event}
                 className="flex-1"
               />
             </div>
@@ -534,7 +533,9 @@ function InfoRow({
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <span className="ml-auto text-right text-sm font-medium text-[#f4efe6]">{value}</span>
+      <span className="ml-auto text-right text-sm font-medium text-[#f4efe6]">
+        {value}
+      </span>
     </div>
   )
 }
@@ -694,8 +695,14 @@ function EntryButton({
   let className =
     "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200"
 
-  if (state === "invite" || state === "before_start" || state === "closed" || state === "gender_mismatch") {
-    className += " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
+  if (
+    state === "invite" ||
+    state === "before_start" ||
+    state === "closed" ||
+    state === "gender_mismatch"
+  ) {
+    className +=
+      " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
   } else if (isCancel) {
     className += cancelling
       ? " cursor-not-allowed bg-red-400 text-white"
@@ -763,14 +770,16 @@ function CheckinButton({
     "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200"
 
   if (state === "checked_in") {
-    className += " cursor-not-allowed border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+    className +=
+      " cursor-not-allowed border border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
   } else if (state === "can_checkin") {
     className += loading
       ? " glow-button text-white cursor-not-allowed opacity-70"
       : " glow-button text-white"
   } else {
     // not_entered / before_checkin / checkin_closed / event_started
-    className += " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
+    className +=
+      " cursor-not-allowed border border-white/8 bg-white/5 text-stone-500"
   }
 
   if (additionalClassName) {
@@ -815,15 +824,19 @@ function CheckinButton({
 function LobbyButton({
   state,
   tournamentId,
-  eventId,
+  event,
   className: additionalClassName = "",
 }: {
   state: LobbyButtonState
   tournamentId: string
-  eventId: string
+  event: TournamentEventForDisplay
   className?: string
 }) {
   const label = LOBBY_BUTTON_LABELS[state]
+  const href =
+    event.match_format === "double_elimination"
+      ? `/tournaments/${tournamentId}/events/${event.id}/bracket`
+      : `/tournaments/${tournamentId}/events/${event.id}/matches`
 
   if (state === "can_enter") {
     let className =
@@ -831,10 +844,7 @@ function LobbyButton({
     if (additionalClassName) className += ` ${additionalClassName}`
 
     return (
-      <Link
-        href={`/tournaments/${tournamentId}/events/${eventId}/matches`}
-        className={className}
-      >
+      <Link href={href} className={className}>
         <Swords className="w-4 h-4" />
         {label}
       </Link>
@@ -917,7 +927,9 @@ function EntryConfirmModal({
             </div>
             {event.gender && (
               <div className="flex items-center gap-2">
-                <span className="w-20 text-xs text-text-secondary">性別区分</span>
+                <span className="w-20 text-xs text-text-secondary">
+                  性別区分
+                </span>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     event.gender === "boys"
@@ -936,7 +948,9 @@ function EntryConfirmModal({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-20 text-xs text-text-secondary">チェックイン</span>
+              <span className="w-20 text-xs text-text-secondary">
+                チェックイン
+              </span>
               <span className="text-sm text-[#f4efe6]">
                 {formatTimeJST(event.checkin_start)} 〜{" "}
                 {formatTimeJST(event.checkin_end)}

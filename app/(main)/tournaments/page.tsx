@@ -1,6 +1,9 @@
 import { PageHeader } from "@/app/components/page-header"
 import { createClient } from "@/lib/supabase/server"
-import type { TournamentWithEvents, UserEntryInfo } from "@/lib/types/tournament"
+import type {
+  TournamentWithEvents,
+  UserEntryInfo,
+} from "@/lib/types/tournament"
 import { TournamentList } from "./tournament-list"
 
 export default async function TournamentsPage() {
@@ -127,10 +130,64 @@ export default async function TournamentsPage() {
           return match.event_id as string
         }),
       )
-      userEntries = (entries ?? []).map((e) => ({
-        ...e,
-        hasInProgressMatch: matchEventIds.has(e.event_id),
-      }))
+
+      // GF は entries ではなく tournament_team_members 所属を参加判定に使う
+      const { data: gfMemberships } = await supabase
+        .from("tournament_team_members")
+        .select("team_id, tournament_teams!inner (event_id)")
+        .eq("profile_id", user.id)
+        .in("tournament_teams.event_id", allEventIds)
+
+      const gfTeamIds = new Set<string>()
+      const gfMemberEventIds = new Set<string>()
+      for (const membership of gfMemberships ?? []) {
+        gfTeamIds.add(membership.team_id as string)
+        const team = Array.isArray(membership.tournament_teams)
+          ? membership.tournament_teams[0]
+          : membership.tournament_teams
+        if (team?.event_id) {
+          gfMemberEventIds.add(team.event_id as string)
+        }
+      }
+
+      if (gfMemberEventIds.size > 0) {
+        const { data: activeBracketMatches } = await supabase
+          .from("bracket_matches")
+          .select("event_id, team_a_id, team_b_id, status")
+          .in("event_id", Array.from(gfMemberEventIds))
+          .in("status", ["ready", "in_progress"])
+
+        for (const match of activeBracketMatches ?? []) {
+          const teamAId = match.team_a_id as string | null
+          const teamBId = match.team_b_id as string | null
+          if (
+            (teamAId && gfTeamIds.has(teamAId)) ||
+            (teamBId && gfTeamIds.has(teamBId))
+          ) {
+            matchEventIds.add(match.event_id as string)
+          }
+        }
+      }
+
+      const entryMap = new Map<string, UserEntryInfo>()
+      for (const entry of entries ?? []) {
+        entryMap.set(entry.event_id, {
+          ...entry,
+          hasInProgressMatch: matchEventIds.has(entry.event_id),
+        })
+      }
+
+      for (const eventId of gfMemberEventIds) {
+        if (!entryMap.has(eventId)) {
+          entryMap.set(eventId, {
+            event_id: eventId,
+            checked_in_at: null,
+            hasInProgressMatch: matchEventIds.has(eventId),
+          })
+        }
+      }
+
+      userEntries = Array.from(entryMap.values())
     }
   }
 
