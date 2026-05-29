@@ -16,22 +16,15 @@ type BracketAdminMatchCardProps = {
 const STATUS_STYLES = {
   pending: {
     card: "bg-gray-50 border-gray-200",
-    badge: null,
   },
   ready: {
     card: "bg-blue-50 border-blue-200",
-    badge: { text: "準備完了", className: "bg-blue-100 text-blue-700" },
   },
   in_progress: {
     card: "bg-amber-50 border-amber-300",
-    badge: {
-      text: "試合中",
-      className: "bg-amber-100 text-amber-700 animate-pulse",
-    },
   },
   confirmed: {
     card: "bg-white border-green-300",
-    badge: { text: "確定", className: "bg-green-100 text-green-700" },
   },
 } as const
 
@@ -77,13 +70,6 @@ export function BracketAdminMatchCard({
 
   return (
     <div className={`relative rounded-xl border ${style.card} overflow-hidden`}>
-      {style.badge && (
-        <span
-          className={`absolute top-1.5 right-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${style.badge.className}`}
-        >
-          {style.badge.text}
-        </span>
-      )}
       <TeamRow
         team={match.teamA}
         isWinner={
@@ -211,11 +197,17 @@ function TeamRow({
         </button>
         <button
           type="button"
-          onClick={() => setIsOpen((value) => !value)}
+          onClick={(event) => {
+            event.stopPropagation()
+            setIsOpen((value) => !value)
+          }}
           aria-expanded={isOpen}
           aria-label={`${team.name}のメンバーを${isOpen ? "閉じる" : "開く"}`}
-          className="px-3 py-2 transition-colors hover:bg-white/60"
+          className="flex items-center gap-1 px-3 py-2 transition-colors hover:bg-white/60"
         >
+          <span className="text-[10px] font-medium text-gray-500">
+            メンバー
+          </span>
           <ChevronDown
             className={`w-4 h-4 text-gray-400 transition-transform ${
               isOpen ? "rotate-180" : ""
