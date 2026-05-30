@@ -14,6 +14,8 @@ export type TeamMemberInfo = {
   playerName: string | null
   avatarUrl: string | null
   firstRole: string | null
+  secondRole: string | null
+  thirdRole: string | null
 }
 
 export type TeamInfo = {

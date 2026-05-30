@@ -50,6 +50,12 @@ function toRole(role: string | null): Role | null {
   return null
 }
 
+function getRoles(member: NonNullable<TeamInfo["members"]>[number]): Role[] {
+  return [member.firstRole, member.secondRole, member.thirdRole]
+    .map(toRole)
+    .filter((role): role is Role => role !== null)
+}
+
 export function BracketMatchCard({ match }: BracketMatchCardProps) {
   const style = STATUS_STYLES[match.status]
   const isConfirmed = match.status === "confirmed"
@@ -151,11 +157,11 @@ function TeamRow({
       {isOpen && (
         <div className="px-3 pb-2 space-y-1">
           {members.map((member) => {
-            const role = toRole(member.firstRole)
+            const roles = getRoles(member)
             return (
               <div
                 key={member.profileId}
-                className="flex items-center gap-2 rounded-lg bg-white/60 px-2 py-1.5"
+                className="flex items-start gap-2 rounded-lg bg-white/60 px-2 py-1.5"
               >
                 {member.avatarUrl && isAllowedAvatarUrl(member.avatarUrl) ? (
                   <Image
@@ -172,16 +178,25 @@ function TeamRow({
                     <User className="w-3.5 h-3.5 text-gray-400" />
                   </span>
                 )}
-                <span className="min-w-0 flex-1 text-xs font-medium text-gray-800 truncate">
-                  {member.playerName ?? "（未設定）"}
-                </span>
-                {role && (
-                  <span
-                    className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight flex-shrink-0 ${ROLE_BADGE_COLORS[role]}`}
-                  >
-                    {ROLE_LABELS[role]}
+                <div className="min-w-0 flex-1">
+                  <span className="block text-xs font-medium text-gray-800 truncate">
+                    {member.playerName ?? "（未設定）"}
                   </span>
-                )}
+                  {roles.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-0.5">
+                      {roles.map((role, index) => (
+                        <span
+                          key={`${member.profileId}-${role}-${index}`}
+                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight ${
+                            ROLE_BADGE_COLORS[role]
+                          } ${index === 0 ? "ring-1 ring-current/20" : "opacity-60"}`}
+                        >
+                          {ROLE_LABELS[role]}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}

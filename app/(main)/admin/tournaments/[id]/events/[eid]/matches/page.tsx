@@ -39,11 +39,15 @@ type TeamMemberRow = {
         player_name: string | null
         avatar_url: string | null
         first_role: string | null
+        second_role: string | null
+        third_role: string | null
       }
     | {
         player_name: string | null
         avatar_url: string | null
         first_role: string | null
+        second_role: string | null
+        third_role: string | null
       }[]
     | null
 }
@@ -59,6 +63,8 @@ function mapTeamMembers(members: TeamMemberRow[] | null): TeamMemberInfo[] {
       playerName: profile?.player_name ?? null,
       avatarUrl: profile?.avatar_url ?? null,
       firstRole: profile?.first_role ?? null,
+      secondRole: profile?.second_role ?? null,
+      thirdRole: profile?.third_role ?? null,
     }
   })
 }
@@ -235,7 +241,7 @@ export default async function AdminMatchesPage({
           id, name, seed,
           tournament_team_members (
             profile_id,
-            profiles (player_name, avatar_url, first_role)
+            profiles (player_name, avatar_url, first_role, second_role, third_role)
           )
         `,
         )
